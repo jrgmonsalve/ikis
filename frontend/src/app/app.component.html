@@ -1,0 +1,350 @@
+<div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white pb-12 relative overflow-hidden">
+  
+  <!-- Subtle Glowing background effects -->
+  <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-violet-600/10 blur-[120px] pointer-events-none"></div>
+  <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-600/10 blur-[120px] pointer-events-none"></div>
+
+  <!-- Header -->
+  <header class="w-full max-w-5xl mx-auto px-4 pt-8 pb-4 flex justify-between items-center border-b border-slate-800/60 relative z-10">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+        <span class="text-white font-extrabold text-xl">IK</span>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-200 to-white bg-clip-text text-transparent">IKIS</h1>
+        <p class="text-xs text-slate-400 font-medium">Task Manager PWA</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-2 bg-slate-900/80 border border-slate-800/80 rounded-full px-3 py-1 text-xs text-slate-400">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span class="font-medium">Cloudflare D1 Activo</span>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="w-full max-w-5xl mx-auto px-4 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10 flex-grow">
+    
+    <!-- Left Column: Stats & Add Task Form -->
+    <div class="space-y-6 lg:col-span-1">
+      
+      <!-- Premium Stats Card -->
+      <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800/80 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Tu Progreso</h2>
+            <p class="text-3xl font-extrabold mt-1">{{ getCompletedPercentage() }}%</p>
+          </div>
+          <div class="p-3 rounded-lg bg-indigo-500/10 text-indigo-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="w-full bg-slate-800 rounded-full h-2.5 mb-6 overflow-hidden">
+          <div class="bg-gradient-to-r from-indigo-500 to-violet-500 h-2.5 rounded-full transition-all duration-500 ease-out" [style.width.%]="getCompletedPercentage()"></div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-slate-850/40 border border-slate-800/40 rounded-xl p-3">
+            <span class="text-xs text-slate-400 block font-medium">Por Hacer</span>
+            <span class="text-lg font-bold text-indigo-400 mt-1 block">{{ getTaskCountByStatus('todo') }}</span>
+          </div>
+          <div class="bg-slate-850/40 border border-slate-800/40 rounded-xl p-3">
+            <span class="text-xs text-slate-400 block font-medium">En Progreso</span>
+            <span class="text-lg font-bold text-amber-400 mt-1 block">{{ getTaskCountByStatus('in_progress') }}</span>
+          </div>
+          <div class="bg-slate-850/40 border border-slate-800/40 rounded-xl p-3">
+            <span class="text-xs text-slate-400 block font-medium">Completas</span>
+            <span class="text-lg font-bold text-emerald-400 mt-1 block">{{ getTaskCountByStatus('done') }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Task Form -->
+      <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800/80 rounded-2xl p-6 shadow-xl">
+        <h2 class="text-lg font-bold mb-4 flex items-center space-x-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Nueva Tarea</span>
+        </h2>
+
+        <form (ngSubmit)="addTask()" class="space-y-4">
+          <!-- Title -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1" for="title">Título *</label>
+            <input 
+              id="title"
+              type="text" 
+              [(ngModel)]="newTaskTitle" 
+              name="title" 
+              placeholder="Ej: Desplegar Worker en CF" 
+              required
+              class="w-full bg-slate-950 border border-slate-800/80 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+            />
+          </div>
+
+          <!-- Description -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1" for="desc">Descripción</label>
+            <textarea 
+              id="desc"
+              [(ngModel)]="newTaskDescription" 
+              name="description" 
+              rows="3" 
+              placeholder="Detalles de la tarea..."
+              class="w-full bg-slate-950 border border-slate-800/80 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
+            ></textarea>
+          </div>
+
+          <!-- Priority & Due Date Row -->
+          <div class="grid grid-cols-2 gap-4">
+            <!-- Priority selection -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Prioridad</label>
+              <select 
+                [(ngModel)]="newTaskPriority" 
+                name="priority"
+                class="w-full bg-slate-950 border border-slate-800/80 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+              >
+                <option value="low">Baja</option>
+                <option value="medium">Media</option>
+                <option value="high">Alta</option>
+              </select>
+            </div>
+
+            <!-- Due Date -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1" for="dueDate">Fecha Límite</label>
+              <input 
+                id="dueDate"
+                type="date" 
+                [(ngModel)]="newTaskDueDate" 
+                name="dueDate"
+                class="w-full bg-slate-950 border border-slate-800/80 rounded-xl px-3 py-1.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+              />
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button 
+            type="submit" 
+            [disabled]="!newTaskTitle.trim()"
+            class="w-full bg-gradient-to-r from-indigo-500 to-violet-500 disabled:from-slate-800 disabled:to-slate-800 hover:from-indigo-600 hover:to-violet-600 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/20 active:scale-[0.98] mt-2 text-sm"
+          >
+            Añadir Tarea
+          </button>
+        </form>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Task List (Spans 2 columns) -->
+    <div class="lg:col-span-2 space-y-6">
+      
+      <!-- Filter Bar -->
+      <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800/80 rounded-2xl p-4 shadow-xl flex flex-wrap gap-2 items-center justify-between">
+        <div class="flex flex-wrap gap-2">
+          <button 
+            (click)="setFilter('all')" 
+            class="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+            [ngClass]="filter === 'all' ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/10' : 'bg-slate-950 text-slate-400 border border-slate-850 hover:bg-slate-850 hover:text-slate-200'"
+          >
+            Todas ({{ tasks.length }})
+          </button>
+          <button 
+            (click)="setFilter('todo')" 
+            class="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+            [ngClass]="filter === 'todo' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' : 'bg-slate-950 text-slate-400 border border-slate-850 hover:bg-slate-850 hover:text-slate-200'"
+          >
+            Por Hacer ({{ getTaskCountByStatus('todo') }})
+          </button>
+          <button 
+            (click)="setFilter('in_progress')" 
+            class="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+            [ngClass]="filter === 'in_progress' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-slate-950 text-slate-400 border border-slate-850 hover:bg-slate-850 hover:text-slate-200'"
+          >
+            En Progreso ({{ getTaskCountByStatus('in_progress') }})
+          </button>
+          <button 
+            (click)="setFilter('done')" 
+            class="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+            [ngClass]="filter === 'done' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-slate-950 text-slate-400 border border-slate-850 hover:bg-slate-850 hover:text-slate-200'"
+          >
+            Completadas ({{ getTaskCountByStatus('done') }})
+          </button>
+        </div>
+
+        <button 
+          (click)="loadTasks()"
+          class="p-2 rounded-xl bg-slate-950 text-slate-400 border border-slate-850 hover:bg-slate-850 hover:text-slate-200 transition-colors"
+          title="Recargar Tareas"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" [ngClass]="{'animate-spin': loading}">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.27 15" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="loading && filteredTasks.length === 0" class="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-2xl border border-slate-800/40">
+        <div class="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-slate-400 mt-4 font-medium text-sm">Consultando D1 Database...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="errorMessage" class="bg-red-500/10 border border-red-500/20 text-red-300 px-6 py-4 rounded-2xl flex items-start space-x-3 shadow-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <div class="flex-grow">
+          <h3 class="font-bold text-sm">Error de Conexión</h3>
+          <p class="text-xs text-red-400/90 mt-1">{{ errorMessage }}</p>
+        </div>
+        <button (click)="loadTasks()" class="bg-red-500/20 hover:bg-red-500/30 text-red-200 text-xs px-3 py-1.5 rounded-lg transition-colors font-semibold">
+          Reintentar
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!loading && filteredTasks.length === 0" class="text-center py-16 bg-slate-900/30 border border-dashed border-slate-800 rounded-2xl">
+        <div class="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto text-slate-600 border border-slate-800">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+        </div>
+        <h3 class="text-slate-200 font-bold mt-4">Sin tareas registradas</h3>
+        <p class="text-slate-500 text-sm mt-1 max-w-sm mx-auto">No hay tareas en esta pestaña. Añade una nueva o cambia tus filtros de búsqueda.</p>
+      </div>
+
+      <!-- Tasks List Grid -->
+      <div *ngIf="filteredTasks.length > 0" class="space-y-4">
+        <div 
+          *ngFor="let task of filteredTasks" 
+          class="bg-slate-900/40 border border-slate-850 hover:border-slate-800 backdrop-blur-sm rounded-2xl p-5 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4 group transition-all hover:translate-y-[-2px]"
+        >
+          <!-- Left Content: Checkbox & Info -->
+          <div class="flex items-start space-x-4 flex-grow">
+            <!-- Custom circular checkbox button -->
+            <button 
+              (click)="updateTaskStatus(task, task.status === 'done' ? 'todo' : 'done')"
+              class="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all outline-none"
+              [ngClass]="{
+                'border-emerald-500 bg-emerald-500/20 text-emerald-400': task.status === 'done',
+                'border-slate-700 hover:border-indigo-500 bg-slate-950 text-transparent': task.status !== 'done'
+              }"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+
+            <!-- Text Content -->
+            <div class="space-y-1">
+              <div class="flex items-center flex-wrap gap-2">
+                <h4 
+                  class="font-bold text-slate-100 group-hover:text-white transition-colors"
+                  [ngClass]="{'line-through text-slate-500 group-hover:text-slate-500': task.status === 'done'}"
+                >
+                  {{ task.title }}
+                </h4>
+                
+                <!-- Priority Badge -->
+                <span 
+                  class="text-[10px] uppercase font-extrabold tracking-wider px-2 py-0.5 rounded-full"
+                  [ngClass]="{
+                    'bg-rose-500/10 text-rose-400 border border-rose-500/20': task.priority === 'high',
+                    'bg-amber-500/10 text-amber-400 border border-amber-500/20': task.priority === 'medium',
+                    'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20': task.priority === 'low'
+                  }"
+                >
+                  {{ task.priority }}
+                </span>
+
+                <!-- Status Badge -->
+                <span 
+                  *ngIf="task.status === 'in_progress'"
+                  class="text-[10px] font-bold px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded-md border border-amber-500/20"
+                >
+                  En Progreso
+                </span>
+              </div>
+              
+              <p 
+                *ngIf="task.description" 
+                class="text-xs text-slate-400 leading-relaxed font-normal"
+                [ngClass]="{'text-slate-500/80': task.status === 'done'}"
+              >
+                {{ task.description }}
+              </p>
+
+              <!-- Meta Row (Date / Created Date) -->
+              <div class="flex items-center space-x-3 text-[10px] text-slate-500 font-semibold pt-1">
+                <span *ngIf="task.dueDate" class="flex items-center space-x-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-indigo-400/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span>Límite: {{ task.dueDate }}</span>
+                </span>
+                <span>Registrado: {{ task.createdAt | date:'shortDate' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Content: Actions -->
+          <div class="flex items-center space-x-2 shrink-0 self-end md:self-center">
+            
+            <!-- Move Status Actions -->
+            <button 
+              *ngIf="task.status === 'todo'"
+              (click)="updateTaskStatus(task, 'in_progress')"
+              class="text-xs px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all font-semibold"
+            >
+              Iniciar
+            </button>
+            <button 
+              *ngIf="task.status === 'in_progress'"
+              (click)="updateTaskStatus(task, 'todo')"
+              class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-750 transition-all font-semibold"
+            >
+              Detener
+            </button>
+
+            <!-- Delete Button -->
+            <button 
+              (click)="deleteTask(task)"
+              class="p-2 rounded-xl text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors border border-transparent hover:border-rose-500/20"
+              title="Eliminar Tarea"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full max-w-5xl mx-auto px-4 mt-12 text-center text-xs text-slate-500 font-semibold relative z-10 border-t border-slate-900/60 pt-6">
+    <p>© 2026 IKIS Task Manager. Diseñado como Aplicación Web Progresiva.</p>
+    <p class="mt-1 text-slate-600">Angular 19 • Hono API • Cloudflare D1 SQL • Drizzle ORM</p>
+  </footer>
+
+  <!-- Floating Toast Notification -->
+  <div 
+    class="fixed bottom-6 right-6 z-50 bg-slate-900 border border-indigo-500/30 text-indigo-200 px-5 py-3 rounded-2xl flex items-center space-x-3 shadow-2xl transition-all duration-300 transform"
+    [ngClass]="showToast ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95 pointer-events-none'"
+  >
+    <div class="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></div>
+    <span class="text-sm font-semibold">{{ toastMessage }}</span>
+  </div>
+
+</div>
