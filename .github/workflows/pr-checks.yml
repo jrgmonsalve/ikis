@@ -1,0 +1,83 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.19"
+      - run: npm install
+        working-directory: frontend
+      - run: npm run lint
+        working-directory: frontend
+      - run: npm test
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.19"
+      - run: npm install
+        working-directory: backend
+      - run: npm run lint
+        working-directory: backend
+      - run: npm test
+        working-directory: backend
+      - run: npm run build
+        working-directory: backend
+
+  terraform:
+    name: Terraform
+    runs-on: ubuntu-latest
+    needs:
+      - backend
+    env:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      TF_VAR_google_client_id: ${{ secrets.GOOGLE_CLIENT_ID }}
+      TF_VAR_google_client_secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      TF_VAR_callback_urls: ${{ secrets.COGNITO_CALLBACK_URLS }}
+      TF_VAR_logout_urls: ${{ secrets.COGNITO_LOGOUT_URLS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.19"
+      - run: npm install
+        working-directory: backend
+      - run: npm run build
+        working-directory: backend
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform fmt -check
+        working-directory: infra
+      - run: terraform init
+        working-directory: infra
+      - run: terraform validate
+        working-directory: infra
+      - name: Configure AWS credentials
+        if: ${{ env.AWS_ROLE_ARN != '' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+      - name: Terraform plan
+        if: ${{ env.AWS_ROLE_ARN != '' }}
+        run: terraform plan -input=false
+        working-directory: infra

@@ -1,0 +1,10 @@
+{
+  "name": "Expense Control",
+  "short_name": "Expenses",
+  "theme_color": "#0f766e",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "scope": "./",
+  "start_url": "./",
+  "icons": []
+}
