@@ -48,119 +48,208 @@ interface TransactionForm {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <main class="min-h-screen bg-slate-100 pb-28 text-slate-950">
+    <main class="min-h-screen bg-slate-50 pb-28 text-slate-900">
       <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-4 backdrop-blur">
         <div class="mx-auto flex max-w-6xl items-center justify-between gap-4">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">Ikis Expense Control</p>
-            <h1 class="text-xl font-semibold">Money dashboard</h1>
+          <div class="flex items-center gap-3">
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-700 text-white shadow-sm">
+              <i class="fa-solid fa-wallet text-base"></i>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-wider text-teal-700 leading-none">Ikis Control</p>
+              <h1 class="text-base font-bold text-slate-800 mt-1">Dashboard</h1>
+            </div>
           </div>
           <button
             type="button"
-            class="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+            class="rounded-xl border border-slate-250 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
             (click)="auth.isAuthenticated() ? signOut() : signIn()"
           >
-            {{ auth.isAuthenticated() ? 'Sign out' : 'Sign in' }}
+            <i class="fa-solid" [ngClass]="auth.isAuthenticated() ? 'fa-right-from-bracket mr-1.5' : 'fa-right-to-bracket mr-1.5'"></i>
+            {{ auth.isAuthenticated() ? 'Cerrar Sesión' : 'Iniciar Sesión' }}
           </button>
         </div>
       </header>
 
-      <section class="mx-auto max-w-6xl px-4 py-5">
+      <section class="mx-auto max-w-6xl px-4 py-6">
         @if (message()) {
-          <div class="mb-4 rounded-md border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-medium text-teal-900">
-            {{ message() }}
+          <div class="mb-5 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-xs font-semibold text-teal-900 flex items-center gap-2">
+            <i class="fa-solid fa-circle-check text-base text-teal-600"></i>
+            <span>{{ message() }}</span>
           </div>
         }
 
         @if (error()) {
-          <div class="mb-4 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-900">
-            {{ error() }}
+          <div class="mb-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-900 flex items-center gap-2">
+            <i class="fa-solid fa-circle-exclamation text-base text-rose-600"></i>
+            <span>{{ error() }}</span>
           </div>
         }
 
         @if (activePanel() === 'dashboard') {
-          <section class="grid gap-4 lg:grid-cols-[1fr_360px]">
-            <div class="space-y-4">
-              <div class="rounded-lg bg-teal-800 px-5 py-5 text-white shadow-sm">
-                <p class="text-sm font-medium text-teal-100">Available balance</p>
-                <p class="mt-2 text-4xl font-semibold">{{ formatMoney(totalBalance()) }}</p>
-                <p class="mt-2 text-sm text-teal-100">{{ accounts().length }} accounts available</p>
+          <section class="grid gap-6 lg:grid-cols-[1fr_360px]">
+            <div class="space-y-6">
+              <!-- Available Balance Banner -->
+              <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-teal-900 via-teal-800 to-teal-700 px-6 py-6 text-white shadow-md">
+                <div class="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-teal-600/20 blur-xl"></div>
+                <div class="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-emerald-500/10 blur-xl"></div>
+                
+                <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-teal-200">Balance total disponible</span>
+                    <h2 class="mt-1.5 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
+                      {{ formatMoney(totalBalance()) }}
+                    </h2>
+                    <div class="mt-3 flex items-center gap-2 text-sm text-teal-100">
+                      <span class="inline-flex h-2.5 w-2.5 items-center justify-center rounded-full bg-emerald-400"></span>
+                      <span>{{ accounts().length }} {{ accounts().length === 1 ? 'cuenta activa' : 'cuentas activas' }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="flex items-center gap-3 self-start sm:self-center">
+                    <button 
+                      type="button" 
+                      class="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur hover:bg-white/20 transition-all shadow-sm"
+                      (click)="openTransactionPanel()"
+                    >
+                      <i class="fa-solid fa-circle-plus"></i>
+                      <span>Registrar Movimiento</span>
+                    </button>
+                  </div>
+                </div>
               </div>
 
+              <!-- Accounts Section -->
               <section>
-                <div class="mb-3 flex items-center justify-between">
-                  <h2 class="text-lg font-semibold">Accounts</h2>
-                  <button class="text-sm font-semibold text-teal-700" type="button" (click)="openAccountPanel()">Add account</button>
+                <div class="mb-4">
+                  <h2 class="text-lg font-bold text-slate-800">Tus Cuentas</h2>
+                  <p class="text-xs text-slate-400">Listado completo de saldos disponibles</p>
                 </div>
-                <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                
+                <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
                   @for (account of accounts(); track account.id) {
-                    <article class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                    <article class="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+                      <div class="absolute top-0 left-0 right-0 h-1" [ngClass]="{
+                        'bg-emerald-500': account.type === 'cash',
+                        'bg-blue-500': account.type === 'checking',
+                        'bg-pink-500': account.type === 'savings',
+                        'bg-indigo-500': account.type === 'credit'
+                      }"></div>
+                      
                       <div class="flex items-start justify-between gap-3">
-                        <div>
-                          <h3 class="font-semibold">{{ account.name }}</h3>
-                          <p class="text-sm capitalize text-slate-500">{{ account.type }}</p>
+                        <div class="flex items-center gap-3">
+                          <div class="flex h-10 w-10 items-center justify-center rounded-lg" [ngClass]="{
+                            'bg-emerald-50 text-emerald-700': account.type === 'cash',
+                            'bg-blue-50 text-blue-700': account.type === 'checking',
+                            'bg-pink-50 text-pink-700': account.type === 'savings',
+                            'bg-indigo-50 text-indigo-700': account.type === 'credit'
+                          }">
+                            @switch (account.type) {
+                              @case ('cash') { <i class="fa-solid fa-money-bill-wave text-lg"></i> }
+                              @case ('checking') { <i class="fa-solid fa-building-columns text-lg"></i> }
+                              @case ('savings') { <i class="fa-solid fa-piggy-bank text-lg"></i> }
+                              @case ('credit') { <i class="fa-solid fa-credit-card text-lg"></i> }
+                            }
+                          </div>
+                          <div>
+                            <h3 class="font-semibold text-slate-800">{{ account.name }}</h3>
+                            <p class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">{{ account.type }}</p>
+                          </div>
                         </div>
-                        <span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
+                        <span class="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
                           {{ account.currency }}
                         </span>
                       </div>
-                      <p class="mt-4 text-2xl font-semibold">{{ formatMoney(account.balance, account.currency) }}</p>
-                      <div class="mt-4 flex gap-2">
-                        <button class="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" (click)="editAccount(account)">
-                          Edit
-                        </button>
-                        <button class="rounded-md border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-700" type="button" (click)="deleteAccount(account.id)">
-                          Delete
-                        </button>
+                      
+                      <div class="mt-5">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-none">Saldo</p>
+                        <p class="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">
+                          {{ formatMoney(account.balance, account.currency) }}
+                        </p>
                       </div>
                     </article>
                   } @empty {
-                    <p class="rounded-lg border border-dashed border-slate-300 bg-white p-5 text-sm text-slate-600">
-                      Create your first account to start tracking balances.
-                    </p>
+                    <div class="col-span-full rounded-xl border border-dashed border-slate-350 bg-white p-6 text-center">
+                      <i class="fa-solid fa-wallet text-slate-300 text-3xl mb-2"></i>
+                      <p class="text-sm text-slate-500 font-medium">No has configurado ninguna cuenta.</p>
+                      <button class="mt-3 text-xs font-bold text-teal-700 hover:text-teal-900" type="button" (click)="setPanel('account')">
+                        Ir a Cuentas para crear una
+                      </button>
+                    </div>
                   }
                 </div>
               </section>
             </div>
 
-            <aside class="space-y-4">
-              <section class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-                <div class="mb-3 flex items-center justify-between">
-                  <h2 class="font-semibold">Recent transactions</h2>
-                  <button class="text-sm font-semibold text-teal-700" type="button" (click)="openTransactionPanel()">New</button>
+            <aside class="space-y-6">
+              <!-- Recent Transactions -->
+              <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="mb-4 flex items-center justify-between">
+                  <h2 class="font-bold text-slate-800">Transacciones Recientes</h2>
+                  <button class="text-xs font-semibold text-teal-700 hover:text-teal-900 flex items-center gap-1.5" type="button" (click)="openTransactionPanel()">
+                    <i class="fa-solid fa-circle-plus"></i>
+                    <span>Nueva</span>
+                  </button>
                 </div>
-                <div class="space-y-3">
+                <div class="space-y-4">
                   @for (transaction of transactions().slice(0, 8); track transaction.id) {
-                    <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3 last:border-0 last:pb-0">
-                      <div>
-                        <p class="font-medium">{{ transaction.description || transaction.type }}</p>
-                        <p class="text-xs text-slate-500">
-                          {{ transaction.transactionDate }} · {{ describeTransaction(transaction) }}
-                        </p>
+                    <div class="flex items-center justify-between gap-3 border-b border-slate-50 pb-3.5 last:border-0 last:pb-0">
+                      <div class="flex items-center gap-3">
+                        <div class="flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold" [ngClass]="{
+                          'bg-emerald-50 text-emerald-700': transaction.type === 'income',
+                          'bg-rose-50 text-rose-700': transaction.type === 'expense',
+                          'bg-blue-50 text-blue-700': transaction.type === 'transfer'
+                        }">
+                          @switch (transaction.type) {
+                            @case ('income') { <i class="fa-solid fa-arrow-down"></i> }
+                            @case ('expense') { <i class="fa-solid fa-arrow-up"></i> }
+                            @case ('transfer') { <i class="fa-solid fa-arrow-right-arrow-left"></i> }
+                          }
+                        </div>
+                        <div>
+                          <p class="text-sm font-semibold text-slate-800">{{ transaction.description || 'Movimiento' }}</p>
+                          <p class="text-[10px] text-slate-400 mt-0.5">
+                            {{ transaction.transactionDate }} · {{ describeTransaction(transaction) }}
+                          </p>
+                        </div>
                       </div>
-                      <p [ngClass]="transaction.type === 'income' ? 'text-emerald-700' : transaction.type === 'expense' ? 'text-rose-700' : 'text-slate-700'" class="font-semibold">
+                      <p [ngClass]="{
+                        'text-emerald-600': transaction.type === 'income',
+                        'text-rose-600': transaction.type === 'expense',
+                        'text-slate-600': transaction.type === 'transfer'
+                      }" class="text-sm font-bold tracking-tight">
                         {{ transaction.type === 'income' ? '+' : transaction.type === 'expense' ? '-' : '' }}{{ formatMoney(transaction.amount) }}
                       </p>
                     </div>
                   } @empty {
-                    <p class="text-sm text-slate-600">No transactions yet.</p>
+                    <div class="flex flex-col items-center justify-center py-6 text-center">
+                      <i class="fa-solid fa-receipt text-slate-300 text-3xl mb-2"></i>
+                      <p class="text-xs text-slate-450 font-medium">Sin transacciones registradas.</p>
+                    </div>
                   }
                 </div>
               </section>
 
-              <section class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-                <div class="mb-3 flex items-center justify-between">
-                  <h2 class="font-semibold">Categories</h2>
-                  <button class="text-sm font-semibold text-teal-700" type="button" (click)="openCategoryPanel()">Add</button>
+              <!-- Categories -->
+              <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="mb-4 flex items-center justify-between">
+                  <h2 class="font-bold text-slate-800">Categorías</h2>
+                  <button class="text-xs font-semibold text-teal-700 hover:text-teal-900 flex items-center gap-1.5" type="button" (click)="openCategoryPanel()">
+                    <i class="fa-solid fa-circle-plus"></i>
+                    <span>Agregar</span>
+                  </button>
                 </div>
                 <div class="flex flex-wrap gap-2">
                   @for (category of categories(); track category.id) {
-                    <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-sm">
-                      <span class="h-2.5 w-2.5 rounded-full" [style.background]="category.color"></span>
-                      {{ category.name }}
+                    <span class="inline-flex items-center gap-2 rounded-full border border-slate-100 bg-slate-50/50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+                      <span class="h-2 w-2 rounded-full" [style.background]="category.color"></span>
+                      <span>{{ category.name }}</span>
                     </span>
                   } @empty {
-                    <p class="text-sm text-slate-600">Create categories for income and expenses.</p>
+                    <div class="flex flex-col items-center justify-center py-4 text-center w-full">
+                      <i class="fa-solid fa-tags text-slate-300 text-2xl mb-2"></i>
+                      <p class="text-xs text-slate-450 font-medium">Crea categorías para clasificar tus movimientos.</p>
+                    </div>
                   }
                 </div>
               </section>
@@ -169,34 +258,35 @@ interface TransactionForm {
         }
 
         @if (activePanel() === 'transaction') {
-          <section class="mx-auto max-w-2xl rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="text-lg font-semibold">Register transaction</h2>
+          <section class="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 class="text-lg font-bold text-slate-800">Registrar Movimiento</h2>
+            <p class="text-xs text-slate-450 mt-1">Añade un ingreso, gasto o transferencia entre cuentas</p>
             <form class="mt-5 grid gap-4" (ngSubmit)="submitTransaction()">
-              <label class="grid gap-2 text-sm font-medium">
-                Type
-                <select class="rounded-md border border-slate-300 px-3 py-2" name="transactionType" [(ngModel)]="transactionForm.type">
-                  <option value="expense">Expense</option>
-                  <option value="income">Income</option>
-                  <option value="transfer">Transfer</option>
+              <label class="grid gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Tipo
+                <select class="rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-teal-500" name="transactionType" [(ngModel)]="transactionForm.type">
+                  <option value="expense">Gasto</option>
+                  <option value="income">Ingreso</option>
+                  <option value="transfer">Transferencia</option>
                 </select>
               </label>
 
               <div class="grid gap-4 sm:grid-cols-2">
-                <label class="grid gap-2 text-sm font-medium">
-                  Amount
-                  <input class="rounded-md border border-slate-300 px-3 py-2" name="amount" type="number" min="0.01" step="0.01" [(ngModel)]="transactionForm.amount" required>
+                <label class="grid gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Monto
+                  <input class="rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-teal-500" name="amount" type="number" min="0.01" step="0.01" [(ngModel)]="transactionForm.amount" required>
                 </label>
-                <label class="grid gap-2 text-sm font-medium">
-                  Date
-                  <input class="rounded-md border border-slate-300 px-3 py-2" name="transactionDate" type="date" [(ngModel)]="transactionForm.transactionDate" required>
+                <label class="grid gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Fecha
+                  <input class="rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-teal-500" name="transactionDate" type="date" [(ngModel)]="transactionForm.transactionDate" required>
                 </label>
               </div>
 
               @if (transactionForm.type !== 'income') {
-                <label class="grid gap-2 text-sm font-medium">
-                  Origin account
-                  <select class="rounded-md border border-slate-300 px-3 py-2" name="fromAccountId" [(ngModel)]="transactionForm.fromAccountId">
-                    <option value="">Select account</option>
+                <label class="grid gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Cuenta Origen
+                  <select class="rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-teal-500" name="fromAccountId" [(ngModel)]="transactionForm.fromAccountId">
+                    <option value="">Selecciona una cuenta</option>
                     @for (account of accounts(); track account.id) {
                       <option [value]="account.id">{{ account.name }} · {{ formatMoney(account.balance, account.currency) }}</option>
                     }
@@ -205,10 +295,10 @@ interface TransactionForm {
               }
 
               @if (transactionForm.type !== 'expense') {
-                <label class="grid gap-2 text-sm font-medium">
-                  Destination account
-                  <select class="rounded-md border border-slate-300 px-3 py-2" name="toAccountId" [(ngModel)]="transactionForm.toAccountId">
-                    <option value="">Select account</option>
+                <label class="grid gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Cuenta Destino
+                  <select class="rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-teal-500" name="toAccountId" [(ngModel)]="transactionForm.toAccountId">
+                    <option value="">Selecciona una cuenta</option>
                     @for (account of accounts(); track account.id) {
                       <option [value]="account.id">{{ account.name }} · {{ formatMoney(account.balance, account.currency) }}</option>
                     }
@@ -217,10 +307,10 @@ interface TransactionForm {
               }
 
               @if (transactionForm.type !== 'transfer') {
-                <label class="grid gap-2 text-sm font-medium">
-                  Category
-                  <select class="rounded-md border border-slate-300 px-3 py-2" name="categoryId" [(ngModel)]="transactionForm.categoryId">
-                    <option value="">Select category</option>
+                <label class="grid gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Categoría
+                  <select class="rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-teal-500" name="categoryId" [(ngModel)]="transactionForm.categoryId">
+                    <option value="">Selecciona una categoría</option>
                     @for (category of filteredCategories(transactionForm.type); track category.id) {
                       <option [value]="category.id">{{ category.name }}</option>
                     }
@@ -228,70 +318,95 @@ interface TransactionForm {
                 </label>
               }
 
-              <label class="grid gap-2 text-sm font-medium">
-                Description
-                <textarea class="min-h-24 rounded-md border border-slate-300 px-3 py-2" name="description" [(ngModel)]="transactionForm.description"></textarea>
+              <label class="grid gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Descripción
+                <textarea class="min-h-24 rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-teal-500" name="description" [(ngModel)]="transactionForm.description"></textarea>
               </label>
 
-              <button class="rounded-md bg-teal-700 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-800" type="submit">
-                Save transaction
+              <button class="rounded-xl bg-teal-700 px-4 py-3 text-sm font-bold text-white hover:bg-teal-800 transition-colors shadow-sm mt-2" type="submit">
+                Guardar Movimiento
               </button>
             </form>
           </section>
         }
 
         @if (activePanel() === 'account') {
-          <section class="grid gap-4 lg:grid-cols-[420px_1fr]">
-            <form class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm" (ngSubmit)="submitAccount()">
-              <h2 class="text-lg font-semibold">{{ accountForm.id ? 'Edit account' : 'Create account' }}</h2>
+          <section class="grid gap-6 lg:grid-cols-[400px_1fr]">
+            <form class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm h-fit" (ngSubmit)="submitAccount()">
+              <h2 class="text-lg font-bold text-slate-800">{{ accountForm.id ? 'Editar Cuenta' : 'Nueva Cuenta' }}</h2>
+              <p class="text-xs text-slate-450 mt-1">Configura los detalles de tu cuenta de dinero</p>
+              
               <div class="mt-5 grid gap-4">
-                <label class="grid gap-2 text-sm font-medium">
-                  Name
-                  <input class="rounded-md border border-slate-300 px-3 py-2" name="accountName" [(ngModel)]="accountForm.name" required>
+                <label class="grid gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Nombre de la Cuenta
+                  <input class="rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-teal-500" name="accountName" [(ngModel)]="accountForm.name" required>
                 </label>
-                <label class="grid gap-2 text-sm font-medium">
-                  Type
-                  <select class="rounded-md border border-slate-300 px-3 py-2" name="accountType" [(ngModel)]="accountForm.type">
-                    <option value="cash">Cash</option>
-                    <option value="checking">Checking</option>
-                    <option value="savings">Savings</option>
-                    <option value="credit">Credit</option>
+                <label class="grid gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Tipo de Cuenta
+                  <select class="rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-teal-500" name="accountType" [(ngModel)]="accountForm.type">
+                    <option value="cash">Efectivo</option>
+                    <option value="checking">Cuenta Corriente</option>
+                    <option value="savings">Cuenta de Ahorros</option>
+                    <option value="credit">Tarjeta de Crédito</option>
                   </select>
                 </label>
                 <div class="grid gap-4 sm:grid-cols-2">
-                  <label class="grid gap-2 text-sm font-medium">
-                    Currency
-                    <input class="rounded-md border border-slate-300 px-3 py-2 uppercase" name="currency" maxlength="3" [(ngModel)]="accountForm.currency" required>
+                  <label class="grid gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Moneda
+                    <input class="rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 uppercase outline-none focus:border-teal-500" name="currency" maxlength="3" [(ngModel)]="accountForm.currency" required>
                   </label>
-                  <label class="grid gap-2 text-sm font-medium">
-                    Balance
-                    <input class="rounded-md border border-slate-300 px-3 py-2" name="balance" type="number" step="0.01" [(ngModel)]="accountForm.balance" required>
+                  <label class="grid gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Saldo Inicial
+                    <input class="rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-teal-500" name="balance" type="number" step="0.01" [(ngModel)]="accountForm.balance" required>
                   </label>
                 </div>
-                <div class="flex gap-2">
-                  <button class="rounded-md bg-teal-700 px-4 py-3 text-sm font-semibold text-white" type="submit">
-                    {{ accountForm.id ? 'Update' : 'Create' }}
+                <div class="flex gap-2.5 mt-2">
+                  <button class="flex-1 rounded-xl bg-teal-700 px-4 py-3 text-sm font-bold text-white hover:bg-teal-800 transition-colors shadow-sm" type="submit">
+                    {{ accountForm.id ? 'Actualizar' : 'Crear' }}
                   </button>
-                  <button class="rounded-md border border-slate-300 px-4 py-3 text-sm font-semibold" type="button" (click)="resetAccountForm()">
-                    Clear
+                  <button class="rounded-xl border border-slate-250 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors" type="button" (click)="resetAccountForm()">
+                    Limpiar
                   </button>
                 </div>
               </div>
             </form>
 
-            <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 class="text-lg font-semibold">Manage accounts</h2>
-              <div class="mt-4 space-y-3">
+            <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 class="text-lg font-bold text-slate-800">Gestionar Cuentas</h2>
+              <p class="text-xs text-slate-450 mt-1">Crea, edita o elimina las cuentas configuradas en tu sistema</p>
+              
+              <div class="mt-5 space-y-3.5">
                 @for (account of accounts(); track account.id) {
-                  <div class="flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-200 p-3">
-                    <div>
-                      <p class="font-semibold">{{ account.name }}</p>
-                      <p class="text-sm capitalize text-slate-500">{{ account.type }} · {{ formatMoney(account.balance, account.currency) }}</p>
+                  <div class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 p-4 bg-slate-50/30 hover:bg-slate-50/80 transition-colors">
+                    <div class="flex items-center gap-3">
+                      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 shadow-sm">
+                        @switch (account.type) {
+                          @case ('cash') { <i class="fa-solid fa-money-bill-wave text-emerald-600"></i> }
+                          @case ('checking') { <i class="fa-solid fa-building-columns text-blue-600"></i> }
+                          @case ('savings') { <i class="fa-solid fa-piggy-bank text-pink-600"></i> }
+                          @case ('credit') { <i class="fa-solid fa-credit-card text-indigo-600"></i> }
+                        }
+                      </div>
+                      <div>
+                        <p class="font-bold text-slate-800">{{ account.name }}</p>
+                        <p class="text-xs capitalize text-slate-400 font-medium">{{ account.type }} · {{ formatMoney(account.balance, account.currency) }}</p>
+                      </div>
                     </div>
                     <div class="flex gap-2">
-                      <button class="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" (click)="editAccount(account)">Edit</button>
-                      <button class="rounded-md border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-700" type="button" (click)="deleteAccount(account.id)">Delete</button>
+                      <button class="rounded-lg border border-slate-250 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-1" type="button" (click)="editAccount(account)">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        <span>Editar</span>
+                      </button>
+                      <button class="rounded-lg border border-rose-250 bg-white px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors flex items-center gap-1" type="button" (click)="deleteAccount(account.id)">
+                        <i class="fa-solid fa-trash-can"></i>
+                        <span>Eliminar</span>
+                      </button>
                     </div>
+                  </div>
+                } @empty {
+                  <div class="flex flex-col items-center justify-center py-8 text-center">
+                    <i class="fa-solid fa-wallet text-slate-300 text-4xl mb-2.5"></i>
+                    <p class="text-xs text-slate-500 font-medium">No has creado cuentas de dinero aún.</p>
                   </div>
                 }
               </div>
@@ -300,52 +415,70 @@ interface TransactionForm {
         }
 
         @if (activePanel() === 'category') {
-          <section class="grid gap-4 lg:grid-cols-[420px_1fr]">
-            <form class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm" (ngSubmit)="submitCategory()">
-              <h2 class="text-lg font-semibold">{{ categoryForm.id ? 'Edit category' : 'Create category' }}</h2>
+          <section class="grid gap-6 lg:grid-cols-[400px_1fr]">
+            <form class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm h-fit" (ngSubmit)="submitCategory()">
+              <h2 class="text-lg font-bold text-slate-800">{{ categoryForm.id ? 'Editar Categoría' : 'Nueva Categoría' }}</h2>
+              <p class="text-xs text-slate-450 mt-1">Configura las categorías de clasificación de movimientos</p>
+              
               <div class="mt-5 grid gap-4">
-                <label class="grid gap-2 text-sm font-medium">
-                  Name
-                  <input class="rounded-md border border-slate-300 px-3 py-2" name="categoryName" [(ngModel)]="categoryForm.name" required>
+                <label class="grid gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Nombre de la Categoría
+                  <input class="rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-teal-500" name="categoryName" [(ngModel)]="categoryForm.name" required>
                 </label>
-                <label class="grid gap-2 text-sm font-medium">
-                  Kind
-                  <select class="rounded-md border border-slate-300 px-3 py-2" name="categoryKind" [(ngModel)]="categoryForm.kind">
-                    <option value="expense">Expense</option>
-                    <option value="income">Income</option>
+                <label class="grid gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Tipo de Categoría
+                  <select class="rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-teal-500" name="categoryKind" [(ngModel)]="categoryForm.kind">
+                    <option value="expense">Gasto</option>
+                    <option value="income">Ingreso</option>
                   </select>
                 </label>
-                <label class="grid gap-2 text-sm font-medium">
+                <label class="grid gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
                   Color
-                  <input class="h-11 rounded-md border border-slate-300 px-3 py-2" name="categoryColor" type="color" [(ngModel)]="categoryForm.color">
+                  <div class="flex gap-2">
+                    <input class="h-11 w-16 rounded-xl border border-slate-250 bg-white px-2 py-2 cursor-pointer" name="categoryColor" type="color" [(ngModel)]="categoryForm.color">
+                    <input class="flex-1 rounded-xl border border-slate-250 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none uppercase focus:border-teal-500" name="categoryColorHex" [(ngModel)]="categoryForm.color" placeholder="#000000">
+                  </div>
                 </label>
-                <div class="flex gap-2">
-                  <button class="rounded-md bg-teal-700 px-4 py-3 text-sm font-semibold text-white" type="submit">
-                    {{ categoryForm.id ? 'Update' : 'Create' }}
+                <div class="flex gap-2.5 mt-2">
+                  <button class="flex-1 rounded-xl bg-teal-700 px-4 py-3 text-sm font-bold text-white hover:bg-teal-800 transition-colors shadow-sm" type="submit">
+                    {{ categoryForm.id ? 'Actualizar' : 'Crear' }}
                   </button>
-                  <button class="rounded-md border border-slate-300 px-4 py-3 text-sm font-semibold" type="button" (click)="resetCategoryForm()">
-                    Clear
+                  <button class="rounded-xl border border-slate-250 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors" type="button" (click)="resetCategoryForm()">
+                    Limpiar
                   </button>
                 </div>
               </div>
             </form>
 
-            <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 class="text-lg font-semibold">Manage categories</h2>
-              <div class="mt-4 space-y-3">
+            <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 class="text-lg font-bold text-slate-800">Gestionar Categorías</h2>
+              <p class="text-xs text-slate-450 mt-1">Crea, edita o elimina las categorías de clasificación de dinero</p>
+              
+              <div class="mt-5 space-y-3">
                 @for (category of categories(); track category.id) {
-                  <div class="flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-200 p-3">
+                  <div class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 p-4 bg-slate-50/30 hover:bg-slate-50/80 transition-colors">
                     <div class="flex items-center gap-3">
-                      <span class="h-4 w-4 rounded-full" [style.background]="category.color"></span>
+                      <span class="h-5 w-5 rounded-full shadow-inner border border-white" [style.background]="category.color"></span>
                       <div>
-                        <p class="font-semibold">{{ category.name }}</p>
-                        <p class="text-sm capitalize text-slate-500">{{ category.kind }}</p>
+                        <p class="font-bold text-slate-800">{{ category.name }}</p>
+                        <p class="text-xs capitalize text-slate-450 font-medium">{{ category.kind === 'expense' ? 'Gasto' : 'Ingreso' }}</p>
                       </div>
                     </div>
                     <div class="flex gap-2">
-                      <button class="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" (click)="editCategory(category)">Edit</button>
-                      <button class="rounded-md border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-700" type="button" (click)="deleteCategory(category.id)">Delete</button>
+                      <button class="rounded-lg border border-slate-250 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-1" type="button" (click)="editCategory(category)">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        <span>Editar</span>
+                      </button>
+                      <button class="rounded-lg border border-rose-250 bg-white px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors flex items-center gap-1" type="button" (click)="deleteCategory(category.id)">
+                        <i class="fa-solid fa-trash-can"></i>
+                        <span>Eliminar</span>
+                      </button>
                     </div>
+                  </div>
+                } @empty {
+                  <div class="flex flex-col items-center justify-center py-8 text-center">
+                    <i class="fa-solid fa-tags text-slate-300 text-4xl mb-2.5"></i>
+                    <p class="text-xs text-slate-500 font-medium">No has creado categorías todavía.</p>
                   </div>
                 }
               </div>
@@ -354,17 +487,17 @@ interface TransactionForm {
         }
       </section>
 
-      <nav class="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white px-3 py-2 shadow-lg">
-        <div class="mx-auto grid max-w-2xl grid-cols-4 gap-2">
+      <nav class="fixed inset-x-0 bottom-0 z-30 border-t border-slate-150 bg-white/95 backdrop-blur px-3 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
+        <div class="mx-auto grid max-w-lg grid-cols-4 gap-1">
           @for (item of menuItems; track item.panel) {
             <button
               type="button"
-              class="rounded-md px-2 py-2 text-xs font-semibold"
-              [ngClass]="activePanel() === item.panel ? 'bg-teal-700 text-white' : 'text-slate-600 hover:bg-slate-100'"
+              class="flex flex-col items-center justify-center rounded-xl py-2 text-xs font-medium transition-all duration-150"
+              [ngClass]="activePanel() === item.panel ? 'text-teal-700 scale-105 font-semibold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'"
               (click)="setPanel(item.panel)"
             >
-              <span class="block text-lg leading-none">{{ item.icon }}</span>
-              <span class="mt-1 block">{{ item.label }}</span>
+              <span class="text-xl"><i [class]="item.icon"></i></span>
+              <span class="mt-1.5 text-[10px] tracking-wide">{{ item.label }}</span>
             </button>
           }
         </div>
@@ -386,10 +519,10 @@ export class HomeComponent implements OnInit {
   totalBalance = computed(() => this.accounts().reduce((total, account) => total + account.balance, 0));
 
   menuItems: Array<{ panel: ActivePanel; label: string; icon: string }> = [
-    { panel: 'dashboard', label: 'Home', icon: '⌂' },
-    { panel: 'transaction', label: 'Move', icon: '+' },
-    { panel: 'account', label: 'Account', icon: '$' },
-    { panel: 'category', label: 'Category', icon: '◇' }
+    { panel: 'dashboard', label: 'Inicio', icon: 'fa-solid fa-chart-pie' },
+    { panel: 'transaction', label: 'Movimiento', icon: 'fa-solid fa-circle-plus' },
+    { panel: 'account', label: 'Cuentas', icon: 'fa-solid fa-wallet' },
+    { panel: 'category', label: 'Categorías', icon: 'fa-solid fa-tags' }
   ];
 
   accountForm: AccountForm = this.createEmptyAccountForm();
