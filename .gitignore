@@ -7,25 +7,9 @@ coverage/
 .angular/
 .turbo/
 
-# Environment and secrets
-.env
-.env.*
-!.env.example
-*.tfvars
-*.tfstate
-*.tfstate.*
-frontend/src/environments/environment.aws-dev.ts
-crash.log
-
-# Terraform
-.terraform/
 
 # OS/editor
 .DS_Store
 .idea/
 .vscode/
 
-# Lambda packages
-backend/build/
-backend/.serverless/
-infra/lambda/*.zip
