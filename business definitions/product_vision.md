@@ -47,3 +47,5 @@ Registrar movimientos financieros en menos de 10 segundos desde el celular.
 * Multiusuario.
 * Multi familia.
 * Registro manual de movimientos.
+* multilanguage EN and ES
+
