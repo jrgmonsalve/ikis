@@ -1,0 +1,13 @@
+{
+  "name": "ikis",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "npm --prefix apps/web start",
+    "build": "npm --prefix apps/web run build && npm --prefix functions run build",
+    "build:web": "npm --prefix apps/web run build",
+    "build:functions": "npm --prefix functions run build",
+    "test:web": "npm --prefix apps/web test",
+    "lint:functions": "npm --prefix functions run lint"
+  }
+}

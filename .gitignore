@@ -6,6 +6,7 @@ dist/
 coverage/
 .angular/
 .turbo/
+functions/lib/
 
 
 # OS/editor
