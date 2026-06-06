@@ -1,6 +1,10 @@
 import { Routes } from '@angular/router';
 
 import { authGuard } from './core/guards/auth.guard';
+import { familyRoleGuard } from './core/guards/family-role.guard';
+
+const adminOrOwnerGuard = familyRoleGuard(['owner', 'admin']);
+const ownerGuard = familyRoleGuard(['owner']);
 
 export const routes: Routes = [
   {
@@ -71,6 +75,7 @@ export const routes: Routes = [
       },
       {
         path: 'budgets/new',
+        canActivate: [adminOrOwnerGuard],
         loadComponent: () =>
           import('./features/budgets/create-budget.component').then(
             (module) => module.CreateBudgetComponent,
@@ -97,6 +102,7 @@ export const routes: Routes = [
       },
       {
         path: 'accounts/new',
+        canActivate: [adminOrOwnerGuard],
         loadComponent: () =>
           import('./features/accounts/create-account.component').then(
             (module) => module.CreateAccountComponent,
@@ -111,6 +117,7 @@ export const routes: Routes = [
       },
       {
         path: 'categories/new',
+        canActivate: [adminOrOwnerGuard],
         loadComponent: () =>
           import('./features/categories/create-category.component').then(
             (module) => module.CreateCategoryComponent,
@@ -125,6 +132,7 @@ export const routes: Routes = [
       },
       {
         path: 'recurring-payments/new',
+        canActivate: [adminOrOwnerGuard],
         loadComponent: () =>
           import('./features/recurring-payments/create-recurring-payment.component').then(
             (module) => module.CreateRecurringPaymentComponent,
@@ -146,6 +154,7 @@ export const routes: Routes = [
       },
       {
         path: 'family-members/invite',
+        canActivate: [ownerGuard],
         loadComponent: () =>
           import('./features/family-members/invite-member.component').then(
             (module) => module.InviteMemberComponent,

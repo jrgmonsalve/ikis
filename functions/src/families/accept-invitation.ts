@@ -31,20 +31,31 @@ export const acceptInvitation = onCall<AcceptInvitationInput>(async (request) =>
   const userRef = db.doc(`users/${uid}`);
 
   await db.runTransaction(async (tx) => {
-    const invitationSnapshot = await tx.get(invitationRef);
+    const [invitationSnapshot, memberSnapshot] = await Promise.all([
+      tx.get(invitationRef),
+      tx.get(memberRef),
+    ]);
     if (!invitationSnapshot.exists) {
       throw new HttpsError('not-found', 'Invitation was not found.');
+    }
+
+    if (memberSnapshot.exists) {
+      throw new HttpsError('already-exists', 'User is already a family member.');
     }
 
     const invitation = invitationSnapshot.data();
     if (
       invitation?.status !== 'pending' ||
+      typeof invitation.email !== 'string' ||
       invitation.email.toLowerCase() !== email.toLowerCase()
     ) {
       throw new HttpsError(
         'permission-denied',
         'Invitation does not belong to the authenticated user.',
       );
+    }
+    if (!['admin', 'member'].includes(invitation.role)) {
+      throw new HttpsError('failed-precondition', 'Invitation role is invalid.');
     }
     if (
       !(invitation.expiresAt instanceof Timestamp) ||

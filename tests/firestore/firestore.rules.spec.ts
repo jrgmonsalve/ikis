@@ -7,7 +7,7 @@ import {
   assertSucceeds,
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { Timestamp, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 
 const projectId = 'ikis-rules-tests';
@@ -166,6 +166,76 @@ describe('Firestore family security', () => {
     });
     const db = environment.authenticatedContext('member-a').firestore();
     await assertSucceeds(getDoc(doc(db, 'families/family-a/accounts/account-a')));
+  });
+
+  it('allows only the owner to create invitations', async () => {
+    const invitation = {
+      id: 'invitation-a',
+      familyId: 'family-a',
+      email: 'guest@example.com',
+      role: 'member',
+      invitedByUserId: 'owner-a',
+      status: 'pending',
+      createdAt: Timestamp.now(),
+      expiresAt: Timestamp.fromMillis(Date.now() + 86_400_000),
+      acceptedAt: null,
+    };
+
+    const ownerDb = environment.authenticatedContext('owner-a').firestore();
+    await assertSucceeds(
+      setDoc(doc(ownerDb, 'families/family-a/invitations/invitation-a'), invitation),
+    );
+
+    const adminDb = environment.authenticatedContext('admin-a').firestore();
+    await assertFails(
+      setDoc(doc(adminDb, 'families/family-a/invitations/invitation-b'), {
+        ...invitation,
+        id: 'invitation-b',
+        invitedByUserId: 'admin-a',
+      }),
+    );
+  });
+
+  it('denies members access to invitations', async () => {
+    await environment.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'families/family-a/invitations/invitation-a'), {
+        id: 'invitation-a',
+        familyId: 'family-a',
+        email: 'guest@example.com',
+        role: 'member',
+        invitedByUserId: 'owner-a',
+        status: 'pending',
+        createdAt: Timestamp.now(),
+        expiresAt: Timestamp.fromMillis(Date.now() + 86_400_000),
+        acceptedAt: null,
+      });
+    });
+
+    const db = environment.authenticatedContext('member-a').firestore();
+    await assertFails(
+      getDoc(doc(db, 'families/family-a/invitations/invitation-a')),
+    );
+  });
+
+  it('allows owners to cancel but not accept invitations directly', async () => {
+    await environment.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'families/family-a/invitations/invitation-a'), {
+        id: 'invitation-a',
+        familyId: 'family-a',
+        email: 'guest@example.com',
+        role: 'member',
+        invitedByUserId: 'owner-a',
+        status: 'pending',
+        createdAt: Timestamp.now(),
+        expiresAt: Timestamp.fromMillis(Date.now() + 86_400_000),
+        acceptedAt: null,
+      });
+    });
+
+    const db = environment.authenticatedContext('owner-a').firestore();
+    const invitationRef = doc(db, 'families/family-a/invitations/invitation-a');
+    await assertFails(updateDoc(invitationRef, { status: 'accepted' }));
+    await assertSucceeds(updateDoc(invitationRef, { status: 'cancelled' }));
   });
 
   it('denies direct transaction writes for an owner', async () => {

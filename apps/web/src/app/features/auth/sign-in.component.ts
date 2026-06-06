@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { environment } from '../../../environments/environment';
@@ -49,6 +49,7 @@ import { environment } from '../../../environments/environment';
 })
 export class SignInComponent {
   private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly showDevelopmentSignIn = environment.useEmulators;
   readonly errorMessage = signal<string | null>(null);
@@ -66,7 +67,9 @@ export class SignInComponent {
 
     try {
       await action();
-      await this.router.navigateByUrl('/select-family');
+      await this.router.navigateByUrl(
+        resolvePostSignInUrl(this.route.snapshot.queryParamMap.get('returnUrl')),
+      );
     } catch {
       this.errorMessage.set(
         environment.useEmulators
@@ -75,4 +78,14 @@ export class SignInComponent {
       );
     }
   }
+}
+
+export function resolvePostSignInUrl(returnUrl: string | null): string {
+  if (!returnUrl || !returnUrl.startsWith('/') || returnUrl.startsWith('//')) {
+    return '/select-family';
+  }
+
+  return returnUrl === '/sign-in' || returnUrl.startsWith('/sign-in?')
+    ? '/select-family'
+    : returnUrl;
 }

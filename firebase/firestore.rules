@@ -207,12 +207,16 @@ service cloud.firestore {
           && request.resource.data.status == "pending";
 
         allow update: if isOwner(familyId)
+          && resource.data.status == "pending"
           && request.resource.data.id == resource.data.id
           && request.resource.data.familyId == familyId
           && request.resource.data.email == resource.data.email
           && request.resource.data.role == resource.data.role
           && request.resource.data.invitedByUserId == resource.data.invitedByUserId
-          && validInvitationStatus(request.resource.data.status);
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.expiresAt == resource.data.expiresAt
+          && request.resource.data.acceptedAt == resource.data.acceptedAt
+          && request.resource.data.status == "cancelled";
 
         allow delete: if false;
       }

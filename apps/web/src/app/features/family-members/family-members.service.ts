@@ -52,6 +52,17 @@ export class FamilyMembersService {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+    const members = await getDocs(
+      collection(firestore, `families/${familyId}/members`),
+    );
+    const isExistingMember = members.docs.some((member) => {
+      const data = member.data() as FamilyMember;
+      return data.status === 'active' && data.email.trim().toLowerCase() === normalizedEmail;
+    });
+    if (isExistingMember) {
+      throw new Error('Ese correo ya pertenece a un miembro activo.');
+    }
+
     const duplicates = await getDocs(
       query(
         collection(firestore, `families/${familyId}/invitations`),
