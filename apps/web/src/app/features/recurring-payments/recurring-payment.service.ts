@@ -8,6 +8,7 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  updateDoc,
   where,
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
@@ -96,6 +97,23 @@ export class RecurringPaymentService {
     });
 
     return recurringRef.id;
+  }
+
+  async update(id: string, input: Partial<CreateRecurringPaymentInput>): Promise<void> {
+    const familyId = this.requireFamilyId();
+    const docRef = doc(firestore, `families/${familyId}/recurringPayments/${id}`);
+    const data: any = {
+      updatedAt: serverTimestamp(),
+    };
+    if (input.name !== undefined) data.name = input.name.trim();
+    if (input.expectedAmount !== undefined) data.expectedAmount = input.expectedAmount;
+    if (input.frequency !== undefined) data.frequency = input.frequency;
+    if (input.nextDueDate !== undefined) data.nextDueDate = Timestamp.fromDate(input.nextDueDate);
+    if (input.suggestedAccountId !== undefined) data.suggestedAccountId = input.suggestedAccountId || null;
+    if (input.suggestedCategoryId !== undefined) data.suggestedCategoryId = input.suggestedCategoryId || null;
+    if (input.currency !== undefined) data.currency = input.currency;
+
+    await updateDoc(docRef, data);
   }
 
   async markAsPaid(input: MarkRecurringPaymentPaidInput): Promise<string> {

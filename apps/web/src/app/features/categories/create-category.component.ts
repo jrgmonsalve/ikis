@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 
@@ -93,11 +93,12 @@ interface IconItem {
     </section>
   `,
 })
-export class CreateCategoryComponent {
+export class CreateCategoryComponent implements OnInit {
   private readonly categoryService = inject(CategoryService);
   private readonly selectedFamily = inject(SelectedFamilyService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   name = '';
   color = '#059669'; // default emerald-600
@@ -154,7 +155,7 @@ export class CreateCategoryComponent {
     { id: 'fa-ellipsis', label: 'Otros' },
   ];
 
-  constructor() {
+  ngOnInit(): void {
     void this.initialize();
   }
 
@@ -192,24 +193,39 @@ export class CreateCategoryComponent {
   }
 
   private async initialize(): Promise<void> {
+    console.log('[CreateCategoryComponent] initialize() triggered');
     try {
       const context = await this.selectedFamily.load();
+      console.log('[CreateCategoryComponent] Loaded context:', context);
+      
       if (!['owner', 'admin'].includes(context.membership.role)) {
+        console.warn('[CreateCategoryComponent] User is not owner or admin. Redirecting to categories list.');
         await this.router.navigateByUrl('/app/categories');
         return;
       }
 
       const id = this.route.snapshot.paramMap.get('id');
+      console.log('[CreateCategoryComponent] Extracted category id parameter:', id);
+      
       if (id) {
         this.isEdit.set(true);
         this.categoryId.set(id);
+        
+        console.log('[CreateCategoryComponent] Fetching category by ID from service...');
         const category = await this.categoryService.getById(id);
+        console.log('[CreateCategoryComponent] Category fetched successfully:', category);
+        
         this.name = category.name;
         this.color = category.color || '#059669';
         this.icon = category.icon || 'fa-utensils';
+      } else {
+        console.log('[CreateCategoryComponent] No id parameter found, running in creation mode.');
       }
     } catch (error) {
+      console.error('[CreateCategoryComponent] Error during initialization:', error);
       this.error.set(error instanceof Error ? error.message : 'No fue posible cargar datos.');
+    } finally {
+      this.cdr.detectChanges();
     }
   }
 }

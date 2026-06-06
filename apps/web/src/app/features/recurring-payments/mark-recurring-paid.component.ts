@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
@@ -62,12 +62,13 @@ import { NumericFormatterDirective } from '../../shared/directives/numeric-forma
     </section>
   `,
 })
-export class MarkRecurringPaidComponent {
+export class MarkRecurringPaidComponent implements OnInit {
   private readonly service = inject(RecurringPaymentService);
   private readonly accountService = inject(AccountService);
   private readonly categoryService = inject(CategoryService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly payment = signal<RecurringPayment | null>(null);
   readonly accounts = signal<Account[]>([]);
@@ -80,7 +81,7 @@ export class MarkRecurringPaidComponent {
   categoryId = '';
   paymentDate = new Date().toISOString().slice(0, 10);
 
-  constructor() {
+  ngOnInit(): void {
     void this.load();
   }
 
@@ -101,6 +102,7 @@ export class MarkRecurringPaidComponent {
         categoryId: this.categoryId,
         paymentDate: new Date(`${this.paymentDate}T12:00:00`).toISOString(),
       });
+      alert('¡Pago confirmado con éxito! Se ha registrado el gasto y actualizado el próximo vencimiento.');
       await this.router.navigateByUrl('/app/recurring-payments');
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'No fue posible confirmar el pago.');
@@ -130,6 +132,7 @@ export class MarkRecurringPaidComponent {
       this.error.set(error instanceof Error ? error.message : 'No fue posible cargar el pago.');
     } finally {
       this.loading.set(false);
+      this.cdr.detectChanges();
     }
   }
 }

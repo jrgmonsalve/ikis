@@ -1,4 +1,4 @@
-import { Component, inject, input, signal } from '@angular/core';
+import { Component, inject, input, signal, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 
@@ -176,12 +176,13 @@ const titles: Record<TransactionType, string> = {
     </section>
   `,
 })
-export class TransactionFormComponent {
+export class TransactionFormComponent implements OnInit {
   private readonly accountsService = inject(AccountService);
   private readonly categoryService = inject(CategoryService);
   private readonly transactionService = inject(TransactionService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly modeInput = input<TransactionType>(undefined, { alias: 'mode' });
   readonly mode = signal<TransactionType>('expense');
@@ -201,7 +202,7 @@ export class TransactionFormComponent {
   description = '';
   transactionDate = new Date().toISOString().slice(0, 10);
 
-  constructor() {
+  ngOnInit(): void {
     void this.loadOptions();
   }
 
@@ -311,6 +312,7 @@ export class TransactionFormComponent {
       this.error.set(error instanceof Error ? error.message : 'No fue posible cargar las opciones.');
     } finally {
       this.loading.set(false);
+      this.cdr.detectChanges();
     }
   }
 }

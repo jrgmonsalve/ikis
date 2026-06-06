@@ -162,6 +162,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'recurring-payments/:id/edit',
+        canActivate: [adminOrOwnerGuard],
+        loadComponent: () =>
+          import('./features/recurring-payments/create-recurring-payment.component').then(
+            (module) => module.CreateRecurringPaymentComponent,
+          ),
+      },
+      {
         path: 'recurring-payments/:id/pay',
         loadComponent: () =>
           import('./features/recurring-payments/mark-recurring-paid.component').then(

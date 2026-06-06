@@ -1,6 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 
 import { SelectedFamilyService } from '../../core/family-context/selected-family.service';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -17,7 +17,9 @@ import { NumericFormatterDirective } from '../../shared/directives/numeric-forma
   template: `
     <section class="mx-auto max-w-md px-5 py-6">
       <a routerLink="/app/recurring-payments" class="text-sm font-medium text-neutral-600">Volver a pagos</a>
-      <h1 class="mt-5 text-2xl font-semibold text-neutral-950">Crear pago recurrente</h1>
+      <h1 class="mt-5 text-2xl font-semibold text-neutral-950">
+        {{ isEdit() ? 'Editar pago recurrente' : 'Crear pago recurrente' }}
+      </h1>
 
       <form class="mt-7 space-y-5" (ngSubmit)="submit()">
         <label class="block">
@@ -64,18 +66,20 @@ import { NumericFormatterDirective } from '../../shared/directives/numeric-forma
           <p class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{ error() }}</p>
         }
         <button type="submit" [disabled]="saving()" class="w-full rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50">
-          {{ saving() ? 'Guardando...' : 'Guardar pago recurrente' }}
+          {{ saving() ? 'Guardando...' : (isEdit() ? 'Guardar cambios' : 'Guardar pago recurrente') }}
         </button>
       </form>
     </section>
   `,
 })
-export class CreateRecurringPaymentComponent {
+export class CreateRecurringPaymentComponent implements OnInit {
   private readonly service = inject(RecurringPaymentService);
   private readonly accountService = inject(AccountService);
   private readonly categoryService = inject(CategoryService);
   private readonly selectedFamily = inject(SelectedFamilyService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly i18n = inject(I18nService);
 
   name = '';
@@ -89,8 +93,10 @@ export class CreateRecurringPaymentComponent {
   readonly categories = signal<Category[]>([]);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
+  readonly isEdit = signal(false);
+  private paymentId: string | null = null;
 
-  constructor() {
+  ngOnInit(): void {
     void this.load();
   }
 
@@ -106,7 +112,7 @@ export class CreateRecurringPaymentComponent {
     this.saving.set(true);
     this.error.set(null);
     try {
-      await this.service.create({
+      const data = {
         name: this.name,
         expectedAmount: this.expectedAmount,
         frequency: this.frequency,
@@ -114,12 +120,18 @@ export class CreateRecurringPaymentComponent {
         suggestedAccountId: this.suggestedAccountId,
         suggestedCategoryId: this.suggestedCategoryId,
         currency: this.currency(),
-      });
+      };
+      if (this.isEdit()) {
+        await this.service.update(this.paymentId!, data);
+      } else {
+        await this.service.create(data);
+      }
       await this.router.navigateByUrl('/app/recurring-payments');
     } catch (error) {
-      this.error.set(error instanceof Error ? error.message : 'No fue posible crear el pago.');
+      this.error.set(error instanceof Error ? error.message : 'No fue posible guardar el pago.');
     } finally {
       this.saving.set(false);
+      this.cdr.detectChanges();
     }
   }
 
@@ -137,8 +149,23 @@ export class CreateRecurringPaymentComponent {
       this.currency.set(context.family.mainCurrency);
       this.accounts.set(accounts);
       this.categories.set(categories);
+
+      const id = this.route.snapshot.paramMap.get('id');
+      if (id) {
+        this.isEdit.set(true);
+        this.paymentId = id;
+        const payment = await this.service.getById(id);
+        this.name = payment.name;
+        this.expectedAmount = payment.expectedAmount;
+        this.frequency = payment.frequency as any;
+        this.nextDueDate = payment.nextDueDate.toDate().toISOString().slice(0, 10);
+        this.suggestedAccountId = payment.suggestedAccountId || '';
+        this.suggestedCategoryId = payment.suggestedCategoryId || '';
+      }
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'No fue posible cargar datos.');
+    } finally {
+      this.cdr.detectChanges();
     }
   }
 }

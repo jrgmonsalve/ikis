@@ -1,10 +1,10 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, ChangeDetectorRef } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { SelectedFamilyService } from '../../core/family-context/selected-family.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { PeriodService } from '../../core/period/period.service';
-import { Account, Category, Currency, RecurringPayment } from '../../shared/models/domain.models';
+import { Account, Category, Currency, RecurringPayment, Transaction } from '../../shared/models/domain.models';
 import { calculateAvailableBalance } from '../../shared/utils/finance-calculations';
 import { formatCurrency } from '../../shared/utils/formatters';
 import { FinancialSummary } from '../../shared/utils/report-calculations';
@@ -13,6 +13,7 @@ import { BudgetService, BudgetWithProgress } from '../budgets/budget.service';
 import { CategoryService } from '../categories/category.service';
 import { RecurringPaymentService } from '../recurring-payments/recurring-payment.service';
 import { ReportService } from '../reports/report.service';
+import { TransactionService } from '../transactions/transaction.service';
 
 const emptySummary: FinancialSummary = {
   totalIncome: 0,
@@ -102,17 +103,77 @@ const emptySummary: FinancialSummary = {
 
         <div>
           <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-neutral-950">Proximos pagos</h2>
+            <h2 class="text-lg font-semibold text-neutral-950">Próximos pagos</h2>
             <a routerLink="/app/recurring-payments" class="text-sm font-medium text-emerald-700">Ver todos</a>
           </div>
           <div class="mt-3 space-y-2">
             @for (payment of upcomingPayments().slice(0, 3); track payment.id) {
-              <div class="flex justify-between rounded-lg border border-neutral-200 bg-white px-4 py-3 text-sm">
-                <span class="font-medium text-neutral-800">{{ payment.name }}</span>
-                <span class="text-neutral-600">{{ dueDate(payment) }}</span>
+              <div class="flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-4 py-3 text-sm">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span>
+                    @switch (getStatus(payment)) {
+                      @case ('paid') {
+                        <i class="fa-solid fa-circle-check text-emerald-600 text-base" title="Pagado"></i>
+                      }
+                      @case ('overdue') {
+                        <i class="fa-solid fa-circle-xmark text-red-600 text-base" title="Vencido"></i>
+                      }
+                      @default {
+                        <i class="fa-solid fa-circle-exclamation text-amber-500 text-base" title="Pendiente"></i>
+                      }
+                    }
+                  </span>
+                  <span class="font-medium text-neutral-800 truncate">{{ payment.name }}</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="font-semibold text-neutral-900">{{ money(payment.expectedAmount) }}</span>
+                  <span class="text-neutral-500 text-xs">{{ dueDate(payment) }}</span>
+                </div>
               </div>
             } @empty {
-              <p class="rounded-lg border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">Sin pagos proximos.</p>
+              <p class="rounded-lg border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">Sin pagos próximos.</p>
+            }
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-neutral-950">Últimos movimientos</h2>
+            <a routerLink="/app/transactions" class="text-sm font-medium text-emerald-700 hover:underline">Ver reporte de transacciones</a>
+          </div>
+          <div class="mt-3 space-y-2">
+            @for (tx of recentTransactions(); track tx.id) {
+              <div class="flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-4 py-3 text-sm">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase"
+                      [class.bg-red-50]="tx.type === 'expense'"
+                      [class.text-red-700]="tx.type === 'expense'"
+                      [class.bg-emerald-50]="tx.type === 'income'"
+                      [class.text-emerald-700]="tx.type === 'income'"
+                      [class.bg-blue-50]="tx.type === 'transfer'"
+                      [class.text-blue-700]="tx.type === 'transfer'"
+                    >
+                      {{ typeLabel(tx.type) }}
+                    </span>
+                    <span class="text-xs text-neutral-500">{{ dateLabel(tx) }}</span>
+                  </div>
+                  <p class="mt-1 font-medium text-neutral-950 truncate">
+                    {{ tx.description || defaultDescription(tx) }}
+                  </p>
+                </div>
+                <span
+                  class="font-bold text-right ml-2 whitespace-nowrap"
+                  [class.text-red-600]="tx.type === 'expense'"
+                  [class.text-emerald-600]="tx.type === 'income'"
+                  [class.text-neutral-700]="tx.type === 'transfer'"
+                >
+                  {{ tx.type === 'expense' ? '-' : tx.type === 'income' ? '+' : '' }}{{ money(tx.amount) }}
+                </span>
+              </div>
+            } @empty {
+              <p class="rounded-lg border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">Sin movimientos recientes.</p>
             }
           </div>
         </div>
@@ -146,6 +207,7 @@ export class DashboardComponent {
   private readonly categoryService = inject(CategoryService);
   private readonly i18n = inject(I18nService);
   private readonly periodService = inject(PeriodService);
+  private readonly transactionService = inject(TransactionService);
 
   readonly familyName = signal('');
   readonly availableBalance = signal(0);
@@ -153,9 +215,11 @@ export class DashboardComponent {
   readonly summary = signal<FinancialSummary>(emptySummary);
   readonly budgets = signal<BudgetWithProgress[]>([]);
   readonly upcomingPayments = signal<RecurringPayment[]>([]);
+  readonly recentTransactions = signal<Transaction[]>([]);
   readonly categories = signal<Category[]>([]);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+  private readonly cdr = inject(ChangeDetectorRef);
   private currency: Currency = 'COP';
 
   readonly currentPeriodLabel = computed(() => {
@@ -233,13 +297,14 @@ export class DashboardComponent {
     this.error.set(null);
     try {
       const period = this.periodService.activePeriod();
-      const [context, accounts, report, budgets, payments, categories] = await Promise.all([
+      const [context, accounts, report, budgets, payments, categories, recent] = await Promise.all([
         this.selectedFamily.load(),
         this.accountService.listActive(),
         this.reportService.load(period.startDate, period.endDate),
         this.budgetService.listWithProgress(),
         this.recurringService.listActive(),
         this.categoryService.listActive(),
+        this.transactionService.listRecent(10),
       ]);
       this.familyName.set(context.family.name);
       this.currency = context.family.mainCurrency;
@@ -252,12 +317,14 @@ export class DashboardComponent {
         return bStart <= period.endDate && bEnd >= period.startDate;
       });
       this.budgets.set(filteredBudgets);
-      this.upcomingPayments.set(payments.filter((payment) => payment.nextDueDate.toMillis() >= Date.now()));
+      this.upcomingPayments.set(payments);
       this.categories.set(categories);
+      this.recentTransactions.set(recent);
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'No fue posible cargar el dashboard.');
     } finally {
       this.loading.set(false);
+      this.cdr.detectChanges();
     }
   }
 
@@ -278,5 +345,75 @@ export class DashboardComponent {
 
   progressWidth(value: number): number {
     return Math.min(Math.max(value, 0), 100);
+  }
+
+  getStatus(payment: RecurringPayment): 'overdue' | 'paid' | 'pending' {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const nextDue = payment.nextDueDate.toDate();
+    nextDue.setHours(0, 0, 0, 0);
+
+    if (nextDue.getTime() < today.getTime()) {
+      return 'overdue';
+    }
+
+    if (this.isPaidInCurrentPeriod(payment)) {
+      return 'paid';
+    }
+
+    return 'pending';
+  }
+
+  isPaidInCurrentPeriod(payment: RecurringPayment): boolean {
+    if (!payment.lastPaidAt) return false;
+    const lastPaid = payment.lastPaidAt.toDate();
+    const today = new Date();
+
+    lastPaid.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
+    switch (payment.frequency) {
+      case 'weekly': {
+        const diffTime = Math.abs(today.getTime() - lastPaid.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays <= 7;
+      }
+      case 'biweekly': {
+        const diffTime = Math.abs(today.getTime() - lastPaid.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays <= 14;
+      }
+      case 'monthly': {
+        return lastPaid.getMonth() === today.getMonth() && 
+               lastPaid.getFullYear() === today.getFullYear();
+      }
+      case 'yearly': {
+        return lastPaid.getFullYear() === today.getFullYear();
+      }
+      default:
+        return false;
+    }
+  }
+
+  typeLabel(type: string): string {
+    if (type === 'expense') return 'Gasto';
+    if (type === 'income') return 'Ingreso';
+    return 'Transf.';
+  }
+
+  dateLabel(tx: Transaction): string {
+    return tx.transactionDate.toDate().toLocaleDateString(this.i18n.locale());
+  }
+
+  accountName(accountId: string): string {
+    return this.activeAccounts().find((a) => a.id === accountId)?.name ?? 'Cuenta';
+  }
+
+  defaultDescription(tx: Transaction): string {
+    if (tx.type === 'transfer') {
+      return `Transferencia a ${this.accountName(tx.destinationAccountId || '')}`;
+    }
+    return this.categoryName(tx.categoryId || '');
   }
 }

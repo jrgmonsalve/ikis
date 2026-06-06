@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 
@@ -100,13 +100,14 @@ import { NumericFormatterDirective } from '../../shared/directives/numeric-forma
     </section>
   `,
 })
-export class CreateBudgetComponent {
+export class CreateBudgetComponent implements OnInit {
   private readonly budgetService = inject(BudgetService);
   private readonly categoryService = inject(CategoryService);
   private readonly selectedFamily = inject(SelectedFamilyService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly i18n = inject(I18nService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   name = '';
   categoryId = '';
@@ -123,7 +124,7 @@ export class CreateBudgetComponent {
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
 
-  constructor() {
+  ngOnInit(): void {
     void this.load();
   }
 
@@ -203,6 +204,8 @@ export class CreateBudgetComponent {
       }
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'No fue posible cargar datos.');
+    } finally {
+      this.cdr.detectChanges();
     }
   }
 

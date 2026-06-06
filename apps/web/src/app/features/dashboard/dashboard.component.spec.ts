@@ -9,6 +9,7 @@ import { CategoryService } from '../categories/category.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { PeriodService } from '../../core/period/period.service';
 import { Router, ActivatedRoute } from '@angular/router';
+import { TransactionService } from '../transactions/transaction.service';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
@@ -22,6 +23,7 @@ describe('DashboardComponent', () => {
   let mockI18nService: any;
   let mockPeriodService: any;
   let mockRouter: any;
+  let mockTransactionService: any;
 
   beforeEach(async () => {
     mockSelectedFamilyService = {
@@ -108,6 +110,20 @@ describe('DashboardComponent', () => {
       navigateByUrl: vi.fn().mockResolvedValue(true),
     };
 
+    mockTransactionService = {
+      listRecent: vi.fn().mockResolvedValue([
+        {
+          id: 'tx-1',
+          type: 'expense',
+          amount: 15000,
+          description: 'Burgers',
+          transactionDate: { toDate: () => new Date('2026-06-05'), toMillis: () => new Date('2026-06-05').getTime() },
+          accountId: 'acc-1',
+          categoryId: 'cat-1',
+        }
+      ]),
+    };
+
     await TestBed.configureTestingModule({
       imports: [DashboardComponent],
       providers: [
@@ -120,6 +136,7 @@ describe('DashboardComponent', () => {
         { provide: I18nService, useValue: mockI18nService },
         { provide: PeriodService, useValue: mockPeriodService },
         { provide: Router, useValue: mockRouter },
+        { provide: TransactionService, useValue: mockTransactionService },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -150,6 +167,7 @@ describe('DashboardComponent', () => {
     expect(mockBudgetService.listWithProgress).toHaveBeenCalled();
     expect(mockRecurringPaymentService.listActive).toHaveBeenCalled();
     expect(mockCategoryService.listActive).toHaveBeenCalled();
+    expect(mockTransactionService.listRecent).toHaveBeenCalledWith(10);
 
     expect(component.availableBalance()).toBe(300000); // 250k + 50k
     expect(component.familyName()).toBe('Family Team');

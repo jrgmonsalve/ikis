@@ -1,6 +1,19 @@
 import { Injectable, inject } from '@angular/core';
 import { httpsCallable } from 'firebase/functions';
-import { doc, getDoc, runTransaction, serverTimestamp, increment } from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  runTransaction,
+  serverTimestamp,
+  increment,
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
+  Timestamp,
+} from 'firebase/firestore';
 
 import { FamilyContextService } from '../../core/family-context/family-context.service';
 import { functions, firestore } from '../../core/firebase/firebase';
@@ -118,6 +131,33 @@ export class TransactionService {
         });
       }
     });
+  }
+
+  async listRecent(limitCount: number): Promise<Transaction[]> {
+    const familyId = this.requireFamilyId();
+    const snapshot = await getDocs(
+      query(
+        collection(firestore, `families/${familyId}/transactions`),
+        where('status', '==', 'active'),
+        orderBy('transactionDate', 'desc'),
+        limit(limitCount),
+      ),
+    );
+    return snapshot.docs.map((doc) => doc.data() as Transaction);
+  }
+
+  async listByDateRange(startDate: Date, endDate: Date): Promise<Transaction[]> {
+    const familyId = this.requireFamilyId();
+    const snapshot = await getDocs(
+      query(
+        collection(firestore, `families/${familyId}/transactions`),
+        where('status', '==', 'active'),
+        where('transactionDate', '>=', Timestamp.fromDate(startDate)),
+        where('transactionDate', '<=', Timestamp.fromDate(endDate)),
+        orderBy('transactionDate', 'desc'),
+      ),
+    );
+    return snapshot.docs.map((doc) => doc.data() as Transaction);
   }
 
   private requireFamilyId(): string {
