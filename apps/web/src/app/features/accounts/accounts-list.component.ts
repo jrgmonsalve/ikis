@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { SelectedFamilyService } from '../../core/family-context/selected-family.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { Account, Currency } from '../../shared/models/domain.models';
 import {
   calculateAvailableBalance,
@@ -92,6 +93,7 @@ const accountTypeLabels: Record<Account['type'], string> = {
 export class AccountsListComponent {
   private readonly accountService = inject(AccountService);
   private readonly selectedFamily = inject(SelectedFamilyService);
+  private readonly i18n = inject(I18nService);
 
   readonly accounts = signal<Account[]>([]);
   readonly familyName = signal('');
@@ -111,7 +113,7 @@ export class AccountsListComponent {
   }
 
   typeLabel(type: Account['type']): string {
-    return accountTypeLabels[type];
+    return this.i18n.translate(accountTypeLabels[type]);
   }
 
   private async load(): Promise<void> {

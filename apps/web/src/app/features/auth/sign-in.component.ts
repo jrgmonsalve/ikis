@@ -24,7 +24,7 @@ import { environment } from '../../../environments/environment';
             class="flex w-full items-center justify-center rounded-lg bg-white px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm transition hover:bg-emerald-50"
             (click)="signIn()"
           >
-            Sign in with Google
+            Iniciar sesion con Google
           </button>
 
           @if (showDevelopmentSignIn) {

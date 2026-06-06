@@ -42,13 +42,13 @@ import { CategoryService } from './category.service';
             [(ngModel)]="icon"
             class="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-3 outline-none focus:border-emerald-600"
           >
-            <option value="FO">Food</option>
-            <option value="TR">Transport</option>
-            <option value="HO">Home</option>
-            <option value="HE">Health</option>
-            <option value="EN">Entertainment</option>
-            <option value="IN">Income</option>
-            <option value="OT">Other</option>
+            <option value="FO">Comida</option>
+            <option value="TR">Transporte</option>
+            <option value="HO">Hogar</option>
+            <option value="HE">Salud</option>
+            <option value="EN">Entretenimiento</option>
+            <option value="IN">Ingreso</option>
+            <option value="OT">Otro</option>
           </select>
         </label>
 

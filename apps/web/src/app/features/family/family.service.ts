@@ -24,7 +24,7 @@ export class FamilyService {
   async createFamily(name: string, mainCurrency: Currency): Promise<string> {
     const user = this.auth.currentUser();
     if (!user) {
-      throw new Error('User must be authenticated to create a family.');
+      throw new Error('Debes iniciar sesion para crear una familia.');
     }
 
     const createFamilyFn = httpsCallable<{ name: string; mainCurrency: Currency }, CreateFamilyResponse>(

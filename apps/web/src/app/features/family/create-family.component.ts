@@ -12,7 +12,7 @@ import { FamilyService } from './family.service';
   template: `
     <section class="mx-auto max-w-md px-5 py-8">
       <h1 class="text-2xl font-semibold text-neutral-950">Crear familia</h1>
-      <p class="mt-2 text-sm text-neutral-600">Este será tu espacio financiero principal.</p>
+      <p class="mt-2 text-sm text-neutral-600">Este sera tu espacio financiero principal.</p>
 
       <form class="mt-8 space-y-5" (ngSubmit)="submit()">
         <label class="block">

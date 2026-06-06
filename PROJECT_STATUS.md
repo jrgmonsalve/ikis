@@ -76,8 +76,8 @@ El procedimiento completo esta documentado en `DEVELOPMENT.md`.
 
 ## Validaciones actuales
 
-- 9 pruebas frontend aprobadas.
-- 8 pruebas de reglas Firestore aprobadas.
+- 13 pruebas frontend aprobadas.
+- 11 pruebas de reglas Firestore aprobadas.
 - Validacion TypeScript de Functions aprobada.
 - Build de Angular aprobado.
 - Build de Functions aprobado.
@@ -94,10 +94,12 @@ Este comando debe ejecutarse con `npm run dev` detenido porque inicia un Firesto
 
 ## CI/CD
 
-Se crearon workflows para:
+Los workflows estan activos y realizan:
 
-- Validar pull requests.
-- Desplegar automaticamente al integrar cambios en `main`.
+- Validacion automatica de pull requests.
+- Pruebas frontend y de reglas Firestore.
+- Compilacion de Angular y Cloud Functions.
+- Despliegue automatico a Firebase al integrar cambios en `main`.
 
 GitHub tiene configurado el secret:
 
@@ -105,18 +107,16 @@ GitHub tiene configurado el secret:
 FIREBASE_SERVICE_ACCOUNT_IKIS_5FED9
 ```
 
-Los workflows y el resto de cambios actuales todavia deben confirmarse y subirse al repositorio para quedar activos en GitHub.
+Las GitHub Actions estan configuradas para ejecutar sus acciones JavaScript con Node.js 24. La aplicacion y las Cloud Functions conservan Node.js 22 como runtime de proyecto.
 
 ## Pendientes para continuar
 
 ### Prioridad alta
 
-- Realizar commit y push del estado actual.
-- Ejecutar una validacion manual completa del MVP en produccion.
-- Confirmar los permisos de owner, admin y member desde la interfaz.
+- Revisar visualmente en produccion el cambio completo entre espanol e ingles.
 - Probar el flujo completo de invitacion con dos cuentas Google reales.
-- Revisar que la traduccion inglesa cubra todos los textos, validaciones y errores.
-- Registrar y priorizar los ajustes de experiencia de usuario encontrados durante la prueba.
+- Confirmar desde la interfaz los permisos de `owner`, `admin` y `member`.
+- Registrar y priorizar los ajustes de experiencia de usuario encontrados durante las pruebas.
 
 ### Mejoras funcionales
 
@@ -134,12 +134,7 @@ Los workflows y el resto de cambios actuales todavia deben confirmarse y subirse
 - Revisar accesibilidad y comportamiento responsive.
 - Revisar experiencia PWA e instalacion en dispositivos moviles.
 - Configurar alertas de presupuesto y facturacion en Google Cloud.
-- Verificar el primer despliegue automatico desde GitHub Actions.
 
 ## Punto de reanudacion
 
-La siguiente sesion debe comenzar revisando la aplicacion de produccion y creando una lista concreta de mejoras observadas. Antes de realizar nuevos cambios, conviene hacer commit y push del estado estable actual.
-
-
-Token usage: total=1,373,783 input=1,216,954 (+ 33,105,920 cached) output=156,829 (reasoning 21,846)
-To continue this session, run codex resume 019e977f-390f-7fe1-a2f3-9ae4fc20cfe5
+El siguiente bloque debe comenzar con la validacion visual de idioma en produccion. Despues se deben ejecutar las pruebas manuales de invitaciones y permisos con cuentas Google separadas, registrando cualquier ajuste concreto antes de iniciar funcionalidades posteriores al MVP.

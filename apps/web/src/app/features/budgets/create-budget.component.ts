@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { SelectedFamilyService } from '../../core/family-context/selected-family.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import {
   BudgetPeriodType,
   Category,
@@ -37,7 +38,7 @@ import { BudgetService } from './budget.service';
         </label>
 
         <label class="block">
-          <span class="text-sm font-medium text-neutral-800">Monto planeado ({{ currency() }})</span>
+          <span class="text-sm font-medium text-neutral-800">{{ amountLabel() }}</span>
           <input name="plannedAmount" [(ngModel)]="plannedAmount" type="number" min="0.01" step="0.01" required class="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-3 outline-none focus:border-emerald-600" />
         </label>
 
@@ -101,6 +102,7 @@ export class CreateBudgetComponent {
   private readonly categoryService = inject(CategoryService);
   private readonly selectedFamily = inject(SelectedFamilyService);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18nService);
 
   name = '';
   categoryId = '';
@@ -117,6 +119,10 @@ export class CreateBudgetComponent {
 
   constructor() {
     void this.load();
+  }
+
+  amountLabel(): string {
+    return `${this.i18n.translate('Monto planeado')} (${this.currency()})`;
   }
 
   async submit(): Promise<void> {

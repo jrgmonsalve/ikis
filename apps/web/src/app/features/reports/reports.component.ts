@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { SelectedFamilyService } from '../../core/family-context/selected-family.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { Category, Currency } from '../../shared/models/domain.models';
 import { formatCurrency } from '../../shared/utils/formatters';
 import {
@@ -97,6 +98,7 @@ export class ReportsComponent {
   private readonly reportService = inject(ReportService);
   private readonly selectedFamily = inject(SelectedFamilyService);
   private readonly categoryService = inject(CategoryService);
+  private readonly i18n = inject(I18nService);
 
   periodType: ReportPeriodType = 'monthly';
   month = new Date().getMonth() + 1;
@@ -142,7 +144,10 @@ export class ReportsComponent {
   }
 
   categoryName(categoryId: string): string {
-    return this.categories().find((category) => category.id === categoryId)?.name ?? 'Categoria';
+    return (
+      this.categories().find((category) => category.id === categoryId)?.name ??
+      this.i18n.translate('Categoria')
+    );
   }
 
   private async initialize(): Promise<void> {

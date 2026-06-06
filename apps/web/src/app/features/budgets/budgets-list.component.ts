@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { SelectedFamilyService } from '../../core/family-context/selected-family.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { Category } from '../../shared/models/domain.models';
 import { formatCurrency } from '../../shared/utils/formatters';
 import { CategoryService } from '../categories/category.service';
@@ -90,6 +91,7 @@ export class BudgetsListComponent {
   private readonly budgetService = inject(BudgetService);
   private readonly categoryService = inject(CategoryService);
   private readonly selectedFamily = inject(SelectedFamilyService);
+  private readonly i18n = inject(I18nService);
 
   readonly budgets = signal<BudgetWithProgress[]>([]);
   readonly categories = signal<Category[]>([]);
@@ -104,7 +106,10 @@ export class BudgetsListComponent {
   }
 
   categoryName(categoryId: string): string {
-    return this.categories().find((category) => category.id === categoryId)?.name ?? 'Categoria';
+    return (
+      this.categories().find((category) => category.id === categoryId)?.name ??
+      this.i18n.translate('Categoria')
+    );
   }
 
   money(value: number): string {
@@ -112,8 +117,8 @@ export class BudgetsListComponent {
   }
 
   periodLabel(item: BudgetWithProgress): string {
-    const start = item.budget.startDate.toDate().toLocaleDateString('es-CO');
-    const end = item.budget.endDate.toDate().toLocaleDateString('es-CO');
+    const start = item.budget.startDate.toDate().toLocaleDateString(this.i18n.locale());
+    const end = item.budget.endDate.toDate().toLocaleDateString(this.i18n.locale());
     return `${start} - ${end}`;
   }
 

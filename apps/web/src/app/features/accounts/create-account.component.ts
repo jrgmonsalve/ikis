@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { SelectedFamilyService } from '../../core/family-context/selected-family.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { AccountType, Currency } from '../../shared/models/domain.models';
 import { AccountService } from './account.service';
 
@@ -14,7 +15,7 @@ import { AccountService } from './account.service';
     <section class="mx-auto max-w-md px-5 py-6">
       <a routerLink="/app/accounts" class="text-sm font-medium text-neutral-600">Volver a cuentas</a>
       <h1 class="mt-5 text-2xl font-semibold text-neutral-950">Crear cuenta</h1>
-      <p class="mt-2 text-sm text-neutral-500">Moneda de la familia: {{ currency() }}</p>
+      <p class="mt-2 text-sm text-neutral-500">{{ familyCurrencyLabel() }}</p>
 
       <form class="mt-7 space-y-5" (ngSubmit)="submit()">
         <label class="block">
@@ -77,6 +78,7 @@ export class CreateAccountComponent {
   private readonly accountService = inject(AccountService);
   private readonly selectedFamily = inject(SelectedFamilyService);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18nService);
 
   name = '';
   type: AccountType = 'savings';
@@ -87,6 +89,10 @@ export class CreateAccountComponent {
 
   constructor() {
     void this.loadContext();
+  }
+
+  familyCurrencyLabel(): string {
+    return `${this.i18n.translate('Moneda de la familia')}: ${this.currency()}`;
   }
 
   async submit(): Promise<void> {

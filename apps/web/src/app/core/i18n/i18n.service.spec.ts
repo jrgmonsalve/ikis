@@ -16,12 +16,15 @@ describe('I18nService', () => {
     service.setLanguage('en');
 
     expect(service.translate('Configuracion')).toBe('Settings');
+    expect(service.translate('El rango de fechas no es valido.')).toBe('The date range is invalid.');
     expect(service.resolveSource('Settings', 'Configuracion')).toBe('Configuracion');
+    expect(service.locale()).toBe('en-US');
     expect(localStorage.getItem('ikis.language')).toBe('en');
     expect(document.documentElement.lang).toBe('en');
 
     service.setLanguage('es');
 
     expect(service.translate(service.resolveSource('Settings'))).toBe('Configuracion');
+    expect(service.locale()).toBe('es-CO');
   });
 });

@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { SelectedFamilyService } from '../../core/family-context/selected-family.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { FamilyMember, Invitation } from '../../shared/models/domain.models';
 import { FamilyMembersService } from './family-members.service';
 
@@ -78,6 +79,7 @@ import { FamilyMembersService } from './family-members.service';
 export class FamilyMembersComponent {
   private readonly service = inject(FamilyMembersService);
   private readonly selectedFamily = inject(SelectedFamilyService);
+  private readonly i18n = inject(I18nService);
 
   readonly members = signal<FamilyMember[]>([]);
   readonly invitations = signal<Invitation[]>([]);
@@ -92,7 +94,9 @@ export class FamilyMembersComponent {
   }
 
   roleLabel(role: string): string {
-    return role === 'owner' ? 'Owner' : role === 'admin' ? 'Admin' : 'Miembro';
+    return this.i18n.translate(
+      role === 'owner' ? 'Owner' : role === 'admin' ? 'Admin' : 'Miembro',
+    );
   }
 
   async copy(invitation: Invitation): Promise<void> {

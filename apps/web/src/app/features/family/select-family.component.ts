@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { FamilyContextService } from '../../core/family-context/family-context.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { FamilyService, UserFamily } from './family.service';
 
 @Component({
@@ -17,7 +18,7 @@ import { FamilyService, UserFamily } from './family.service';
             Cargando familias...
           </p>
         } @else if (families().length === 0) {
-          <p class="rounded-lg bg-neutral-100 px-4 py-3 text-sm text-neutral-600">No tienes familias activas todavía.</p>
+          <p class="rounded-lg bg-neutral-100 px-4 py-3 text-sm text-neutral-600">No tienes familias activas todavia.</p>
         } @else {
           @for (item of families(); track item.family.id) {
             <button
@@ -26,7 +27,7 @@ import { FamilyService, UserFamily } from './family.service';
               (click)="select(item)"
             >
               <span class="block font-medium text-neutral-950">{{ item.family.name }}</span>
-              <span class="text-sm text-neutral-500">{{ item.membership.role }} · {{ item.family.mainCurrency }}</span>
+              <span class="text-sm text-neutral-500">{{ roleLabel(item.membership.role) }} · {{ item.family.mainCurrency }}</span>
             </button>
           }
         }
@@ -44,12 +45,19 @@ export class SelectFamilyComponent {
   private readonly familyService = inject(FamilyService);
   private readonly familyContext = inject(FamilyContextService);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18nService);
 
   readonly families = signal<UserFamily[]>([]);
   readonly loading = signal(true);
 
   constructor() {
     void this.load();
+  }
+
+  roleLabel(role: string): string {
+    return this.i18n.translate(
+      role === 'owner' ? 'Owner' : role === 'admin' ? 'Admin' : 'Miembro',
+    );
   }
 
   async select(item: UserFamily): Promise<void> {

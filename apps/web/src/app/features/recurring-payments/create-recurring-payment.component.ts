@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { SelectedFamilyService } from '../../core/family-context/selected-family.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { Account, Category, Currency } from '../../shared/models/domain.models';
 import { AccountService } from '../accounts/account.service';
 import { CategoryService } from '../categories/category.service';
@@ -23,7 +24,7 @@ import { RecurringPaymentService } from './recurring-payment.service';
           <input name="name" [(ngModel)]="name" required maxlength="60" class="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-3 outline-none focus:border-emerald-600" />
         </label>
         <label class="block">
-          <span class="text-sm font-medium text-neutral-800">Monto esperado ({{ currency() }})</span>
+          <span class="text-sm font-medium text-neutral-800">{{ amountLabel() }}</span>
           <input name="expectedAmount" [(ngModel)]="expectedAmount" type="number" min="0.01" step="0.01" required class="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-3 outline-none focus:border-emerald-600" />
         </label>
         <label class="block">
@@ -74,6 +75,7 @@ export class CreateRecurringPaymentComponent {
   private readonly categoryService = inject(CategoryService);
   private readonly selectedFamily = inject(SelectedFamilyService);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18nService);
 
   name = '';
   expectedAmount = 0;
@@ -89,6 +91,10 @@ export class CreateRecurringPaymentComponent {
 
   constructor() {
     void this.load();
+  }
+
+  amountLabel(): string {
+    return `${this.i18n.translate('Monto esperado')} (${this.currency()})`;
   }
 
   async submit(): Promise<void> {

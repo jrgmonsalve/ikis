@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { SelectedFamilyService } from '../../core/family-context/selected-family.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { Category, Currency, RecurringPayment } from '../../shared/models/domain.models';
 import { calculateAvailableBalance } from '../../shared/utils/finance-calculations';
 import { formatCurrency } from '../../shared/utils/formatters';
@@ -112,7 +113,7 @@ const emptySummary: FinancialSummary = {
             @for (payment of upcomingPayments().slice(0, 3); track payment.id) {
               <div class="flex justify-between rounded-lg border border-neutral-200 bg-white px-4 py-3 text-sm">
                 <span class="font-medium text-neutral-800">{{ payment.name }}</span>
-                <span class="text-neutral-600">{{ payment.nextDueDate.toDate().toLocaleDateString('es-CO') }}</span>
+                <span class="text-neutral-600">{{ dueDate(payment) }}</span>
               </div>
             } @empty {
               <p class="rounded-lg border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">Sin pagos proximos.</p>
@@ -147,6 +148,7 @@ export class DashboardComponent {
   private readonly budgetService = inject(BudgetService);
   private readonly recurringService = inject(RecurringPaymentService);
   private readonly categoryService = inject(CategoryService);
+  private readonly i18n = inject(I18nService);
 
   periodType: ReportPeriodType = 'monthly';
   month = new Date().getMonth() + 1;
@@ -199,7 +201,14 @@ export class DashboardComponent {
   }
 
   categoryName(categoryId: string): string {
-    return this.categories().find((category) => category.id === categoryId)?.name ?? 'Categoria';
+    return (
+      this.categories().find((category) => category.id === categoryId)?.name ??
+      this.i18n.translate('Categoria')
+    );
+  }
+
+  dueDate(payment: RecurringPayment): string {
+    return payment.nextDueDate.toDate().toLocaleDateString(this.i18n.locale());
   }
 
   progressWidth(value: number): number {

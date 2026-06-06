@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { SelectedFamilyService } from '../../core/family-context/selected-family.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { Currency, RecurringPayment } from '../../shared/models/domain.models';
 import { formatCurrency } from '../../shared/utils/formatters';
 import { RecurringPaymentService } from './recurring-payment.service';
@@ -44,7 +45,7 @@ const frequencyLabels: Record<RecurringPayment['frequency'], string> = {
                 <div class="min-w-0">
                   <h2 class="truncate font-medium text-neutral-950">{{ payment.name }}</h2>
                   <p class="mt-1 text-sm text-neutral-500">
-                    {{ frequencyLabel(payment.frequency) }} · vence {{ dueDate(payment) }}
+                    {{ paymentSummary(payment) }}
                   </p>
                 </div>
                 <p class="font-semibold text-neutral-950">{{ money(payment.expectedAmount) }}</p>
@@ -70,6 +71,7 @@ const frequencyLabels: Record<RecurringPayment['frequency'], string> = {
 export class RecurringPaymentsListComponent {
   private readonly service = inject(RecurringPaymentService);
   private readonly selectedFamily = inject(SelectedFamilyService);
+  private readonly i18n = inject(I18nService);
 
   readonly payments = signal<RecurringPayment[]>([]);
   readonly familyName = signal('');
@@ -87,11 +89,14 @@ export class RecurringPaymentsListComponent {
   }
 
   frequencyLabel(frequency: RecurringPayment['frequency']): string {
-    return frequencyLabels[frequency];
+    return this.i18n.translate(frequencyLabels[frequency]);
   }
 
-  dueDate(payment: RecurringPayment): string {
-    return payment.nextDueDate.toDate().toLocaleDateString('es-CO');
+  paymentSummary(payment: RecurringPayment): string {
+    const frequency = this.frequencyLabel(payment.frequency);
+    const due = this.i18n.translate('vence');
+    const date = payment.nextDueDate.toDate().toLocaleDateString(this.i18n.locale());
+    return `${frequency} · ${due} ${date}`;
   }
 
   private async load(): Promise<void> {
