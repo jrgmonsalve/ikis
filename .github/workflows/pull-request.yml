@@ -1,0 +1,51 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            apps/web/package-lock.json
+            functions/package-lock.json
+            tests/firestore/package-lock.json
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install frontend dependencies
+        run: npm ci --prefix apps/web
+
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions
+
+      - name: Install rules test dependencies
+        run: npm ci --prefix tests/firestore
+
+      - name: Install Firebase CLI
+        run: npm install --global firebase-tools
+
+      - name: Functions lint
+        run: npm run lint:functions
+
+      - name: Frontend tests
+        run: npm --prefix apps/web test
+
+      - name: Firestore rules tests
+        run: npm run test:rules
+
+      - name: Build
+        run: npm run build

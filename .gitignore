@@ -14,3 +14,11 @@ functions/lib/
 .idea/
 .vscode/
 
+
+# Firebase emulator data
+.firebase-emulator-data/
+
+# Firebase local logs
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

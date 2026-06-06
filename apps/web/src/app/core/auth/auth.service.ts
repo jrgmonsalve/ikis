@@ -1,41 +1,77 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import {
   GoogleAuthProvider,
   User,
+  browserLocalPersistence,
   onAuthStateChanged,
+  setPersistence,
+  signInAnonymously,
   signInWithPopup,
   signOut,
 } from 'firebase/auth';
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 
 import { firebaseAuth, firestore } from '../firebase/firebase';
+import { I18nService } from '../i18n/i18n.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private readonly i18n = inject(I18nService);
   private readonly currentUserSignal = signal<User | null>(null);
   private readonly readySignal = signal(false);
+  private readyResolver: (() => void) | null = null;
+  private readonly readyPromise = new Promise<void>((resolve) => {
+    this.readyResolver = resolve;
+  });
 
   readonly currentUser = this.currentUserSignal.asReadonly();
   readonly ready = this.readySignal.asReadonly();
   readonly isAuthenticated = computed(() => this.currentUserSignal() !== null);
 
   constructor() {
-    onAuthStateChanged(firebaseAuth, async (user) => {
-      this.currentUserSignal.set(user);
-      if (user) {
-        await this.ensureUserProfile(user);
-      }
-      this.readySignal.set(true);
-    });
+    void this.initializeAuthState();
+  }
+
+  async waitUntilReady(): Promise<void> {
+    if (this.readySignal()) {
+      return;
+    }
+
+    await this.readyPromise;
   }
 
   async signInWithGoogle(): Promise<void> {
+    await setPersistence(firebaseAuth, browserLocalPersistence);
     const provider = new GoogleAuthProvider();
     await signInWithPopup(firebaseAuth, provider);
   }
 
+  async signInForDevelopment(): Promise<void> {
+    await setPersistence(firebaseAuth, browserLocalPersistence);
+    await signInAnonymously(firebaseAuth);
+  }
+
   async signOut(): Promise<void> {
     await signOut(firebaseAuth);
+  }
+
+  private async initializeAuthState(): Promise<void> {
+    await setPersistence(firebaseAuth, browserLocalPersistence);
+
+    onAuthStateChanged(firebaseAuth, async (user) => {
+      this.currentUserSignal.set(user);
+
+      try {
+        if (user) {
+          await this.ensureUserProfile(user);
+        }
+      } catch (error) {
+        console.warn('Unable to synchronize the user profile with Firestore.', error);
+      } finally {
+        this.readySignal.set(true);
+        this.readyResolver?.();
+      }
+    });
   }
 
   private async ensureUserProfile(user: User): Promise<void> {
@@ -58,6 +94,8 @@ export class AuthService {
       });
       return;
     }
+
+    this.i18n.setLanguage(snapshot.data()['preferredLanguage'] === 'en' ? 'en' : 'es');
 
     await updateDoc(userRef, {
       updatedAt: serverTimestamp(),

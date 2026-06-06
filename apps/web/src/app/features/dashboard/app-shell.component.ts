@@ -1,8 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { FamilyContextService } from '../../core/family-context/family-context.service';
+import { SelectedFamilyService } from '../../core/family-context/selected-family.service';
 
 @Component({
   selector: 'app-shell',
@@ -15,7 +16,7 @@ import { FamilyContextService } from '../../core/family-context/family-context.s
           <button type="button" class="text-left" routerLink="/select-family">
             <span class="block text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">IKIS</span>
             <span class="block max-w-48 truncate text-sm text-neutral-500">
-              {{ familyContext.selectedFamilyId() || 'Seleccionar familia' }}
+              {{ familyName() || 'Seleccionar familia' }}
             </span>
           </button>
           <button type="button" class="text-sm font-medium text-neutral-700" (click)="logout()">Salir</button>
@@ -46,14 +47,33 @@ export class AppShellComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   readonly familyContext = inject(FamilyContextService);
+  private readonly selectedFamily = inject(SelectedFamilyService);
+  readonly familyName = signal('');
+
+  constructor() {
+    void this.loadFamilyName();
+  }
 
   readonly navItems = [
-    { path: '/app/dashboard', label: 'Dashboard' },
+    { path: '/app/dashboard', label: 'Resumen' },
     { path: '/app/transactions', label: 'Movimientos' },
-    { path: '/app/budgets', label: 'Budgets' },
-    { path: '/app/reports', label: 'Reports' },
-    { path: '/app/more', label: 'More' },
+    { path: '/app/budgets', label: 'Presupuestos' },
+    { path: '/app/reports', label: 'Reportes' },
+    { path: '/app/more', label: 'Mas' },
   ];
+
+  private async loadFamilyName(): Promise<void> {
+    if (!this.familyContext.selectedFamilyId()) {
+      return;
+    }
+
+    try {
+      const context = await this.selectedFamily.load();
+      this.familyName.set(context.family.name);
+    } catch {
+      this.familyName.set('Familia no disponible');
+    }
+  }
 
   async logout(): Promise<void> {
     await this.auth.signOut();

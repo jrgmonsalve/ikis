@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-sign-in',
@@ -17,13 +18,31 @@ import { AuthService } from '../../core/auth/auth.service';
           </p>
         </div>
 
-        <button
-          type="button"
-          class="mb-8 flex w-full items-center justify-center rounded-lg bg-white px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm transition hover:bg-emerald-50"
-          (click)="signIn()"
-        >
-          Sign in with Google
-        </button>
+        <div class="mb-8 space-y-3">
+          <button
+            type="button"
+            class="flex w-full items-center justify-center rounded-lg bg-white px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm transition hover:bg-emerald-50"
+            (click)="signIn()"
+          >
+            Sign in with Google
+          </button>
+
+          @if (showDevelopmentSignIn) {
+            <button
+              type="button"
+              class="flex w-full items-center justify-center rounded-lg border border-emerald-400 px-4 py-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-950"
+              (click)="signInForDevelopment()"
+            >
+              Entrar en desarrollo
+            </button>
+          }
+
+          @if (errorMessage()) {
+            <p class="rounded-lg border border-red-400/40 bg-red-950/60 px-3 py-2 text-sm text-red-100">
+              {{ errorMessage() }}
+            </p>
+          }
+        </div>
       </section>
     </main>
   `,
@@ -31,9 +50,29 @@ import { AuthService } from '../../core/auth/auth.service';
 export class SignInComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  readonly showDevelopmentSignIn = environment.useEmulators;
+  readonly errorMessage = signal<string | null>(null);
 
   async signIn(): Promise<void> {
-    await this.auth.signInWithGoogle();
-    await this.router.navigateByUrl('/select-family');
+    await this.runSignIn(() => this.auth.signInWithGoogle());
+  }
+
+  async signInForDevelopment(): Promise<void> {
+    await this.runSignIn(() => this.auth.signInForDevelopment());
+  }
+
+  private async runSignIn(action: () => Promise<void>): Promise<void> {
+    this.errorMessage.set(null);
+
+    try {
+      await action();
+      await this.router.navigateByUrl('/select-family');
+    } catch {
+      this.errorMessage.set(
+        environment.useEmulators
+          ? 'No se pudo conectar con Firebase Emulator. Ejecuta npm run dev desde la raiz del proyecto.'
+          : 'No se pudo iniciar sesion. Intenta nuevamente.',
+      );
+    }
   }
 }

@@ -7,12 +7,20 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function userPath(userId) {
-      return /databases/$(database)/documents/users/$(userId);
-    }
-
     function familyPath(familyId) {
       return /databases/$(database)/documents/families/$(familyId);
+    }
+
+    function isInitialOwnerMemberCreate(familyId, memberId) {
+      return isSignedIn()
+        && request.auth.uid == memberId
+        && request.resource.data.id == memberId
+        && request.resource.data.familyId == familyId
+        && request.resource.data.userId == memberId
+        && request.resource.data.role == "owner"
+        && request.resource.data.status == "active"
+        && getAfter(familyPath(familyId)).data.ownerUserId == request.auth.uid
+        && getAfter(familyPath(familyId)).data.status == "active";
     }
 
     function memberPath(familyId, userId) {
@@ -45,6 +53,12 @@ service cloud.firestore {
     function isActiveMember(familyId) {
       return isFamilyMember(familyId)
         && memberRole(familyId) in ["owner", "admin", "member"];
+    }
+
+    function isOwnActiveMemberDocument() {
+      return isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && resource.data.status == "active";
     }
 
     function validLanguage(language) {
@@ -83,14 +97,6 @@ service cloud.firestore {
       return status in ["active", "inactive"];
     }
 
-    function validTransactionType(type) {
-      return type in ["income", "expense", "transfer"];
-    }
-
-    function validTransactionStatus(status) {
-      return status in ["active", "cancelled"];
-    }
-
     function validBudgetPeriodType(periodType) {
       return periodType in ["monthly", "yearly", "custom"];
     }
@@ -119,8 +125,11 @@ service cloud.firestore {
       return request.resource.data.createdByUserId == request.auth.uid;
     }
 
-    function onlyAllowedFields(allowedFields) {
-      return request.resource.data.keys().hasOnly(allowedFields);
+    // Collection group query used to list the current user's active families.
+    match /{path=**}/members/{memberId} {
+      allow list: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && resource.data.status == "active";
     }
 
     match /users/{userId} {
@@ -162,9 +171,9 @@ service cloud.firestore {
       allow delete: if false;
 
       match /members/{memberId} {
-        allow read: if isActiveMember(familyId);
+        allow read: if isActiveMember(familyId) || isOwnActiveMemberDocument();
 
-        allow create: if isOwner(familyId)
+        allow create: if (isOwner(familyId) || isInitialOwnerMemberCreate(familyId, memberId))
           && request.resource.data.id == memberId
           && request.resource.data.familyId == familyId
           && request.resource.data.userId == memberId
@@ -217,8 +226,9 @@ service cloud.firestore {
           && request.resource.data.name is string
           && validAccountType(request.resource.data.type)
           && request.resource.data.initialBalance is number
-          && request.resource.data.currentBalance is number
-          && validCurrency(request.resource.data.currency)
+          && request.resource.data.initialBalance >= 0
+          && request.resource.data.currentBalance == request.resource.data.initialBalance
+          && request.resource.data.currency == get(familyPath(familyId)).data.mainCurrency
           && createdByCurrentUser()
           && validAccountStatus(request.resource.data.status);
 
@@ -227,10 +237,10 @@ service cloud.firestore {
           && request.resource.data.familyId == familyId
           && request.resource.data.createdByUserId == resource.data.createdByUserId
           && request.resource.data.name is string
-          && validAccountType(request.resource.data.type)
-          && request.resource.data.initialBalance is number
-          && request.resource.data.currentBalance is number
-          && validCurrency(request.resource.data.currency)
+          && request.resource.data.type == resource.data.type
+          && request.resource.data.initialBalance == resource.data.initialBalance
+          && request.resource.data.currentBalance == resource.data.currentBalance
+          && request.resource.data.currency == resource.data.currency
           && validAccountStatus(request.resource.data.status);
 
         allow delete: if false;

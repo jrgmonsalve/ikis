@@ -1,47 +1,162 @@
 import { Routes } from '@angular/router';
 
 import { authGuard } from './core/guards/auth.guard';
-import { SignInComponent } from './features/auth/sign-in.component';
-import { AppShellComponent } from './features/dashboard/app-shell.component';
-import { DashboardComponent } from './features/dashboard/dashboard.component';
-import { PlaceholderPageComponent } from './features/dashboard/placeholder-page.component';
-import { CreateFamilyComponent } from './features/family/create-family.component';
-import { SelectFamilyComponent } from './features/family/select-family.component';
 
 export const routes: Routes = [
-  { path: 'sign-in', component: SignInComponent },
-  { path: 'create-family', component: CreateFamilyComponent, canActivate: [authGuard] },
-  { path: 'select-family', component: SelectFamilyComponent, canActivate: [authGuard] },
+  {
+    path: 'sign-in',
+    loadComponent: () =>
+      import('./features/auth/sign-in.component').then((module) => module.SignInComponent),
+  },
+  {
+    path: 'create-family',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/family/create-family.component').then(
+        (module) => module.CreateFamilyComponent,
+      ),
+  },
+  {
+    path: 'select-family',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/family/select-family.component').then(
+        (module) => module.SelectFamilyComponent,
+      ),
+  },
+  {
+    path: 'accept-invitation',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/family-members/accept-invitation.component').then(
+        (module) => module.AcceptInvitationComponent,
+      ),
+  },
   {
     path: 'app',
-    component: AppShellComponent,
     canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/dashboard/app-shell.component').then(
+        (module) => module.AppShellComponent,
+      ),
     children: [
-      { path: 'dashboard', component: DashboardComponent },
       {
-        path: 'transactions',
-        component: PlaceholderPageComponent,
-        data: { title: 'Movimientos', description: 'Registro de gastos, ingresos y transferencias.' },
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/dashboard/dashboard.component').then(
+            (module) => module.DashboardComponent,
+          ),
       },
       {
+        path: 'transactions',
+        loadComponent: () =>
+          import('./features/transactions/transactions-home.component').then(
+            (module) => module.TransactionsHomeComponent,
+          ),
+      },
+      ...(['expense', 'income', 'transfer'] as const).map((mode) => ({
+        path: `transactions/${mode}`,
+        data: { mode },
+        loadComponent: () =>
+          import('./features/transactions/transaction-form.component').then(
+            (module) => module.TransactionFormComponent,
+          ),
+      })),
+      {
         path: 'budgets',
-        component: PlaceholderPageComponent,
-        data: { title: 'Presupuestos', description: 'Control de presupuesto por categoria y periodo.' },
+        loadComponent: () =>
+          import('./features/budgets/budgets-list.component').then(
+            (module) => module.BudgetsListComponent,
+          ),
+      },
+      {
+        path: 'budgets/new',
+        loadComponent: () =>
+          import('./features/budgets/create-budget.component').then(
+            (module) => module.CreateBudgetComponent,
+          ),
       },
       {
         path: 'reports',
-        component: PlaceholderPageComponent,
-        data: { title: 'Reportes', description: 'Resumen por periodo, categoria, ingresos y gastos.' },
+        loadComponent: () =>
+          import('./features/reports/reports.component').then(
+            (module) => module.ReportsComponent,
+          ),
       },
       {
         path: 'more',
-        component: PlaceholderPageComponent,
-        data: { title: 'Mas', description: 'Cuentas, categorias, pagos recurrentes, miembros y configuracion.' },
+        loadComponent: () =>
+          import('./features/settings/more.component').then((module) => module.MoreComponent),
       },
       {
         path: 'accounts',
-        component: PlaceholderPageComponent,
-        data: { title: 'Cuentas', description: 'Saldos por cuenta y balance disponible.' },
+        loadComponent: () =>
+          import('./features/accounts/accounts-list.component').then(
+            (module) => module.AccountsListComponent,
+          ),
+      },
+      {
+        path: 'accounts/new',
+        loadComponent: () =>
+          import('./features/accounts/create-account.component').then(
+            (module) => module.CreateAccountComponent,
+          ),
+      },
+      {
+        path: 'categories',
+        loadComponent: () =>
+          import('./features/categories/categories-list.component').then(
+            (module) => module.CategoriesListComponent,
+          ),
+      },
+      {
+        path: 'categories/new',
+        loadComponent: () =>
+          import('./features/categories/create-category.component').then(
+            (module) => module.CreateCategoryComponent,
+          ),
+      },
+      {
+        path: 'recurring-payments',
+        loadComponent: () =>
+          import('./features/recurring-payments/recurring-payments-list.component').then(
+            (module) => module.RecurringPaymentsListComponent,
+          ),
+      },
+      {
+        path: 'recurring-payments/new',
+        loadComponent: () =>
+          import('./features/recurring-payments/create-recurring-payment.component').then(
+            (module) => module.CreateRecurringPaymentComponent,
+          ),
+      },
+      {
+        path: 'recurring-payments/:id/pay',
+        loadComponent: () =>
+          import('./features/recurring-payments/mark-recurring-paid.component').then(
+            (module) => module.MarkRecurringPaidComponent,
+          ),
+      },
+      {
+        path: 'family-members',
+        loadComponent: () =>
+          import('./features/family-members/family-members.component').then(
+            (module) => module.FamilyMembersComponent,
+          ),
+      },
+      {
+        path: 'family-members/invite',
+        loadComponent: () =>
+          import('./features/family-members/invite-member.component').then(
+            (module) => module.InviteMemberComponent,
+          ),
+      },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('./features/settings/settings.component').then(
+            (module) => module.SettingsComponent,
+          ),
       },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
     ],

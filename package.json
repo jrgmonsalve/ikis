@@ -8,6 +8,11 @@
     "build:web": "npm --prefix apps/web run build",
     "build:functions": "npm --prefix functions run build",
     "test:web": "npm --prefix apps/web test",
-    "lint:functions": "npm --prefix functions run lint"
+    "test:rules": "firebase emulators:exec --only firestore \"npm --prefix tests/firestore test\"",
+    "validate": "npm run lint:functions && npm run test:web && npm run test:rules && npm run build",
+    "lint:functions": "npm --prefix functions run lint",
+    "emulators": "npm --prefix functions run build && firebase emulators:start --only auth,firestore,functions",
+    "emulators:export": "npm --prefix functions run build && firebase emulators:start --only auth,firestore,functions --export-on-exit=./.firebase-emulator-data",
+    "dev": "bash scripts/dev.sh"
   }
 }

@@ -95,6 +95,8 @@ export const createIncome = onCall<CreateTransactionInput>(async (request) => {
       throw new HttpsError('not-found', 'Category was not found.');
     }
 
+    const account = accountSnapshot.data() as AccountDoc;
+    const balanceDelta = account.type === 'credit_card' ? -amount : amount;
     const transactionRef = db.collection(`families/${familyId}/transactions`).doc();
     tx.set(transactionRef, {
       id: transactionRef.id,
@@ -114,7 +116,7 @@ export const createIncome = onCall<CreateTransactionInput>(async (request) => {
       recurringPaymentId: null,
     });
     tx.update(accountRef, {
-      currentBalance: FieldValue.increment(amount),
+      currentBalance: FieldValue.increment(balanceDelta),
       updatedAt: nowField(),
     });
 
@@ -151,6 +153,10 @@ export const createTransfer = onCall<CreateTransactionInput>(async (request) => 
       throw new HttpsError('not-found', 'Destination account was not found.');
     }
 
+    const sourceAccount = sourceSnapshot.data() as AccountDoc;
+    const destinationAccount = destinationSnapshot.data() as AccountDoc;
+    const sourceDelta = sourceAccount.type === 'credit_card' ? amount : -amount;
+    const destinationDelta = destinationAccount.type === 'credit_card' ? -amount : amount;
     const transactionRef = db.collection(`families/${familyId}/transactions`).doc();
     tx.set(transactionRef, {
       id: transactionRef.id,
@@ -169,8 +175,8 @@ export const createTransfer = onCall<CreateTransactionInput>(async (request) => 
       source: 'manual',
       recurringPaymentId: null,
     });
-    tx.update(sourceRef, { currentBalance: FieldValue.increment(-amount), updatedAt: nowField() });
-    tx.update(destinationRef, { currentBalance: FieldValue.increment(amount), updatedAt: nowField() });
+    tx.update(sourceRef, { currentBalance: FieldValue.increment(sourceDelta), updatedAt: nowField() });
+    tx.update(destinationRef, { currentBalance: FieldValue.increment(destinationDelta), updatedAt: nowField() });
 
     return { transactionId: transactionRef.id };
   });
