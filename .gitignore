@@ -23,3 +23,5 @@ functions/lib/
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+# Local environment process and logs
+.local-runtime/

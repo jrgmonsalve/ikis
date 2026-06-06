@@ -59,7 +59,7 @@ npm install --prefix tests/firestore
 Desde `~/projects/ikis` ejecuta:
 
 ```bash
-npm run dev
+npm run local:start
 ```
 
 Este comando realiza el proceso en este orden:
@@ -71,7 +71,15 @@ Este comando realiza el proceso en este orden:
 5. Espera hasta que los emuladores esten listos.
 6. Inicia Angular en `http://localhost:4200/`.
 
-No abras la aplicacion hasta que la terminal indique que los emuladores estan listos y Angular muestre su URL local.
+El comando espera hasta que Angular y los emuladores esten listos y luego devuelve el control de la terminal.
+
+Comandos de control:
+
+```bash
+npm run local:status
+npm run local:logs
+npm run local:restart
+```
 
 ### Entrar a la aplicacion
 
@@ -84,13 +92,13 @@ No se utilizan credenciales fijas y esta sesion solo existe en el entorno local.
 
 ### Detener el entorno
 
-En la terminal donde ejecutaste `npm run dev`, pulsa:
-
-```text
-Ctrl+C
+```bash
+npm run local:stop
 ```
 
-Esto detiene Angular y los emuladores.
+Esto detiene Angular y todos los emuladores iniciados por `local:start`.
+
+Para ejecutar el entorno en primer plano durante una sesion de depuracion tambien puedes usar `npm run dev` y detenerlo con `Ctrl+C`.
 
 ## 3. Alternativa: usar dos terminales
 

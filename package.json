@@ -13,6 +13,11 @@
     "lint:functions": "npm --prefix functions run lint",
     "emulators": "npm --prefix functions run build && firebase emulators:start --only auth,firestore,functions",
     "emulators:export": "npm --prefix functions run build && firebase emulators:start --only auth,firestore,functions --export-on-exit=./.firebase-emulator-data",
-    "dev": "bash scripts/dev.sh"
+    "dev": "bash scripts/dev.sh",
+    "local:start": "bash scripts/local-env.sh start",
+    "local:stop": "bash scripts/local-env.sh stop",
+    "local:restart": "bash scripts/local-env.sh restart",
+    "local:status": "bash scripts/local-env.sh status",
+    "local:logs": "bash scripts/local-env.sh logs"
   }
 }

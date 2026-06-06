@@ -4,42 +4,50 @@ Ultima actualizacion: 6 de junio de 2026
 
 ## Estado actual
 
-El MVP esta desplegado y operativo en:
+El MVP de IKIS esta implementado y desplegado en:
 
 https://ikis-5fed9.web.app
 
-El entorno local continua disponible mediante:
+La rama de trabajo es `main`. El repositorio contiene Angular PWA, Firebase Functions, reglas e indices de Firestore, pruebas y workflows de GitHub Actions.
 
-```bash
-npm run dev
-```
+No hay archivos de credenciales privadas versionados. La configuracion publica del cliente Firebase permanece en los archivos de environment; el JSON de la cuenta de servicio se almacena exclusivamente en el secret de GitHub `FIREBASE_SERVICE_ACCOUNT_IKIS_5FED9`.
 
 ## Funcionalidades implementadas
 
-- Aplicacion Angular PWA con Tailwind CSS.
-- Autenticacion con Google en produccion.
-- Autenticacion anonima para desarrollo local.
-- Persistencia de la sesion y proteccion de rutas.
-- Creacion y seleccion de familias.
-- Contexto de familia activa.
-- Gestion de miembros e invitaciones.
-- Creacion y consulta de cuentas.
-- Creacion y consulta de categorias.
-- Registro de gastos, ingresos y transferencias.
+- Autenticacion con Google en produccion y autenticacion local para desarrollo.
+- Persistencia de sesion y proteccion de rutas.
+- Creacion, seleccion y contexto de familia activa.
+- Gestion de miembros, roles e invitaciones.
+- Cuentas y categorias.
+- Gastos, ingresos y transferencias.
 - Actualizacion atomica de saldos mediante Cloud Functions.
-- Manejo diferenciado de deuda de tarjetas de credito.
-- Creacion y seguimiento de presupuestos.
-- Creacion y pago de pagos recurrentes.
-- Dashboard con resumen financiero.
-- Reportes por periodo y categoria.
-- Pantalla de configuracion y perfil.
-- Cambio de idioma entre espanol e ingles.
+- Manejo de deuda de tarjetas de credito.
+- Presupuestos y calculo de avance.
+- Pagos recurrentes y registro de pago.
+- Dashboard y reportes por periodo y categoria.
+- Configuracion de perfil, idioma y moneda.
+- Traducciones en espanol e ingles para pantallas, estados vacios, validaciones y errores.
+- Fechas localizadas en `es-CO` o `en-US` segun el idioma.
 - Formato monetario para COP y USD.
-- Carga diferida de pantallas mediante rutas lazy.
+- PWA, Tailwind CSS y rutas lazy.
+
+## Cambios recientes
+
+- Se elimino el flash de la pantalla para crear familia durante la carga de sesion.
+- Las invitaciones conservan su URL al pasar por el login.
+- Se agregaron guards para permisos de `owner`, `admin` y `member`.
+- Se impide invitar nuevamente a miembros activos o con invitacion pendiente.
+- La Function de aceptacion evita sobrescribir membresias existentes.
+- Las reglas Firestore impiden aceptar invitaciones directamente desde el cliente.
+- Se amplio la cobertura de traducciones y etiquetas generadas desde TypeScript.
+- GitHub Actions usa Node.js 24 para ejecutar las acciones JavaScript. El proyecto y las Functions conservan Node.js 22.
+- Se agrego un controlador persistente para iniciar y detener todo el entorno local.
 
 ## Firebase
 
-Recursos desplegados en el proyecto `ikis-5fed9`:
+Proyecto: `ikis-5fed9`
+
+Recursos desplegados:
 
 - Firebase Hosting.
 - Firebase Authentication.
@@ -47,7 +55,7 @@ Recursos desplegados en el proyecto `ikis-5fed9`:
 - Reglas e indices de Firestore.
 - Cloud Functions de segunda generacion con Node.js 22.
 
-Functions publicadas:
+Functions:
 
 - `acceptInvitation`
 - `createFamily`
@@ -60,7 +68,19 @@ El proyecto utiliza el plan Blaze. Artifact Registry elimina automaticamente ima
 
 ## Desarrollo local
 
-El modo local utiliza Firebase Emulator Suite:
+Comandos recomendados desde la raiz:
+
+```bash
+npm run local:start
+npm run local:status
+npm run local:logs
+npm run local:restart
+npm run local:stop
+```
+
+`local:start` ejecuta Angular y Firebase Emulator Suite en segundo plano. Los PID y logs se guardan en `.local-runtime/`, que esta ignorado por Git.
+
+Direcciones:
 
 ```text
 Angular:       http://localhost:4200/
@@ -70,71 +90,76 @@ Functions:     http://localhost:5001/
 Firestore:     http://localhost:8081/
 ```
 
-La configuracion de desarrollo usa `useEmulators: true`. La configuracion de produccion usa `useEmulators: false`.
+Tambien existe `npm run dev` para ejecutar todo en primer plano y detenerlo con `Ctrl+C`.
 
-El procedimiento completo esta documentado en `DEVELOPMENT.md`.
+La configuracion de desarrollo usa `useEmulators: true`; produccion usa `useEmulators: false`. No es necesario desplegar Functions para probar cambios locales.
 
-## Validaciones actuales
+El procedimiento completo esta en `DEVELOPMENT.md`.
 
-- 13 pruebas frontend aprobadas.
-- 11 pruebas de reglas Firestore aprobadas.
-- Validacion TypeScript de Functions aprobada.
-- Build de Angular aprobado.
-- Build de Functions aprobado.
-- Hosting de produccion responde correctamente.
-- `git diff --check` sin errores.
+## Validaciones
 
-Validacion completa:
+Ultima validacion completa aprobada:
+
+- 13 pruebas frontend en 7 archivos.
+- 11 pruebas de reglas Firestore.
+- TypeScript/lint de Functions.
+- Build de Angular.
+- Build de Functions.
+- `git diff --check`.
+
+Comando:
 
 ```bash
 npm run validate
 ```
 
-Este comando debe ejecutarse con `npm run dev` detenido porque inicia un Firestore Emulator temporal.
+Antes de ejecutarlo, detener el entorno persistente con `npm run local:stop`, porque las pruebas de reglas levantan un Firestore Emulator temporal. Al terminar se puede ejecutar `npm run local:start`.
 
 ## CI/CD
 
-Los workflows estan activos y realizan:
+Workflows activos:
 
-- Validacion automatica de pull requests.
-- Pruebas frontend y de reglas Firestore.
-- Compilacion de Angular y Cloud Functions.
-- Despliegue automatico a Firebase al integrar cambios en `main`.
+- `.github/workflows/pull-request.yml`: valida pull requests.
+- `.github/workflows/deploy-production.yml`: valida y despliega automáticamente los pushes a `main`.
 
-GitHub tiene configurado el secret:
+El despliegue incluye Hosting, Functions, reglas e indices de Firestore. La autenticacion de CI usa el secret `FIREBASE_SERVICE_ACCOUNT_IKIS_5FED9`.
 
-```text
-FIREBASE_SERVICE_ACCOUNT_IKIS_5FED9
-```
+## Pendientes prioritarios
 
-Las GitHub Actions estan configuradas para ejecutar sus acciones JavaScript con Node.js 24. La aplicacion y las Cloud Functions conservan Node.js 22 como runtime de proyecto.
+1. Revisar visualmente en produccion el cambio completo entre espanol e ingles.
+2. Probar el flujo completo de invitacion con dos cuentas Google reales.
+3. Confirmar desde la interfaz los permisos de `owner`, `admin` y `member`.
+4. Registrar y priorizar ajustes de experiencia de usuario encontrados en esas pruebas.
 
-## Pendientes para continuar
+Las tareas 2 y 3 requieren interaccion manual con cuentas Google distintas; no deben asumirse como aprobadas solo por las pruebas automatizadas.
 
-### Prioridad alta
+## Mejoras posteriores al MVP
 
-- Revisar visualmente en produccion el cambio completo entre espanol e ingles.
-- Probar el flujo completo de invitacion con dos cuentas Google reales.
-- Confirmar desde la interfaz los permisos de `owner`, `admin` y `member`.
-- Registrar y priorizar los ajustes de experiencia de usuario encontrados durante las pruebas.
-
-### Mejoras funcionales
-
-- Agregar edicion y desactivacion de cuentas.
-- Agregar edicion y desactivacion de categorias.
-- Mejorar el historial y consulta de movimientos.
-- Definir e implementar frecuencia personalizada para pagos recurrentes.
+- Editar y desactivar cuentas.
+- Editar y desactivar categorias.
+- Mejorar historial y filtros de movimientos.
+- Definir frecuencia personalizada para pagos recurrentes.
 - Evaluar cancelacion o reverso controlado de transacciones.
 - Mejorar estados de carga, confirmaciones y mensajes de error.
-
-### Calidad y operacion
-
 - Agregar pruebas end-to-end para los flujos principales.
 - Ampliar pruebas de reglas para todas las colecciones y operaciones.
-- Revisar accesibilidad y comportamiento responsive.
-- Revisar experiencia PWA e instalacion en dispositivos moviles.
+- Revisar accesibilidad y responsive.
+- Probar instalacion y experiencia PWA en dispositivos moviles.
 - Configurar alertas de presupuesto y facturacion en Google Cloud.
+
+## Reglas para continuar
+
+- Leer primero `business definitions/`, `technical definitions/` y `development_backlog.md`.
+- No crear secciones, flujos o funcionalidades que no esten definidos en esos documentos.
+- No versionar claves privadas, secretos OAuth ni JSON de cuentas de servicio.
+- Probar localmente antes de hacer push. Usar push cuando corresponda integrar el cambio o validar CI/despliegue.
+- Mantener cambios pequenos y seguir los patrones existentes del repositorio.
+- No revertir cambios ajenos presentes en el working tree.
 
 ## Punto de reanudacion
 
-El siguiente bloque debe comenzar con la validacion visual de idioma en produccion. Despues se deben ejecutar las pruebas manuales de invitaciones y permisos con cuentas Google separadas, registrando cualquier ajuste concreto antes de iniciar funcionalidades posteriores al MVP.
+1. Ejecutar `git status --short --branch` y confirmar que `main` esta sincronizada y limpia.
+2. Consultar el ultimo workflow de GitHub Actions y confirmar que termino correctamente.
+3. Abrir produccion y validar espanol/ingles en dashboard, cuentas, presupuestos, pagos recurrentes, reportes, miembros y formularios.
+4. Ejecutar la prueba manual de invitacion y permisos con dos cuentas Google.
+5. Documentar bugs concretos antes de iniciar una mejora posterior al MVP.
