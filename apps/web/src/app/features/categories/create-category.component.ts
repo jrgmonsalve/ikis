@@ -1,9 +1,14 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 
 import { SelectedFamilyService } from '../../core/family-context/selected-family.service';
 import { CategoryService } from './category.service';
+
+interface IconItem {
+  id: string;
+  label: string;
+}
 
 @Component({
   selector: 'app-create-category',
@@ -12,7 +17,9 @@ import { CategoryService } from './category.service';
   template: `
     <section class="mx-auto max-w-md px-5 py-6">
       <a routerLink="/app/categories" class="text-sm font-medium text-neutral-600">Volver a categorias</a>
-      <h1 class="mt-5 text-2xl font-semibold text-neutral-950">Crear categoria</h1>
+      <h1 class="mt-5 text-2xl font-semibold text-neutral-950">
+        {{ isEdit() ? 'Editar categoria' : 'Crear categoria' }}
+      </h1>
 
       <form class="mt-7 space-y-5" (ngSubmit)="submit()">
         <label class="block">
@@ -27,30 +34,49 @@ import { CategoryService } from './category.service';
           />
         </label>
 
-        <label class="block">
+        <div>
           <span class="text-sm font-medium text-neutral-800">Color</span>
-          <div class="mt-2 flex items-center gap-3">
-            <input name="color" [(ngModel)]="color" type="color" class="h-11 w-14 rounded border border-neutral-300 bg-white p-1" />
-            <span class="text-sm text-neutral-500">{{ color }}</span>
+          <div class="mt-2 grid grid-cols-5 gap-3">
+            @for (c of predefinedColors; track c) {
+              <button
+                type="button"
+                (click)="color = c"
+                class="h-10 w-10 rounded-full border border-neutral-200 transition-transform relative focus:outline-none hover:scale-110 flex items-center justify-center cursor-pointer"
+                [style.background-color]="c"
+                [attr.aria-label]="'Seleccionar color ' + c"
+              >
+                @if (color === c) {
+                  <span class="text-white font-bold text-sm">✓</span>
+                }
+              </button>
+            }
           </div>
-        </label>
+        </div>
 
-        <label class="block">
+        <div>
           <span class="text-sm font-medium text-neutral-800">Icono</span>
-          <select
-            name="icon"
-            [(ngModel)]="icon"
-            class="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-3 outline-none focus:border-emerald-600"
-          >
-            <option value="FO">Comida</option>
-            <option value="TR">Transporte</option>
-            <option value="HO">Hogar</option>
-            <option value="HE">Salud</option>
-            <option value="EN">Entretenimiento</option>
-            <option value="IN">Ingreso</option>
-            <option value="OT">Otro</option>
-          </select>
-        </label>
+          <div class="mt-2 grid grid-cols-2 gap-2 max-h-60 overflow-y-auto border border-neutral-200 rounded-lg p-2.5 bg-neutral-50">
+            @for (item of iconCatalog; track item.id) {
+              <button
+                type="button"
+                (click)="icon = item.id"
+                class="flex items-center gap-3 rounded-lg border p-3 text-left transition-all focus:outline-none hover:bg-white cursor-pointer"
+                [class.border-emerald-600]="icon === item.id"
+                [class.bg-white]="icon === item.id"
+                [class.border-neutral-200]="icon !== item.id"
+                [class.bg-neutral-50]="icon !== item.id"
+              >
+                <span
+                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white text-xs"
+                  [style.background-color]="color || '#404040'"
+                >
+                  <i class="fa-solid" [class]="item.id"></i>
+                </span>
+                <span class="text-xs font-medium text-neutral-800 truncate">{{ item.label }}</span>
+              </button>
+            }
+          </div>
+        </div>
 
         @if (error()) {
           <p class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{ error() }}</p>
@@ -61,7 +87,7 @@ import { CategoryService } from './category.service';
           [disabled]="saving()"
           class="w-full rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {{ saving() ? 'Guardando...' : 'Guardar categoria' }}
+          {{ saving() ? 'Guardando...' : (isEdit() ? 'Guardar cambios' : 'Guardar categoria') }}
         </button>
       </form>
     </section>
@@ -71,15 +97,65 @@ export class CreateCategoryComponent {
   private readonly categoryService = inject(CategoryService);
   private readonly selectedFamily = inject(SelectedFamilyService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   name = '';
-  color = '#16a34a';
-  icon = 'FO';
+  color = '#059669'; // default emerald-600
+  icon = 'fa-utensils'; // default food icon
+
+  readonly isEdit = signal(false);
+  readonly categoryId = signal<string | null>(null);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
 
+  readonly predefinedColors = [
+    '#059669', // Emerald
+    '#16a34a', // Green
+    '#0d9488', // Teal
+    '#0891b2', // Cyan
+    '#0284c7', // Sky
+    '#2563eb', // Blue
+    '#4f46e5', // Indigo
+    '#7c3aed', // Violet
+    '#9333ea', // Purple
+    '#c026d3', // Fuchsia
+    '#db2777', // Pink
+    '#e11d48', // Rose
+    '#dc2626', // Red
+    '#ea580c', // Orange
+    '#d97706', // Amber
+    '#ca8a04', // Yellow
+    '#65a30d', // Lime
+    '#475569', // Slate
+    '#52525b', // Zinc
+    '#78716c', // Stone
+  ];
+
+  readonly iconCatalog: IconItem[] = [
+    { id: 'fa-utensils', label: 'Comida' },
+    { id: 'fa-car', label: 'Transporte' },
+    { id: 'fa-house', label: 'Hogar' },
+    { id: 'fa-heart-pulse', label: 'Salud' },
+    { id: 'fa-film', label: 'Entretenimiento' },
+    { id: 'fa-bag-shopping', label: 'Compras' },
+    { id: 'fa-graduation-cap', label: 'Educación' },
+    { id: 'fa-bolt', label: 'Servicios Públicos' },
+    { id: 'fa-tv', label: 'Suscripciones / TV' },
+    { id: 'fa-gift', label: 'Regalos' },
+    { id: 'fa-spa', label: 'Cuidado Personal' },
+    { id: 'fa-plane', label: 'Viajes' },
+    { id: 'fa-money-bill-wave', label: 'Ingresos / Sueldo' },
+    { id: 'fa-chart-line', label: 'Inversiones' },
+    { id: 'fa-receipt', label: 'Impuestos' },
+    { id: 'fa-shield-halved', label: 'Seguros' },
+    { id: 'fa-dumbbell', label: 'Deportes / Gym' },
+    { id: 'fa-paw', label: 'Mascotas' },
+    { id: 'fa-briefcase', label: 'Trabajo / Negocios' },
+    { id: 'fa-ellipsis', label: 'Otros' },
+  ];
+
   constructor() {
-    void this.ensurePermission();
+    void this.initialize();
   }
 
   async submit(): Promise<void> {
@@ -91,27 +167,49 @@ export class CreateCategoryComponent {
     this.saving.set(true);
     this.error.set(null);
     try {
-      await this.categoryService.create({
-        name: this.name,
-        color: this.color,
-        icon: this.icon,
-      });
+      const id = this.categoryId();
+      if (this.isEdit() && id) {
+        await this.categoryService.update(id, {
+          name: this.name,
+          color: this.color,
+          icon: this.icon,
+        });
+      } else {
+        await this.categoryService.create({
+          name: this.name,
+          color: this.color,
+          icon: this.icon,
+        });
+      }
       await this.router.navigateByUrl('/app/categories');
     } catch (error) {
-      this.error.set(error instanceof Error ? error.message : 'No fue posible crear la categoria.');
+      this.error.set(
+        error instanceof Error ? error.message : 'No fue posible guardar la categoria.'
+      );
     } finally {
       this.saving.set(false);
     }
   }
 
-  private async ensurePermission(): Promise<void> {
+  private async initialize(): Promise<void> {
     try {
       const context = await this.selectedFamily.load();
       if (!['owner', 'admin'].includes(context.membership.role)) {
         await this.router.navigateByUrl('/app/categories');
+        return;
+      }
+
+      const id = this.route.snapshot.paramMap.get('id');
+      if (id) {
+        this.isEdit.set(true);
+        this.categoryId.set(id);
+        const category = await this.categoryService.getById(id);
+        this.name = category.name;
+        this.color = category.color || '#059669';
+        this.icon = category.icon || 'fa-utensils';
       }
     } catch (error) {
-      this.error.set(error instanceof Error ? error.message : 'No fue posible cargar la familia.');
+      this.error.set(error instanceof Error ? error.message : 'No fue posible cargar datos.');
     }
   }
 }

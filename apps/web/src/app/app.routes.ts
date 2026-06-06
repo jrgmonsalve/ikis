@@ -67,6 +67,13 @@ export const routes: Routes = [
           ),
       })),
       {
+        path: 'transactions/:id/edit',
+        loadComponent: () =>
+          import('./features/transactions/transaction-form.component').then(
+            (module) => module.TransactionFormComponent,
+          ),
+      },
+      {
         path: 'budgets',
         loadComponent: () =>
           import('./features/budgets/budgets-list.component').then(
@@ -75,6 +82,14 @@ export const routes: Routes = [
       },
       {
         path: 'budgets/new',
+        canActivate: [adminOrOwnerGuard],
+        loadComponent: () =>
+          import('./features/budgets/create-budget.component').then(
+            (module) => module.CreateBudgetComponent,
+          ),
+      },
+      {
+        path: 'budgets/:id/edit',
         canActivate: [adminOrOwnerGuard],
         loadComponent: () =>
           import('./features/budgets/create-budget.component').then(
@@ -117,6 +132,14 @@ export const routes: Routes = [
       },
       {
         path: 'categories/new',
+        canActivate: [adminOrOwnerGuard],
+        loadComponent: () =>
+          import('./features/categories/create-category.component').then(
+            (module) => module.CreateCategoryComponent,
+          ),
+      },
+      {
+        path: 'categories/:id/edit',
         canActivate: [adminOrOwnerGuard],
         loadComponent: () =>
           import('./features/categories/create-category.component').then(

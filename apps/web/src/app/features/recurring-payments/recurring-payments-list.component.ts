@@ -23,8 +23,7 @@ const frequencyLabels: Record<RecurringPayment['frequency'], string> = {
     <section class="space-y-6 px-5 py-6">
       <div class="flex items-start justify-between gap-4">
         <div>
-          <p class="text-sm font-medium text-emerald-700">{{ familyName() }}</p>
-          <h1 class="mt-1 text-2xl font-semibold text-neutral-950">Pagos recurrentes</h1>
+          <h1 class="text-2xl font-semibold text-neutral-950">Pagos recurrentes</h1>
         </div>
         @if (canManage()) {
           <a routerLink="/app/recurring-payments/new" class="rounded-lg bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white">

@@ -27,8 +27,7 @@ const emptySummary: FinancialSummary = {
   template: `
     <section class="space-y-6 px-5 py-6">
       <div>
-        <p class="text-sm font-medium text-emerald-700">{{ familyName() }}</p>
-        <h1 class="mt-1 text-2xl font-semibold text-neutral-950">Reportes</h1>
+        <h1 class="text-2xl font-semibold text-neutral-950">Reportes</h1>
       </div>
 
       <div class="space-y-3 rounded-lg border border-neutral-200 bg-white p-4">
@@ -39,11 +38,11 @@ const emptySummary: FinancialSummary = {
         </select>
         @if (periodType === 'monthly') {
           <div class="grid grid-cols-2 gap-3">
-            <input [(ngModel)]="month" type="number" min="1" max="12" class="rounded-lg border border-neutral-300 px-3 py-2.5" />
-            <input [(ngModel)]="year" type="number" min="2020" max="2100" class="rounded-lg border border-neutral-300 px-3 py-2.5" />
+            <input [(ngModel)]="month" type="number" min="1" max="12" inputmode="numeric" class="rounded-lg border border-neutral-300 px-3 py-2.5" />
+            <input [(ngModel)]="year" type="number" min="2020" max="2100" inputmode="numeric" class="rounded-lg border border-neutral-300 px-3 py-2.5" />
           </div>
         } @else if (periodType === 'yearly') {
-          <input [(ngModel)]="year" type="number" min="2020" max="2100" class="w-full rounded-lg border border-neutral-300 px-3 py-2.5" />
+          <input [(ngModel)]="year" type="number" min="2020" max="2100" inputmode="numeric" class="w-full rounded-lg border border-neutral-300 px-3 py-2.5" />
         } @else {
           <div class="grid grid-cols-2 gap-3">
             <input [(ngModel)]="customStart" type="date" class="rounded-lg border border-neutral-300 px-3 py-2.5" />

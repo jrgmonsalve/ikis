@@ -3,10 +3,12 @@ import {
   Timestamp,
   collection,
   doc,
+  getDoc,
   getDocs,
   query,
   serverTimestamp,
   setDoc,
+  updateDoc,
   where,
 } from 'firebase/firestore';
 
@@ -124,6 +126,61 @@ export class BudgetService {
     });
 
     return budgetRef.id;
+  }
+
+  async getById(budgetId: string): Promise<Budget> {
+    const familyId = this.requireFamilyId();
+    const docRef = doc(firestore, `families/${familyId}/budgets/${budgetId}`);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) {
+      throw new Error('Presupuesto no encontrado.');
+    }
+    return snap.data() as Budget;
+  }
+
+  async update(budgetId: string, input: CreateBudgetInput): Promise<void> {
+    const user = this.auth.currentUser();
+    const familyId = this.requireFamilyId();
+    if (!user) {
+      throw new Error('Debes iniciar sesion para actualizar un presupuesto.');
+    }
+
+    const existingSnapshot = await getDocs(
+      query(
+        collection(firestore, `families/${familyId}/budgets`),
+        where('categoryId', '==', input.categoryId),
+        where('status', '==', 'active'),
+      ),
+    );
+    const startMillis = input.startDate.getTime();
+    const endMillis = input.endDate.getTime();
+    const duplicate = existingSnapshot.docs.some((item) => {
+      if (item.id === budgetId) return false;
+      const existing = item.data() as Budget;
+      return (
+        existing.startDate.toMillis() === startMillis &&
+        existing.endDate.toMillis() === endMillis
+      );
+    });
+
+    if (duplicate) {
+      throw new Error('Ya existe otro presupuesto activo para esa categoria y periodo.');
+    }
+
+    const budgetRef = doc(firestore, `families/${familyId}/budgets/${budgetId}`);
+    await updateDoc(budgetRef, {
+      name: input.name.trim(),
+      categoryId: input.categoryId,
+      plannedAmount: input.plannedAmount,
+      remainingAmount: input.plannedAmount - (input.plannedAmount * 0), // spentAmount calculation is dynamic, remainingAmount is just calculated in client usually, but let's keep model shape
+      periodType: input.periodType,
+      month: input.month ?? null,
+      year: input.year ?? null,
+      startDate: Timestamp.fromDate(input.startDate),
+      endDate: Timestamp.fromDate(input.endDate),
+      currency: input.currency,
+      updatedAt: serverTimestamp(),
+    });
   }
 
   private requireFamilyId(): string {

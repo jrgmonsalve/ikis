@@ -2,10 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   query,
   serverTimestamp,
   setDoc,
+  updateDoc,
   where,
 } from 'firebase/firestore';
 
@@ -73,6 +75,48 @@ export class CategoryService {
     });
 
     return categoryRef.id;
+  }
+
+  async getById(categoryId: string): Promise<Category> {
+    const familyId = this.requireFamilyId();
+    const docRef = doc(firestore, `families/${familyId}/categories/${categoryId}`);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) {
+      throw new Error('Categoria no encontrada.');
+    }
+    return snap.data() as Category;
+  }
+
+  async update(categoryId: string, input: CreateCategoryInput): Promise<void> {
+    const user = this.auth.currentUser();
+    const familyId = this.requireFamilyId();
+
+    if (!user) {
+      throw new Error('Debes iniciar sesion para actualizar una categoria.');
+    }
+
+    const normalizedName = normalizeName(input.name);
+    const duplicates = await getDocs(
+      query(
+        collection(firestore, `families/${familyId}/categories`),
+        where('normalizedName', '==', normalizedName),
+        where('status', '==', 'active'),
+      ),
+    );
+
+    const hasDuplicate = duplicates.docs.some((doc) => doc.id !== categoryId);
+    if (hasDuplicate) {
+      throw new Error('Ya existe otra categoria activa con ese nombre.');
+    }
+
+    const categoryRef = doc(firestore, `families/${familyId}/categories/${categoryId}`);
+    await updateDoc(categoryRef, {
+      name: input.name.trim(),
+      normalizedName,
+      color: input.color || null,
+      icon: input.icon || null,
+      updatedAt: serverTimestamp(),
+    });
   }
 
   private requireFamilyId(): string {

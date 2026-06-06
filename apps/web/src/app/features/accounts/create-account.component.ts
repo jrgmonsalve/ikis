@@ -6,58 +6,76 @@ import { SelectedFamilyService } from '../../core/family-context/selected-family
 import { I18nService } from '../../core/i18n/i18n.service';
 import { AccountType, Currency } from '../../shared/models/domain.models';
 import { AccountService } from './account.service';
+import { NumericFormatterDirective } from '../../shared/directives/numeric-formatter.directive';
 
 @Component({
   selector: 'app-create-account',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, NumericFormatterDirective],
   template: `
     <section class="mx-auto max-w-md px-5 py-6">
-      <a routerLink="/app/accounts" class="text-sm font-medium text-neutral-600">Volver a cuentas</a>
-      <h1 class="mt-5 text-2xl font-semibold text-neutral-950">Crear cuenta</h1>
-      <p class="mt-2 text-sm text-neutral-500">{{ familyCurrencyLabel() }}</p>
+      <div class="flex items-center gap-4">
+        <a
+          routerLink="/app/accounts"
+          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-neutral-600 hover:bg-neutral-100 transition-colors"
+          aria-label="Volver a cuentas"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+          </svg>
+        </a>
+        <h1 class="text-2xl font-semibold text-neutral-950">Crear cuenta</h1>
+      </div>
+      <p class="mt-2 text-sm text-neutral-500 pl-13">{{ familyCurrencyLabel() }}</p>
 
-      <form class="mt-7 space-y-5" (ngSubmit)="submit()">
-        <label class="block">
-          <span class="text-sm font-medium text-neutral-800">Nombre</span>
+      <form class="mt-7 space-y-4" (ngSubmit)="submit()">
+        <div class="floating-group">
           <input
+            id="name"
             name="name"
             [(ngModel)]="name"
             required
             maxlength="60"
-            placeholder="Nequi"
-            class="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-3 outline-none focus:border-emerald-600"
+            placeholder=" "
+            class="floating-input"
           />
-        </label>
+          <label for="name" class="floating-label">Nombre</label>
+        </div>
 
-        <label class="block">
-          <span class="text-sm font-medium text-neutral-800">Tipo de cuenta</span>
+        <div class="floating-group">
           <select
+            id="type"
             name="type"
             [(ngModel)]="type"
-            class="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-3 outline-none focus:border-emerald-600"
+            class="floating-select appearance-none bg-white pr-10"
           >
             <option value="savings">Ahorros</option>
             <option value="cash">Efectivo</option>
             <option value="digital_wallet">Billetera digital</option>
             <option value="credit_card">Tarjeta de credito</option>
           </select>
-        </label>
+          <label for="type" class="floating-label">Tipo de cuenta</label>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-400">
+            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+            </svg>
+          </div>
+        </div>
 
-        <label class="block">
-          <span class="text-sm font-medium text-neutral-800">
-            {{ type === 'credit_card' ? 'Deuda inicial' : 'Saldo inicial' }}
-          </span>
+        <div class="floating-group">
           <input
+            id="initialBalance"
             name="initialBalance"
             [(ngModel)]="initialBalance"
-            type="number"
-            min="0"
-            step="0.01"
+            appNumericFormatter
             required
-            class="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-3 outline-none focus:border-emerald-600"
+            placeholder=" "
+            class="floating-input"
           />
-        </label>
+          <label for="initialBalance" class="floating-label">
+            {{ type === 'credit_card' ? 'Deuda inicial' : 'Saldo inicial' }}
+          </label>
+        </div>
 
         @if (error()) {
           <p class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{ error() }}</p>

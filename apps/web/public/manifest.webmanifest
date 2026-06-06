@@ -1,6 +1,8 @@
 {
   "name": "ikis",
   "short_name": "ikis",
+  "theme_color": "#047857",
+  "background_color": "#fafafa",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",

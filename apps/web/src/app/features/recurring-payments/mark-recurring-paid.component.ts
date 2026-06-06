@@ -6,11 +6,12 @@ import { Account, Category, RecurringPayment } from '../../shared/models/domain.
 import { AccountService } from '../accounts/account.service';
 import { CategoryService } from '../categories/category.service';
 import { RecurringPaymentService } from './recurring-payment.service';
+import { NumericFormatterDirective } from '../../shared/directives/numeric-formatter.directive';
 
 @Component({
   selector: 'app-mark-recurring-paid',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, NumericFormatterDirective],
   template: `
     <section class="mx-auto max-w-md px-5 py-6">
       <a routerLink="/app/recurring-payments" class="text-sm font-medium text-neutral-600">Volver a pagos</a>
@@ -25,7 +26,7 @@ import { RecurringPaymentService } from './recurring-payment.service';
         <form class="mt-7 space-y-5" (ngSubmit)="submit()">
           <label class="block">
             <span class="text-sm font-medium text-neutral-800">Monto pagado</span>
-            <input name="amount" [(ngModel)]="amount" type="number" min="0.01" step="0.01" required class="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-3 outline-none focus:border-emerald-600" />
+            <input name="amount" [(ngModel)]="amount" appNumericFormatter required class="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-3 outline-none focus:border-emerald-600" />
           </label>
           <label class="block">
             <span class="text-sm font-medium text-neutral-800">Cuenta</span>

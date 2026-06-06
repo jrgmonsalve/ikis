@@ -1,13 +1,12 @@
-import { Component, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { SelectedFamilyService } from '../../core/family-context/selected-family.service';
 import { I18nService } from '../../core/i18n/i18n.service';
-import { Category, Currency, RecurringPayment } from '../../shared/models/domain.models';
+import { PeriodService } from '../../core/period/period.service';
+import { Account, Category, Currency, RecurringPayment } from '../../shared/models/domain.models';
 import { calculateAvailableBalance } from '../../shared/utils/finance-calculations';
 import { formatCurrency } from '../../shared/utils/formatters';
-import { ReportPeriodType, resolveDatePeriod } from '../../shared/utils/period';
 import { FinancialSummary } from '../../shared/utils/report-calculations';
 import { AccountService } from '../accounts/account.service';
 import { BudgetService, BudgetWithProgress } from '../budgets/budget.service';
@@ -25,62 +24,59 @@ const emptySummary: FinancialSummary = {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [RouterLink],
   template: `
     <section class="space-y-6 px-5 py-6">
-      <div>
-        <p class="text-sm font-medium text-emerald-700">{{ familyName() }}</p>
-        <h1 class="mt-1 text-2xl font-semibold text-neutral-950">Dashboard</h1>
-      </div>
-
-      <div class="flex gap-2 overflow-x-auto pb-1">
-        <select [(ngModel)]="periodType" class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm">
-          <option value="monthly">Mensual</option>
-          <option value="yearly">Anual</option>
-          <option value="custom">Personalizado</option>
-        </select>
-        @if (periodType === 'monthly') {
-          <input [(ngModel)]="month" type="number" min="1" max="12" class="w-20 rounded-lg border border-neutral-300 px-3 py-2 text-sm" />
-          <input [(ngModel)]="year" type="number" class="w-24 rounded-lg border border-neutral-300 px-3 py-2 text-sm" />
-        } @else if (periodType === 'yearly') {
-          <input [(ngModel)]="year" type="number" class="w-24 rounded-lg border border-neutral-300 px-3 py-2 text-sm" />
-        }
-        <button type="button" class="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white" (click)="load()">Aplicar</button>
-      </div>
-      @if (periodType === 'custom') {
-        <div class="grid grid-cols-2 gap-3">
-          <input [(ngModel)]="customStart" type="date" class="rounded-lg border border-neutral-300 px-3 py-2 text-sm" />
-          <input [(ngModel)]="customEnd" type="date" class="rounded-lg border border-neutral-300 px-3 py-2 text-sm" />
+      <div class="flex justify-between items-start gap-4">
+        <div>
+          <h1 class="text-2xl font-semibold text-neutral-950">Dashboard</h1>
         </div>
-      }
+        <span class="rounded-lg bg-neutral-100 px-3 py-1.5 text-xs font-semibold text-neutral-600">
+          {{ currentPeriodLabel() }}
+        </span>
+      </div>
 
       @if (loading()) {
         <p class="text-sm text-neutral-500">Calculando resumen...</p>
       } @else if (error()) {
         <p class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error() }}</p>
       } @else {
-        <article class="rounded-lg bg-neutral-950 p-5 text-white">
-          <p class="text-sm text-neutral-300">Saldo disponible</p>
-          <p class="mt-2 text-3xl font-semibold">{{ money(availableBalance()) }}</p>
-          <a routerLink="/app/accounts" class="mt-4 inline-block text-sm font-medium text-emerald-300">Ver cuentas</a>
+        <!-- Available Balance Donut Chart Card -->
+        <article class="rounded-lg border border-neutral-200 bg-white p-5">
+          <h2 class="text-sm font-semibold text-neutral-500 uppercase tracking-wider">Saldo Disponible</h2>
+
+          <div class="mt-5 flex flex-col sm:flex-row items-center gap-6 justify-around">
+            <!-- Donut Chart Container -->
+            <div class="relative flex items-center justify-center w-36 h-36 rounded-full flex-shrink-0"
+                 [style.background]="chartData().gradient">
+              <!-- Inner circle to make it a Donut -->
+              <div class="absolute w-24 h-24 rounded-full bg-white flex flex-col items-center justify-center p-2 text-center">
+                <span class="text-[10px] uppercase tracking-wider text-neutral-400 font-medium">Total</span>
+                <span class="text-sm font-bold text-neutral-900 truncate max-w-full">
+                  {{ money(availableBalance()) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Legend/Accounts list -->
+            <div class="flex-1 space-y-2.5 w-full max-w-xs">
+              @for (item of chartData().legend; track item.name) {
+                <div class="flex items-center justify-between text-xs">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-3 h-3 rounded-full flex-shrink-0" [style.background-color]="item.color"></span>
+                    <span class="font-medium text-neutral-700 truncate">{{ item.name }}</span>
+                  </div>
+                  <span class="font-semibold text-neutral-950 ml-2">{{ money(item.balance) }}</span>
+                </div>
+              } @empty {
+                <p class="text-xs text-neutral-500 text-center py-2">No hay saldos disponibles.</p>
+              }
+              <div class="pt-2 border-t border-neutral-100 text-right">
+                <a routerLink="/app/accounts" class="text-xs font-semibold text-emerald-700 hover:underline">Ver todas las cuentas ›</a>
+              </div>
+            </div>
+          </div>
         </article>
-
-        <div class="grid grid-cols-2 gap-3">
-          <article class="rounded-lg border border-neutral-200 bg-white p-4">
-            <p class="text-xs uppercase text-neutral-500">Ingresos</p>
-            <p class="mt-2 text-lg font-semibold text-emerald-700">{{ money(summary().totalIncome) }}</p>
-          </article>
-          <article class="rounded-lg border border-neutral-200 bg-white p-4">
-            <p class="text-xs uppercase text-neutral-500">Gastos</p>
-            <p class="mt-2 text-lg font-semibold text-red-700">{{ money(summary().totalExpenses) }}</p>
-          </article>
-        </div>
-
-        <div class="grid grid-cols-3 gap-2">
-          <a routerLink="/app/transactions/expense" class="rounded-lg bg-red-50 px-3 py-3 text-center text-sm font-semibold text-red-800">Gasto</a>
-          <a routerLink="/app/transactions/income" class="rounded-lg bg-emerald-50 px-3 py-3 text-center text-sm font-semibold text-emerald-800">Ingreso</a>
-          <a routerLink="/app/transactions/transfer" class="rounded-lg bg-neutral-200 px-3 py-3 text-center text-sm font-semibold text-neutral-800">Transferir</a>
-        </div>
 
         <div>
           <div class="flex items-center justify-between">
@@ -149,14 +145,11 @@ export class DashboardComponent {
   private readonly recurringService = inject(RecurringPaymentService);
   private readonly categoryService = inject(CategoryService);
   private readonly i18n = inject(I18nService);
+  private readonly periodService = inject(PeriodService);
 
-  periodType: ReportPeriodType = 'monthly';
-  month = new Date().getMonth() + 1;
-  year = new Date().getFullYear();
-  customStart = new Date().toISOString().slice(0, 10);
-  customEnd = new Date().toISOString().slice(0, 10);
   readonly familyName = signal('');
   readonly availableBalance = signal(0);
+  readonly activeAccounts = signal<Account[]>([]);
   readonly summary = signal<FinancialSummary>(emptySummary);
   readonly budgets = signal<BudgetWithProgress[]>([]);
   readonly upcomingPayments = signal<RecurringPayment[]>([]);
@@ -165,15 +158,81 @@ export class DashboardComponent {
   readonly error = signal<string | null>(null);
   private currency: Currency = 'COP';
 
+  readonly currentPeriodLabel = computed(() => {
+    const s = this.periodService.state();
+    if (s.periodType === 'monthly') {
+      const monthNames = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+      ];
+      return this.i18n.translate(monthNames[s.month - 1]) + ' ' + s.year;
+    }
+    if (s.periodType === 'yearly') {
+      return s.year.toString();
+    }
+    const start = new Date(`${s.customStart}T00:00:00`).toLocaleDateString(this.i18n.locale());
+    const end = new Date(`${s.customEnd}T00:00:00`).toLocaleDateString(this.i18n.locale());
+    return `${start} - ${end}`;
+  });
+
+  readonly chartData = computed(() => {
+    const list = this.activeAccounts().filter(
+      (a) => a.status === 'active' && a.type !== 'credit_card' && a.currentBalance > 0
+    );
+    const total = list.reduce((sum, a) => sum + a.currentBalance, 0);
+    if (total === 0) {
+      return {
+        gradient: 'conic-gradient(#e5e7eb 0% 100%)',
+        legend: [],
+        hasData: false,
+      };
+    }
+
+    const colors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6', '#6366f1'];
+    let accumulatedPercentage = 0;
+
+    const slices = list.map((account, index) => {
+      const percentage = (account.currentBalance / total) * 100;
+      const color = colors[index % colors.length];
+      const start = accumulatedPercentage;
+      const end = accumulatedPercentage + percentage;
+      accumulatedPercentage = end;
+      return {
+        account,
+        color,
+        percentage,
+        gradientSegment: `${color} ${start.toFixed(1)}% ${end.toFixed(1)}%`,
+      };
+    });
+
+    const legend = slices.map((s) => ({
+      name: s.account.name,
+      balance: s.account.currentBalance,
+      percentage: s.percentage,
+      color: s.color,
+    }));
+
+    const gradient = `conic-gradient(${slices.map((s) => s.gradientSegment).join(', ')})`;
+
+    return {
+      gradient,
+      legend,
+      hasData: true,
+    };
+  });
+
   constructor() {
-    void this.load();
+    effect(() => {
+      this.periodService.state();
+      void this.load();
+    });
   }
 
   async load(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const period = resolveDatePeriod(this.periodType, this.year, this.month, this.customStart, this.customEnd);
+      const period = this.periodService.activePeriod();
       const [context, accounts, report, budgets, payments, categories] = await Promise.all([
         this.selectedFamily.load(),
         this.accountService.listActive(),
@@ -185,8 +244,14 @@ export class DashboardComponent {
       this.familyName.set(context.family.name);
       this.currency = context.family.mainCurrency;
       this.availableBalance.set(calculateAvailableBalance(accounts));
+      this.activeAccounts.set(accounts);
       this.summary.set(report.summary);
-      this.budgets.set(budgets);
+      const filteredBudgets = budgets.filter((item) => {
+        const bStart = item.budget.startDate.toDate();
+        const bEnd = item.budget.endDate.toDate();
+        return bStart <= period.endDate && bEnd >= period.startDate;
+      });
+      this.budgets.set(filteredBudgets);
       this.upcomingPayments.set(payments.filter((payment) => payment.nextDueDate.toMillis() >= Date.now()));
       this.categories.set(categories);
     } catch (error) {

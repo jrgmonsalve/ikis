@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 
 import { SelectedFamilyService } from '../../core/family-context/selected-family.service';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -11,15 +11,18 @@ import {
 } from '../../shared/models/domain.models';
 import { CategoryService } from '../categories/category.service';
 import { BudgetService } from './budget.service';
+import { NumericFormatterDirective } from '../../shared/directives/numeric-formatter.directive';
 
 @Component({
   selector: 'app-create-budget',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, NumericFormatterDirective],
   template: `
     <section class="mx-auto max-w-md px-5 py-6">
       <a routerLink="/app/budgets" class="text-sm font-medium text-neutral-600">Volver a presupuestos</a>
-      <h1 class="mt-5 text-2xl font-semibold text-neutral-950">Crear presupuesto</h1>
+      <h1 class="mt-5 text-2xl font-semibold text-neutral-950">
+        {{ isEdit() ? 'Editar presupuesto' : 'Crear presupuesto' }}
+      </h1>
 
       <form class="mt-7 space-y-5" (ngSubmit)="submit()">
         <label class="block">
@@ -39,7 +42,7 @@ import { BudgetService } from './budget.service';
 
         <label class="block">
           <span class="text-sm font-medium text-neutral-800">{{ amountLabel() }}</span>
-          <input name="plannedAmount" [(ngModel)]="plannedAmount" type="number" min="0.01" step="0.01" required class="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-3 outline-none focus:border-emerald-600" />
+          <input name="plannedAmount" [(ngModel)]="plannedAmount" appNumericFormatter required class="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-3 outline-none focus:border-emerald-600" />
         </label>
 
         <label class="block">
@@ -55,17 +58,17 @@ import { BudgetService } from './budget.service';
           <div class="grid grid-cols-2 gap-3">
             <label class="block">
               <span class="text-sm font-medium text-neutral-800">Mes</span>
-              <input name="month" [(ngModel)]="month" type="number" min="1" max="12" required class="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-3 outline-none focus:border-emerald-600" />
+              <input name="month" [(ngModel)]="month" type="number" min="1" max="12" inputmode="numeric" required class="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-3 outline-none focus:border-emerald-600" />
             </label>
             <label class="block">
               <span class="text-sm font-medium text-neutral-800">Ano</span>
-              <input name="year" [(ngModel)]="year" type="number" min="2020" max="2100" required class="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-3 outline-none focus:border-emerald-600" />
+              <input name="year" [(ngModel)]="year" type="number" min="2020" max="2100" inputmode="numeric" required class="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-3 outline-none focus:border-emerald-600" />
             </label>
           </div>
         } @else if (periodType === 'yearly') {
           <label class="block">
             <span class="text-sm font-medium text-neutral-800">Ano</span>
-            <input name="year" [(ngModel)]="year" type="number" min="2020" max="2100" required class="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-3 outline-none focus:border-emerald-600" />
+            <input name="year" [(ngModel)]="year" type="number" min="2020" max="2100" inputmode="numeric" required class="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-3 outline-none focus:border-emerald-600" />
           </label>
         } @else {
           <div class="grid grid-cols-2 gap-3">
@@ -91,7 +94,7 @@ import { BudgetService } from './budget.service';
         }
 
         <button type="submit" [disabled]="saving() || categories().length === 0" class="w-full rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">
-          {{ saving() ? 'Guardando...' : 'Guardar presupuesto' }}
+          {{ saving() ? 'Guardando...' : (isEdit() ? 'Guardar cambios' : 'Guardar presupuesto') }}
         </button>
       </form>
     </section>
@@ -102,6 +105,7 @@ export class CreateBudgetComponent {
   private readonly categoryService = inject(CategoryService);
   private readonly selectedFamily = inject(SelectedFamilyService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly i18n = inject(I18nService);
 
   name = '';
@@ -112,6 +116,8 @@ export class CreateBudgetComponent {
   year = new Date().getFullYear();
   customStart = new Date().toISOString().slice(0, 10);
   customEnd = new Date().toISOString().slice(0, 10);
+  readonly isEdit = signal(false);
+  readonly budgetId = signal<string | null>(null);
   readonly currency = signal<Currency>('COP');
   readonly categories = signal<Category[]>([]);
   readonly saving = signal(false);
@@ -137,7 +143,9 @@ export class CreateBudgetComponent {
 
       this.saving.set(true);
       this.error.set(null);
-      await this.budgetService.create({
+
+      const id = this.budgetId();
+      const budgetData = {
         name: this.name,
         categoryId: this.categoryId,
         plannedAmount: this.plannedAmount,
@@ -147,10 +155,18 @@ export class CreateBudgetComponent {
         currency: this.currency(),
         month: this.periodType === 'monthly' ? this.month : undefined,
         year: this.periodType !== 'custom' ? this.year : undefined,
-      });
+      };
+
+      if (this.isEdit() && id) {
+        await this.budgetService.update(id, budgetData);
+      } else {
+        await this.budgetService.create(budgetData);
+      }
       await this.router.navigateByUrl('/app/budgets');
     } catch (error) {
-      this.error.set(error instanceof Error ? error.message : 'No fue posible crear el presupuesto.');
+      this.error.set(
+        error instanceof Error ? error.message : 'No fue posible guardar el presupuesto.'
+      );
     } finally {
       this.saving.set(false);
     }
@@ -168,6 +184,23 @@ export class CreateBudgetComponent {
       }
       this.currency.set(context.family.mainCurrency);
       this.categories.set(categories);
+
+      const id = this.route.snapshot.paramMap.get('id');
+      if (id) {
+        this.isEdit.set(true);
+        this.budgetId.set(id);
+        const budget = await this.budgetService.getById(id);
+        this.name = budget.name;
+        this.categoryId = budget.categoryId;
+        this.plannedAmount = budget.plannedAmount;
+        this.periodType = budget.periodType;
+        if (budget.month) this.month = budget.month;
+        if (budget.year) this.year = budget.year;
+        if (budget.periodType === 'custom') {
+          this.customStart = budget.startDate.toDate().toISOString().slice(0, 10);
+          this.customEnd = budget.endDate.toDate().toISOString().slice(0, 10);
+        }
+      }
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'No fue posible cargar datos.');
     }

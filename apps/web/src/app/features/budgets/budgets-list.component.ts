@@ -16,8 +16,7 @@ import { BudgetService, BudgetWithProgress } from './budget.service';
     <section class="space-y-6 px-5 py-6">
       <div class="flex items-start justify-between gap-4">
         <div>
-          <p class="text-sm font-medium text-emerald-700">{{ familyName() }}</p>
-          <h1 class="mt-1 text-2xl font-semibold text-neutral-950">Presupuestos</h1>
+          <h1 class="text-2xl font-semibold text-neutral-950">Presupuestos</h1>
         </div>
         @if (canManage()) {
           <a routerLink="/app/budgets/new" class="rounded-lg bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white">
@@ -36,7 +35,17 @@ import { BudgetService, BudgetWithProgress } from './budget.service';
             <article class="rounded-lg border border-neutral-200 bg-white p-4">
               <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0">
-                  <h2 class="truncate font-medium text-neutral-950">{{ item.budget.name }}</h2>
+                  <div class="flex items-center gap-2">
+                    <h2 class="truncate font-medium text-neutral-950">{{ item.budget.name }}</h2>
+                    @if (canManage()) {
+                      <a
+                        [routerLink]="['/app/budgets', item.budget.id, 'edit']"
+                        class="text-xs font-semibold text-emerald-700 hover:underline shrink-0"
+                      >
+                        Editar
+                      </a>
+                    }
+                  </div>
                   <p class="mt-1 text-sm text-neutral-500">
                     {{ categoryName(item.budget.categoryId) }} · {{ periodLabel(item) }}
                   </p>

@@ -28,6 +28,9 @@ import { RouterLink } from '@angular/router';
 })
 export class MoreComponent {
   readonly items = [
+    { path: '/app/transactions', label: 'Movimientos', description: 'Historial de ingresos, gastos y transferencias' },
+    { path: '/app/budgets', label: 'Presupuestos', description: 'Limites por categoria' },
+    { path: '/app/reports', label: 'Reportes', description: 'Resumen de ingresos y gastos' },
     { path: '/app/accounts', label: 'Cuentas', description: 'Saldos y tipos de cuenta' },
     { path: '/app/categories', label: 'Categorias', description: 'Clasificacion de movimientos' },
     { path: '/app/recurring-payments', label: 'Pagos recurrentes', description: 'Obligaciones proximas' },

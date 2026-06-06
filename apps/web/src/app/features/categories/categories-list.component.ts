@@ -13,8 +13,7 @@ import { CategoryService } from './category.service';
     <section class="space-y-6 px-5 py-6">
       <div class="flex items-start justify-between gap-4">
         <div>
-          <p class="text-sm font-medium text-emerald-700">{{ familyName() }}</p>
-          <h1 class="mt-1 text-2xl font-semibold text-neutral-950">Categorias</h1>
+          <h1 class="text-2xl font-semibold text-neutral-950">Categorias</h1>
         </div>
         @if (canManage()) {
           <a
@@ -33,14 +32,28 @@ import { CategoryService } from './category.service';
       } @else {
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           @for (category of categories(); track category.id) {
-            <article class="flex items-center gap-3 rounded-lg border border-neutral-200 bg-white p-4">
-              <span
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-semibold text-white"
-                [style.background-color]="category.color || '#404040'"
-              >
-                {{ category.icon || category.name.charAt(0).toUpperCase() }}
-              </span>
-              <h2 class="min-w-0 truncate font-medium text-neutral-950">{{ category.name }}</h2>
+            <article class="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4">
+              <div class="flex items-center gap-3 min-w-0">
+                <span
+                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-semibold text-white"
+                  [style.background-color]="category.color || '#404040'"
+                >
+                  @if (category.icon && category.icon.startsWith('fa-')) {
+                    <i class="fa-solid" [class]="category.icon"></i>
+                  } @else {
+                    {{ category.icon || category.name.charAt(0).toUpperCase() }}
+                  }
+                </span>
+                <h2 class="min-w-0 truncate font-medium text-neutral-950">{{ category.name }}</h2>
+              </div>
+              @if (canManage()) {
+                <a
+                  [routerLink]="['/app/categories', category.id, 'edit']"
+                  class="text-xs font-semibold text-emerald-700 hover:underline shrink-0"
+                >
+                  Editar
+                </a>
+              }
             </article>
           } @empty {
             <div class="rounded-lg border border-dashed border-neutral-300 px-5 py-10 text-center sm:col-span-2">
