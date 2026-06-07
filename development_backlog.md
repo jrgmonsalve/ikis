@@ -748,6 +748,12 @@ Acceptance Criteria:
 - Required date fields appear based on selected period type.
 - System validates duplicate budget for same category and period.
 - Budget is created.
+- Owner or admin can copy a completed budget to a new period.
+- Copy preserves name, category, planned amount, currency, and period type.
+- Monthly and yearly copies default to the following period.
+- Custom copies require new dates.
+- Copied budget is created as a new record with independently calculated progress.
+- Duplicate category-and-period validation applies to copied budgets.
 
 Related User Story:
 

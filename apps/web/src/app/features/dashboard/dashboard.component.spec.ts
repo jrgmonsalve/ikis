@@ -118,6 +118,7 @@ describe('DashboardComponent', () => {
           amount: 15000,
           description: 'Burgers',
           transactionDate: { toDate: () => new Date('2026-06-05'), toMillis: () => new Date('2026-06-05').getTime() },
+          createdAt: { toDate: () => new Date('2026-06-05T10:30:00'), toMillis: () => new Date('2026-06-05T10:30:00').getTime() },
           accountId: 'acc-1',
           categoryId: 'cat-1',
         }
@@ -171,6 +172,7 @@ describe('DashboardComponent', () => {
 
     expect(component.availableBalance()).toBe(300000); // 250k + 50k
     expect(component.familyName()).toBe('Family Team');
+    expect(component.dateLabel(component.recentTransactions()[0])).toContain('10:30');
   });
 
   it('should correctly filter and map budgets active in the selected period', async () => {

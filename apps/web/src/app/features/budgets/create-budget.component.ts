@@ -5,6 +5,7 @@ import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { SelectedFamilyService } from '../../core/family-context/selected-family.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import {
+  Budget,
   BudgetPeriodType,
   Category,
   Currency,
@@ -21,7 +22,7 @@ import { NumericFormatterDirective } from '../../shared/directives/numeric-forma
     <section class="mx-auto max-w-md px-5 py-6">
       <a routerLink="/app/budgets" class="text-sm font-medium text-neutral-600">Volver a presupuestos</a>
       <h1 class="mt-5 text-2xl font-semibold text-neutral-950">
-        {{ isEdit() ? 'Editar presupuesto' : 'Crear presupuesto' }}
+        {{ title() }}
       </h1>
 
       <form class="mt-7 space-y-5" (ngSubmit)="submit()">
@@ -94,7 +95,7 @@ import { NumericFormatterDirective } from '../../shared/directives/numeric-forma
         }
 
         <button type="submit" [disabled]="saving() || categories().length === 0" class="w-full rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">
-          {{ saving() ? 'Guardando...' : (isEdit() ? 'Guardar cambios' : 'Guardar presupuesto') }}
+          {{ submitLabel() }}
         </button>
       </form>
     </section>
@@ -118,6 +119,7 @@ export class CreateBudgetComponent implements OnInit {
   customStart = new Date().toISOString().slice(0, 10);
   customEnd = new Date().toISOString().slice(0, 10);
   readonly isEdit = signal(false);
+  readonly isCopy = signal(false);
   readonly budgetId = signal<string | null>(null);
   readonly currency = signal<Currency>('COP');
   readonly categories = signal<Category[]>([]);
@@ -126,6 +128,16 @@ export class CreateBudgetComponent implements OnInit {
 
   ngOnInit(): void {
     void this.load();
+  }
+
+  title(): string {
+    if (this.isCopy()) return this.i18n.translate('Copiar presupuesto');
+    return this.i18n.translate(this.isEdit() ? 'Editar presupuesto' : 'Crear presupuesto');
+  }
+
+  submitLabel(): string {
+    if (this.saving()) return this.i18n.translate('Guardando...');
+    return this.i18n.translate(this.isEdit() ? 'Guardar cambios' : 'Guardar presupuesto');
   }
 
   amountLabel(): string {
@@ -187,10 +199,16 @@ export class CreateBudgetComponent implements OnInit {
       this.categories.set(categories);
 
       const id = this.route.snapshot.paramMap.get('id');
+      const copyMode = this.route.snapshot.data?.['mode'] === 'copy';
       if (id) {
-        this.isEdit.set(true);
+        this.isCopy.set(copyMode);
+        this.isEdit.set(!copyMode);
         this.budgetId.set(id);
         const budget = await this.budgetService.getById(id);
+        if (copyMode && budget.endDate.toMillis() >= Date.now()) {
+          await this.router.navigateByUrl('/app/budgets');
+          return;
+        }
         this.name = budget.name;
         this.categoryId = budget.categoryId;
         this.plannedAmount = budget.plannedAmount;
@@ -201,12 +219,34 @@ export class CreateBudgetComponent implements OnInit {
           this.customStart = budget.startDate.toDate().toISOString().slice(0, 10);
           this.customEnd = budget.endDate.toDate().toISOString().slice(0, 10);
         }
+        if (copyMode) {
+          this.prepareCopyPeriod(budget);
+        }
       }
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'No fue posible cargar datos.');
     } finally {
       this.cdr.detectChanges();
     }
+  }
+
+  private prepareCopyPeriod(budget: Budget): void {
+    if (budget.periodType === 'monthly') {
+      const sourceDate = budget.startDate.toDate();
+      const sourceMonth = budget.month ?? sourceDate.getMonth() + 1;
+      const sourceYear = budget.year ?? sourceDate.getFullYear();
+      this.month = sourceMonth === 12 ? 1 : sourceMonth + 1;
+      this.year = sourceMonth === 12 ? sourceYear + 1 : sourceYear;
+      return;
+    }
+
+    if (budget.periodType === 'yearly') {
+      this.year = (budget.year ?? budget.startDate.toDate().getFullYear()) + 1;
+      return;
+    }
+
+    this.customStart = '';
+    this.customEnd = '';
   }
 
   private resolvePeriod(): { startDate: Date; endDate: Date } {
@@ -227,6 +267,9 @@ export class CreateBudgetComponent implements OnInit {
       };
     }
 
+    if (!this.customStart || !this.customEnd) {
+      throw new Error('Selecciona una fecha inicial y final.');
+    }
     const startDate = new Date(`${this.customStart}T00:00:00`);
     const endDate = new Date(`${this.customEnd}T23:59:59.999`);
     if (startDate.getTime() > endDate.getTime()) {

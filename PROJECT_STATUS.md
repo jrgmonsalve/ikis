@@ -1,6 +1,6 @@
 # IKIS - Estado del proyecto
 
-Ultima actualizacion: 6 de junio de 2026
+Ultima actualizacion: 6 de junio de 2026 (Refactorización de Movimientos y Pagos Recurrentes)
 
 ## Estado actual
 
@@ -18,13 +18,14 @@ No hay archivos de credenciales privadas versionados. La configuracion publica d
 - Persistencia de sesion y proteccion de rutas.
 - Creacion, seleccion y contexto de familia activa.
 - Gestion de miembros, roles e invitaciones.
-- Cuentas y categorias.
+- Cuentas y categorias (incluyendo edicion y listado).
 - Gastos, ingresos y transferencias.
 - Actualizacion atomica de saldos mediante Cloud Functions.
 - Manejo de deuda de tarjetas de credito.
 - Presupuestos y calculo de avance.
-- Pagos recurrentes y registro de pago.
-- Dashboard y reportes por periodo y categoria.
+- Pagos recurrentes: creacion, edicion, marcado como pagado, alertas e indicadores visuales de estado.
+- Dashboard principal: saldos, presupuestos activos, proximos pagos con indicadores, ultimos movimientos y gastos por categoria.
+- Movimientos: historial con filtros de fecha personalizados (limite de 3 meses), paginacion de 20 items y reverso/cancelacion.
 - Configuracion de perfil, idioma y moneda.
 - Traducciones en espanol e ingles para pantallas, estados vacios, validaciones y errores.
 - Fechas localizadas en `es-CO` o `en-US` segun el idioma.
@@ -33,15 +34,15 @@ No hay archivos de credenciales privadas versionados. La configuracion publica d
 
 ## Cambios recientes
 
-- Se elimino el flash de la pantalla para crear familia durante la carga de sesion.
-- Las invitaciones conservan su URL al pasar por el login.
-- Se agregaron guards para permisos de `owner`, `admin` y `member`.
-- Se impide invitar nuevamente a miembros activos o con invitacion pendiente.
-- La Function de aceptacion evita sobrescribir membresias existentes.
-- Las reglas Firestore impiden aceptar invitaciones directamente desde el cliente.
-- Se amplio la cobertura de traducciones y etiquetas generadas desde TypeScript.
-- GitHub Actions usa Node.js 24 para ejecutar las acciones JavaScript. El proyecto y las Functions conservan Node.js 22.
-- Se agrego un controlador persistente para iniciar y detener todo el entorno local.
+- **Edición de Pagos Recurrentes:** Se habilitó la edición reutilizando `CreateRecurringPaymentComponent` bajo la ruta `/app/recurring-payments/:id/edit` para administradores y owners. La vista muestra condicionalmente "Editar pago recurrente" y "Guardar cambios", cargando los datos preexistentes del pago y persistiendo las modificaciones en Firestore.
+- **Indicadores de Estado en Dashboard:** Se añadieron iconos de estado color-coded (verde/check para pagado, amarillo/warning para pendiente, rojo/X para vencido) a la sección "Próximos pagos" en el Dashboard principal, alineándolo con la pantalla de listado de pagos recurrentes.
+- **Últimos Movimientos en Dashboard:** Nueva sección en el dashboard que lista las 10 transacciones más recientes globales y añade un enlace directo para ver el reporte de transacciones.
+- **Historial de Movimientos Refactorizado:** Se desacopló la pantalla de movimientos del `PeriodService` global. Ahora:
+  - Muestra por defecto los últimos 30 días de transacciones.
+  - Ofrece filtros de fecha personalizados (Desde / Hasta) validados reactivamente para no superar los 90 días (3 meses).
+  - Consulta a Firestore solo las transacciones dentro de ese rango seleccionado.
+  - Cuenta con paginación de 20 ítems por página con botones Anterior/Siguiente.
+- **Correcciones de Cambios Asíncronos (Zone.js):** Se inyectó `ChangeDetectorRef` y se forzó la detección de cambios (`cdr.detectChanges()`) en los componentes que resuelven datos asíncronamente desde Firebase SDK fuera del Angular Zone (tales como CategoryComponent, TransactionFormComponent, MarkRecurringPaidComponent, DashboardComponent, etc.).
 
 ## Firebase
 
@@ -100,10 +101,10 @@ El procedimiento completo esta en `DEVELOPMENT.md`.
 
 Ultima validacion completa aprobada:
 
-- 13 pruebas frontend en 7 archivos.
+- 36 pruebas frontend en 12 archivos (todas aprobadas, incluyendo mocks actualizados de `TransactionService`).
 - 11 pruebas de reglas Firestore.
 - TypeScript/lint de Functions.
-- Build de Angular.
+- Build de Angular (build de producción completado con éxito).
 - Build de Functions.
 - `git diff --check`.
 
@@ -136,11 +137,8 @@ Las tareas 2 y 3 requieren interaccion manual con cuentas Google distintas; no d
 ## Mejoras posteriores al MVP
 
 - Editar y desactivar cuentas.
-- Editar y desactivar categorias.
-- Mejorar historial y filtros de movimientos.
+- Desactivar categorias.
 - Definir frecuencia personalizada para pagos recurrentes.
-- Evaluar cancelacion o reverso controlado de transacciones.
-- Mejorar estados de carga, confirmaciones y mensajes de error.
 - Agregar pruebas end-to-end para los flujos principales.
 - Ampliar pruebas de reglas para todas las colecciones y operaciones.
 - Revisar accesibilidad y responsive.

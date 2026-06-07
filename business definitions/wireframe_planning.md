@@ -800,6 +800,7 @@ The screen should include:
 
 - Save budget.
 - Cancel and return to Budgets List.
+- Copy a completed budget to the next period from Budgets List.
 
 ## Empty State
 

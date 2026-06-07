@@ -298,6 +298,10 @@ Allow a family member to create a budget for a category and period.
 * Start date field.
 * End date field.
 * Save budget button.
+* Copy to next period action for completed budgets.
+* Copied budget form prefilled with name, category, amount, currency, and period type.
+* Monthly and yearly copies default to the following period.
+* Custom copies require new dates.
 * Validation messages.
 
 ## Related Flow

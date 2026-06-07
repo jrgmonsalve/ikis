@@ -139,7 +139,7 @@ export class TransactionService {
       query(
         collection(firestore, `families/${familyId}/transactions`),
         where('status', '==', 'active'),
-        orderBy('transactionDate', 'desc'),
+        orderBy('createdAt', 'desc'),
         limit(limitCount),
       ),
     );
@@ -157,7 +157,13 @@ export class TransactionService {
         orderBy('transactionDate', 'desc'),
       ),
     );
-    return snapshot.docs.map((doc) => doc.data() as Transaction);
+    return snapshot.docs
+      .map((doc) => doc.data() as Transaction)
+      .sort(
+        (left, right) =>
+          (right.createdAt?.toMillis() ?? right.transactionDate.toMillis()) -
+          (left.createdAt?.toMillis() ?? left.transactionDate.toMillis()),
+      );
   }
 
   private requireFamilyId(): string {

@@ -268,7 +268,10 @@ export class TransactionsHomeComponent {
   }
 
   dateLabel(tx: Transaction): string {
-    return tx.transactionDate.toDate().toLocaleDateString(this.i18n.locale());
+    return (tx.createdAt ?? tx.transactionDate).toDate().toLocaleString(this.i18n.locale(), {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    });
   }
 
   money(value: number): string {

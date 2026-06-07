@@ -17,6 +17,7 @@ describe('CreateBudgetComponent', () => {
   let mockRouter: any;
   let mockI18nService: any;
   let mockParamMapGet: any;
+  let mockRouteData: Record<string, string>;
 
   beforeEach(async () => {
     mockBudgetService = {
@@ -28,8 +29,10 @@ describe('CreateBudgetComponent', () => {
         categoryId: 'cat-1',
         plannedAmount: 150000,
         periodType: 'monthly',
-        startDate: { toDate: () => new Date('2026-06-01') },
-        endDate: { toDate: () => new Date('2026-06-30') },
+        month: 5,
+        year: 2026,
+        startDate: { toDate: () => new Date('2026-05-01') },
+        endDate: { toDate: () => new Date('2026-05-31'), toMillis: () => new Date('2026-05-31').getTime() },
       }),
     };
 
@@ -56,6 +59,7 @@ describe('CreateBudgetComponent', () => {
     };
 
     mockParamMapGet = vi.fn().mockReturnValue(null);
+    mockRouteData = {};
 
     await TestBed.configureTestingModule({
       imports: [FormsModule, CreateBudgetComponent],
@@ -69,6 +73,7 @@ describe('CreateBudgetComponent', () => {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
+              data: mockRouteData,
               paramMap: {
                 get: mockParamMapGet,
               },
@@ -125,5 +130,42 @@ describe('CreateBudgetComponent', () => {
     expect(component.budgetId()).toBe('budget-id-edit');
     expect(component.name).toBe('Mock Budget');
     expect(component.plannedAmount).toBe(150000);
+  });
+  it("copies a monthly budget into the following month as a new budget", async () => {
+    mockParamMapGet.mockReturnValue("budget-id-edit");
+    mockRouteData["mode"] = "copy";
+    await component["load"]();
+    expect(component.isCopy()).toBe(true);
+    expect(component.isEdit()).toBe(false);
+    expect(component.month).toBe(6);
+    expect(component.year).toBe(2026);
+    await component.submit();
+    expect(mockBudgetService.create).toHaveBeenCalled();
+    expect(mockBudgetService.update).not.toHaveBeenCalled();
+  });
+
+  it("rolls a December monthly copy into January of the next year", () => {
+    component["prepareCopyPeriod"]({
+      periodType: "monthly",
+      month: 12,
+      year: 2026,
+      startDate: { toDate: () => new Date(2026, 11, 1) },
+    } as any);
+    expect(component.month).toBe(1);
+    expect(component.year).toBe(2027);
+  });
+
+  it("advances yearly copies and requires new dates for custom copies", () => {
+    component["prepareCopyPeriod"]({
+      periodType: "yearly",
+      year: 2026,
+      startDate: { toDate: () => new Date(2026, 0, 1) },
+    } as any);
+    expect(component.year).toBe(2027);
+    component.customStart = "2026-01-01";
+    component.customEnd = "2026-01-31";
+    component["prepareCopyPeriod"]({ periodType: "custom" } as any);
+    expect(component.customStart).toBe("");
+    expect(component.customEnd).toBe("");
   });
 });

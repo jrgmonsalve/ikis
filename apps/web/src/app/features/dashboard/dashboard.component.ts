@@ -30,7 +30,7 @@ const emptySummary: FinancialSummary = {
     <section class="space-y-6 px-5 py-6">
       <div class="flex justify-between items-start gap-4">
         <div>
-          <h1 class="text-2xl font-semibold text-neutral-950">Dashboard</h1>
+          <h1 class="text-2xl font-semibold text-neutral-950">{{ t('Dashboard') }}</h1>
         </div>
         <span class="rounded-lg bg-neutral-100 px-3 py-1.5 text-xs font-semibold text-neutral-600">
           {{ currentPeriodLabel() }}
@@ -38,13 +38,13 @@ const emptySummary: FinancialSummary = {
       </div>
 
       @if (loading()) {
-        <p class="text-sm text-neutral-500">Calculando resumen...</p>
+        <p class="text-sm text-neutral-500">{{ t('Calculando resumen...') }}</p>
       } @else if (error()) {
         <p class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error() }}</p>
       } @else {
         <!-- Available Balance Donut Chart Card -->
         <article class="rounded-lg border border-neutral-200 bg-white p-5">
-          <h2 class="text-sm font-semibold text-neutral-500 uppercase tracking-wider">Saldo Disponible</h2>
+          <h2 class="text-sm font-semibold text-neutral-500 uppercase tracking-wider">{{ t('Saldo disponible') }}</h2>
 
           <div class="mt-5 flex flex-col sm:flex-row items-center gap-6 justify-around">
             <!-- Donut Chart Container -->
@@ -52,7 +52,7 @@ const emptySummary: FinancialSummary = {
                  [style.background]="chartData().gradient">
               <!-- Inner circle to make it a Donut -->
               <div class="absolute w-24 h-24 rounded-full bg-white flex flex-col items-center justify-center p-2 text-center">
-                <span class="text-[10px] uppercase tracking-wider text-neutral-400 font-medium">Total</span>
+                <span class="text-[10px] uppercase tracking-wider text-neutral-400 font-medium">{{ t('Total') }}</span>
                 <span class="text-sm font-bold text-neutral-900 truncate max-w-full">
                   {{ money(availableBalance()) }}
                 </span>
@@ -70,10 +70,10 @@ const emptySummary: FinancialSummary = {
                   <span class="font-semibold text-neutral-950 ml-2">{{ money(item.balance) }}</span>
                 </div>
               } @empty {
-                <p class="text-xs text-neutral-500 text-center py-2">No hay saldos disponibles.</p>
+                <p class="text-xs text-neutral-500 text-center py-2">{{ t('Balance disponible') }}</p>
               }
               <div class="pt-2 border-t border-neutral-100 text-right">
-                <a routerLink="/app/accounts" class="text-xs font-semibold text-emerald-700 hover:underline">Ver todas las cuentas ›</a>
+                <a routerLink="/app/accounts" class="text-xs font-semibold text-emerald-700 hover:underline">{{ t('Ver cuentas') }}</a>
               </div>
             </div>
           </div>
@@ -81,8 +81,8 @@ const emptySummary: FinancialSummary = {
 
         <div>
           <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-neutral-950">Presupuestos</h2>
-            <a routerLink="/app/budgets" class="text-sm font-medium text-emerald-700">Ver todos</a>
+            <h2 class="text-lg font-semibold text-neutral-950">{{ t('Presupuestos') }}</h2>
+            <a routerLink="/app/budgets" class="text-sm font-medium text-emerald-700">{{ t('Ver todos') }}</a>
           </div>
           <div class="mt-3 space-y-3">
             @for (item of budgets().slice(0, 3); track item.budget.id) {
@@ -96,15 +96,15 @@ const emptySummary: FinancialSummary = {
                 </div>
               </div>
             } @empty {
-              <p class="rounded-lg border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">Sin presupuestos activos.</p>
+              <p class="rounded-lg border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">{{ t('Sin presupuestos activos.') }}</p>
             }
           </div>
         </div>
 
         <div>
           <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-neutral-950">Próximos pagos</h2>
-            <a routerLink="/app/recurring-payments" class="text-sm font-medium text-emerald-700">Ver todos</a>
+            <h2 class="text-lg font-semibold text-neutral-950">{{ t('Proximos pagos') }}</h2>
+            <a routerLink="/app/recurring-payments" class="text-sm font-medium text-emerald-700">{{ t('Ver todos') }}</a>
           </div>
           <div class="mt-3 space-y-2">
             @for (payment of upcomingPayments().slice(0, 3); track payment.id) {
@@ -113,13 +113,13 @@ const emptySummary: FinancialSummary = {
                   <span>
                     @switch (getStatus(payment)) {
                       @case ('paid') {
-                        <i class="fa-solid fa-circle-check text-emerald-600 text-base" title="Pagado"></i>
+                        <i class="fa-solid fa-circle-check text-emerald-600 text-base" [attr.title]="t('Pagado')"></i>
                       }
                       @case ('overdue') {
-                        <i class="fa-solid fa-circle-xmark text-red-600 text-base" title="Vencido"></i>
+                        <i class="fa-solid fa-circle-xmark text-red-600 text-base" [attr.title]="t('Proximo vencimiento')"></i>
                       }
                       @default {
-                        <i class="fa-solid fa-circle-exclamation text-amber-500 text-base" title="Pendiente"></i>
+                        <i class="fa-solid fa-circle-exclamation text-amber-500 text-base" [attr.title]="t('Proximos pagos')"></i>
                       }
                     }
                   </span>
@@ -131,15 +131,15 @@ const emptySummary: FinancialSummary = {
                 </div>
               </div>
             } @empty {
-              <p class="rounded-lg border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">Sin pagos próximos.</p>
+              <p class="rounded-lg border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">{{ t('Sin pagos proximos.') }}</p>
             }
           </div>
         </div>
 
         <div>
           <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-neutral-950">Últimos movimientos</h2>
-            <a routerLink="/app/transactions" class="text-sm font-medium text-emerald-700 hover:underline">Ver reporte de transacciones</a>
+            <h2 class="text-lg font-semibold text-neutral-950">{{ t('Movimientos') }}</h2>
+            <a routerLink="/app/transactions" class="text-sm font-medium text-emerald-700 hover:underline">{{ t('Ver todos') }}</a>
           </div>
           <div class="mt-3 space-y-2">
             @for (tx of recentTransactions(); track tx.id) {
@@ -173,15 +173,15 @@ const emptySummary: FinancialSummary = {
                 </span>
               </div>
             } @empty {
-              <p class="rounded-lg border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">Sin movimientos recientes.</p>
+              <p class="rounded-lg border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">{{ t('Movimientos') }}</p>
             }
           </div>
         </div>
 
         <div>
           <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-neutral-950">Gastos por categoria</h2>
-            <a routerLink="/app/reports" class="text-sm font-medium text-emerald-700">Reporte</a>
+            <h2 class="text-lg font-semibold text-neutral-950">{{ t('Gastos por categoria') }}</h2>
+            <a routerLink="/app/reports" class="text-sm font-medium text-emerald-700">{{ t('Reporte') }}</a>
           </div>
           <div class="mt-3 space-y-2">
             @for (item of summary().expensesByCategory.slice(0, 4); track item.categoryId) {
@@ -190,7 +190,7 @@ const emptySummary: FinancialSummary = {
                 <span class="font-semibold text-neutral-950">{{ money(item.amount) }}</span>
               </div>
             } @empty {
-              <p class="rounded-lg border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">Sin gastos en el periodo.</p>
+              <p class="rounded-lg border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">{{ t('Sin gastos en el periodo.') }}</p>
             }
           </div>
         </div>
@@ -321,11 +321,15 @@ export class DashboardComponent {
       this.categories.set(categories);
       this.recentTransactions.set(recent);
     } catch (error) {
-      this.error.set(error instanceof Error ? error.message : 'No fue posible cargar el dashboard.');
+      this.error.set(this.t(error instanceof Error ? error.message : 'No fue posible cargar el dashboard.'));
     } finally {
       this.loading.set(false);
       this.cdr.detectChanges();
     }
+  }
+
+  t(source: string): string {
+    return this.i18n.translate(source);
   }
 
   money(value: number): string {
@@ -397,22 +401,25 @@ export class DashboardComponent {
   }
 
   typeLabel(type: string): string {
-    if (type === 'expense') return 'Gasto';
-    if (type === 'income') return 'Ingreso';
-    return 'Transf.';
+    if (type === 'expense') return this.i18n.translate('Gasto');
+    if (type === 'income') return this.i18n.translate('Ingreso');
+    return this.i18n.translate('Transferencia');
   }
 
   dateLabel(tx: Transaction): string {
-    return tx.transactionDate.toDate().toLocaleDateString(this.i18n.locale());
+    return (tx.createdAt ?? tx.transactionDate).toDate().toLocaleString(this.i18n.locale(), {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    });
   }
 
   accountName(accountId: string): string {
-    return this.activeAccounts().find((a) => a.id === accountId)?.name ?? 'Cuenta';
+    return this.activeAccounts().find((a) => a.id === accountId)?.name ?? this.i18n.translate('Cuenta');
   }
 
   defaultDescription(tx: Transaction): string {
     if (tx.type === 'transfer') {
-      return `Transferencia a ${this.accountName(tx.destinationAccountId || '')}`;
+      return `${this.i18n.translate('Transferencia')}: ${this.accountName(tx.destinationAccountId || '')}`;
     }
     return this.categoryName(tx.categoryId || '');
   }

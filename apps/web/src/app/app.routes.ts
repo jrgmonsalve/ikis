@@ -1,3 +1,4 @@
+
 import { Routes } from '@angular/router';
 
 import { authGuard } from './core/guards/auth.guard';
@@ -91,6 +92,15 @@ export const routes: Routes = [
       {
         path: 'budgets/:id/edit',
         canActivate: [adminOrOwnerGuard],
+        loadComponent: () =>
+          import('./features/budgets/create-budget.component').then(
+            (module) => module.CreateBudgetComponent,
+          ),
+      },
+      {
+        path: 'budgets/:id/copy',
+        canActivate: [adminOrOwnerGuard],
+        data: { mode: 'copy' },
         loadComponent: () =>
           import('./features/budgets/create-budget.component').then(
             (module) => module.CreateBudgetComponent,

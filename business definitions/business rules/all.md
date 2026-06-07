@@ -273,6 +273,13 @@ A family should not have duplicate budgets for the same category and period.
 * A family cannot have two active budgets for the same category and exact same custom date range.
 * Different families can have similar budgets.
 * Different categories can have budgets for the same period.
+* A completed budget can be copied to create a new budget for a later period.
+* Copying preserves the name, category, planned amount, and currency.
+* Monthly copies default to the following month, including the year rollover from December to January.
+* Yearly copies default to the following year.
+* Custom-period copies require the user to select a new start date and end date.
+* A copied budget is a new budget and does not inherit spent amount, remaining amount, percentage used, or matched transactions.
+* The copied budget remains subject to the duplicate category-and-period validation.
 
 ### Reason
 

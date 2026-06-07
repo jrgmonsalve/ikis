@@ -49,6 +49,14 @@ import { BudgetService, BudgetWithProgress } from './budget.service';
                   <p class="mt-1 text-sm text-neutral-500">
                     {{ categoryName(item.budget.categoryId) }} · {{ periodLabel(item) }}
                   </p>
+                  @if (canCopy(item)) {
+                    <a
+                      [routerLink]="['/app/budgets', item.budget.id, 'copy']"
+                      class="mt-2 inline-block text-xs font-semibold text-emerald-700 hover:underline"
+                    >
+                      {{ copyLabel() }}
+                    </a>
+                  }
                 </div>
                 <span
                   class="text-sm font-semibold"
@@ -119,6 +127,14 @@ export class BudgetsListComponent {
       this.categories().find((category) => category.id === categoryId)?.name ??
       this.i18n.translate('Categoria')
     );
+  }
+
+  canCopy(item: BudgetWithProgress): boolean {
+    return this.canManage() && item.budget.endDate.toMillis() < Date.now();
+  }
+
+  copyLabel(): string {
+    return this.i18n.translate('Copiar al siguiente periodo');
   }
 
   money(value: number): string {
