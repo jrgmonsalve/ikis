@@ -36,6 +36,13 @@ beforeEach(async () => {
       name: 'Family A',
       mainCurrency: 'COP',
       ownerUserId: 'owner-a',
+      activePeriod: {
+        periodType: 'monthly',
+        month: 6,
+        year: 2026,
+        customStart: null,
+        customEnd: null,
+      },
       status: 'active',
     });
     await setDoc(doc(db, 'families/family-a/members/owner-a'), {
@@ -117,6 +124,51 @@ describe('Firestore family security', () => {
     await assertFails(getDoc(doc(db, 'families/family-a')));
   });
 
+  it('allows owner to update a valid family active period', async () => {
+    const db = environment.authenticatedContext('owner-a').firestore();
+    await assertSucceeds(
+      updateDoc(doc(db, 'families/family-a'), {
+        activePeriod: {
+          periodType: 'custom',
+          month: null,
+          year: null,
+          customStart: Timestamp.fromDate(new Date('2026-07-01T00:00:00')),
+          customEnd: Timestamp.fromDate(new Date('2026-07-31T23:59:59')),
+        },
+      }),
+    );
+  });
+
+  it('denies admin family active period updates', async () => {
+    const db = environment.authenticatedContext('admin-a').firestore();
+    await assertFails(
+      updateDoc(doc(db, 'families/family-a'), {
+        activePeriod: {
+          periodType: 'monthly',
+          month: 7,
+          year: 2026,
+          customStart: null,
+          customEnd: null,
+        },
+      }),
+    );
+  });
+
+  it('denies invalid family active period payloads', async () => {
+    const db = environment.authenticatedContext('owner-a').firestore();
+    await assertFails(
+      updateDoc(doc(db, 'families/family-a'), {
+        activePeriod: {
+          periodType: 'custom',
+          month: null,
+          year: null,
+          customStart: Timestamp.fromDate(new Date('2026-08-31T00:00:00')),
+          customEnd: Timestamp.fromDate(new Date('2026-08-01T00:00:00')),
+        },
+      }),
+    );
+  });
+
   it('denies an account with a manipulated current balance', async () => {
     const db = environment.authenticatedContext('owner-a').firestore();
     await assertFails(
@@ -166,6 +218,50 @@ describe('Firestore family security', () => {
     });
     const db = environment.authenticatedContext('member-a').firestore();
     await assertSucceeds(getDoc(doc(db, 'families/family-a/accounts/account-a')));
+  });
+
+  it('allows admin to rename and deactivate an account without changing balances', async () => {
+    await environment.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'families/family-a/accounts/account-a'), {
+        id: 'account-a',
+        familyId: 'family-a',
+        name: 'Cash',
+        type: 'cash',
+        initialBalance: 100,
+        currentBalance: 100,
+        currency: 'COP',
+        createdByUserId: 'owner-a',
+        status: 'active',
+      });
+    });
+
+    const db = environment.authenticatedContext('admin-a').firestore();
+    const accountRef = doc(db, 'families/family-a/accounts/account-a');
+    await assertSucceeds(updateDoc(accountRef, { name: 'Wallet' }));
+    await assertSucceeds(updateDoc(accountRef, { status: 'inactive' }));
+  });
+
+  it('denies account balance updates from the client', async () => {
+    await environment.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'families/family-a/accounts/account-a'), {
+        id: 'account-a',
+        familyId: 'family-a',
+        name: 'Cash',
+        type: 'cash',
+        initialBalance: 100,
+        currentBalance: 100,
+        currency: 'COP',
+        createdByUserId: 'owner-a',
+        status: 'active',
+      });
+    });
+
+    const db = environment.authenticatedContext('admin-a').firestore();
+    await assertFails(
+      updateDoc(doc(db, 'families/family-a/accounts/account-a'), {
+        currentBalance: 1000,
+      }),
+    );
   });
 
   it('allows only the owner to create invitations', async () => {

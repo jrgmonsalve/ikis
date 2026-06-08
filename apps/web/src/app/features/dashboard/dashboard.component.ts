@@ -296,9 +296,10 @@ export class DashboardComponent {
     this.loading.set(true);
     this.error.set(null);
     try {
+      const context = await this.selectedFamily.load();
+      this.periodService.setFromActivePeriod(context.family.activePeriod);
       const period = this.periodService.activePeriod();
-      const [context, accounts, report, budgets, payments, categories, recent] = await Promise.all([
-        this.selectedFamily.load(),
+      const [accounts, report, budgets, payments, categories, recent] = await Promise.all([
         this.accountService.listActive(),
         this.reportService.load(period.startDate, period.endDate),
         this.budgetService.listWithProgress(),

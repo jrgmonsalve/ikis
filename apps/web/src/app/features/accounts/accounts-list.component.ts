@@ -65,7 +65,7 @@ const accountTypeLabels: Record<Account['type'], string> = {
                 <h2 class="truncate font-medium text-neutral-950">{{ account.name }}</h2>
                 <p class="mt-1 text-sm text-neutral-500">{{ typeLabel(account.type) }}</p>
               </div>
-              <div class="text-right">
+              <div class="shrink-0 text-right">
                 <p
                   class="font-semibold"
                   [class.text-red-700]="account.type === 'credit_card'"
@@ -76,6 +76,24 @@ const accountTypeLabels: Record<Account['type'], string> = {
                 <p class="mt-1 text-xs text-neutral-500">
                   {{ account.type === 'credit_card' ? 'Adeudado' : account.currency }}
                 </p>
+                @if (canManage()) {
+                  <div class="mt-3 flex justify-end gap-3 text-xs font-semibold">
+                    <a
+                      [routerLink]="['/app/accounts', account.id, 'edit']"
+                      class="text-emerald-700 hover:underline"
+                    >
+                      Editar
+                    </a>
+                    <button
+                      type="button"
+                      (click)="deactivate(account)"
+                      [disabled]="deactivatingId() === account.id"
+                      class="text-red-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {{ deactivatingId() === account.id ? 'Desactivando...' : 'Desactivar' }}
+                    </button>
+                  </div>
+                }
               </div>
             </article>
           } @empty {
@@ -100,6 +118,7 @@ export class AccountsListComponent {
   readonly canManage = signal(false);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+  readonly deactivatingId = signal<string | null>(null);
   readonly availableBalance = computed(() => calculateAvailableBalance(this.accounts()));
   readonly creditCardDebt = computed(() => calculateCreditCardDebt(this.accounts()));
 
@@ -113,6 +132,26 @@ export class AccountsListComponent {
 
   typeLabel(type: Account['type']): string {
     return this.i18n.translate(accountTypeLabels[type]);
+  }
+
+  async deactivate(account: Account): Promise<void> {
+    const confirmed = globalThis.confirm(
+      `Desactivar ${account.name}? La cuenta dejara de aparecer, pero sus movimientos historicos se conservan.`,
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    this.deactivatingId.set(account.id);
+    this.error.set(null);
+    try {
+      await this.accountService.deactivate(account.id);
+      this.accounts.update((accounts) => accounts.filter((item) => item.id !== account.id));
+    } catch (error) {
+      this.error.set(error instanceof Error ? error.message : 'No fue posible desactivar la cuenta.');
+    } finally {
+      this.deactivatingId.set(null);
+    }
   }
 
   private async load(): Promise<void> {

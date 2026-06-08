@@ -12,6 +12,23 @@ function familyReservationId(normalizedName: string): string {
   return createHash('sha256').update(normalizedName).digest('hex');
 }
 
+function defaultActivePeriod(): {
+  periodType: 'monthly';
+  month: number;
+  year: number;
+  customStart: null;
+  customEnd: null;
+} {
+  const now = new Date();
+  return {
+    periodType: 'monthly',
+    month: now.getMonth() + 1,
+    year: now.getFullYear(),
+    customStart: null,
+    customEnd: null,
+  };
+}
+
 interface CreateFamilyInput {
   name: string;
   mainCurrency: 'COP' | 'USD';
@@ -103,6 +120,7 @@ export const createFamily = onCall<CreateFamilyInput>(async (request) => {
       normalizedName,
       mainCurrency,
       ownerUserId: uid,
+      activePeriod: defaultActivePeriod(),
       createdAt: nowField(),
       updatedAt: nowField(),
       status: 'active',

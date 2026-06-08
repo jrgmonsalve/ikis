@@ -104,6 +104,7 @@ describe('DashboardComponent', () => {
         startDate: new Date('2026-06-01T00:00:00'),
         endDate: new Date('2026-06-30T23:59:59'),
       }),
+      setFromActivePeriod: vi.fn(),
     };
 
     mockRouter = {

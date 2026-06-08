@@ -15,7 +15,13 @@ node --version
 npm --version
 ```
 
-El proyecto utiliza Node.js 22.
+El proyecto utiliza Angular 22. Usa una version de Node.js compatible con Angular 22:
+
+- Node.js `^22.22.3`
+- Node.js `^24.15.0`
+- Node.js `>=26.0.0`
+
+En Windows, si tienes Node.js instalado en `C:\Program Files\nodejs`, la actualizacion del MSI debe ejecutarse como Administrador.
 
 ### 1.2 Verificar Java
 
@@ -62,6 +68,12 @@ Desde `~/projects/ikis` ejecuta:
 npm run local:start
 ```
 
+En Windows PowerShell ejecuta:
+
+```powershell
+npm run local:start:win
+```
+
 Este comando realiza el proceso en este orden:
 
 1. Compila Cloud Functions.
@@ -81,6 +93,14 @@ npm run local:logs
 npm run local:restart
 ```
 
+Comandos equivalentes en Windows:
+
+```powershell
+npm run local:status:win
+npm run local:logs:win
+npm run local:restart:win
+```
+
 ### Entrar a la aplicacion
 
 1. Abre `http://localhost:4200/`.
@@ -96,9 +116,21 @@ No se utilizan credenciales fijas y esta sesion solo existe en el entorno local.
 npm run local:stop
 ```
 
+En Windows PowerShell:
+
+```powershell
+npm run local:stop:win
+```
+
 Esto detiene Angular y todos los emuladores iniciados por `local:start`.
 
 Para ejecutar el entorno en primer plano durante una sesion de depuracion tambien puedes usar `npm run dev` y detenerlo con `Ctrl+C`.
+
+En Windows PowerShell usa:
+
+```powershell
+npm run dev:win
+```
 
 ## 3. Alternativa: usar dos terminales
 

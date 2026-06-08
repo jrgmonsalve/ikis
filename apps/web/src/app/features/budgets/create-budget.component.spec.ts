@@ -45,7 +45,17 @@ describe('CreateBudgetComponent', () => {
 
     mockSelectedFamilyService = {
       load: vi.fn().mockResolvedValue({
-        family: { mainCurrency: 'COP', name: 'Family Team' },
+        family: {
+          mainCurrency: 'COP',
+          name: 'Family Team',
+          activePeriod: {
+            periodType: 'monthly',
+            month: 7,
+            year: 2026,
+            customStart: null,
+            customEnd: null,
+          },
+        },
         membership: { role: 'admin' },
       }),
     };
@@ -56,6 +66,7 @@ describe('CreateBudgetComponent', () => {
 
     mockI18nService = {
       translate: vi.fn((key: string) => key),
+      locale: vi.fn().mockReturnValue('es-CO'),
     };
 
     mockParamMapGet = vi.fn().mockReturnValue(null);
@@ -107,16 +118,20 @@ describe('CreateBudgetComponent', () => {
   });
 
   it('should call budgetService.create and navigate on valid submit in create mode', async () => {
+    await fixture.whenStable();
     component.name = 'Groceries';
     component.categoryId = 'cat-1';
     component.plannedAmount = 100000;
-    component.periodType = 'monthly';
-    component.month = 6;
-    component.year = 2026;
 
     await component.submit();
 
-    expect(mockBudgetService.create).toHaveBeenCalled();
+    expect(mockBudgetService.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        periodType: 'monthly',
+        month: 7,
+        year: 2026,
+      }),
+    );
     expect(mockRouter.navigateByUrl).toHaveBeenCalledWith('/app/budgets');
   });
 
@@ -130,42 +145,32 @@ describe('CreateBudgetComponent', () => {
     expect(component.budgetId()).toBe('budget-id-edit');
     expect(component.name).toBe('Mock Budget');
     expect(component.plannedAmount).toBe(150000);
+    await component.submit();
+    expect(mockBudgetService.update).toHaveBeenCalledWith(
+      'budget-id-edit',
+      expect.objectContaining({
+        periodType: 'monthly',
+        month: 5,
+        year: 2026,
+      }),
+    );
   });
-  it("copies a monthly budget into the following month as a new budget", async () => {
+  it("copies a budget into the currently configured family period", async () => {
     mockParamMapGet.mockReturnValue("budget-id-edit");
     mockRouteData["mode"] = "copy";
     await component["load"]();
     expect(component.isCopy()).toBe(true);
     expect(component.isEdit()).toBe(false);
-    expect(component.month).toBe(6);
+    expect(component.month).toBe(7);
     expect(component.year).toBe(2026);
     await component.submit();
-    expect(mockBudgetService.create).toHaveBeenCalled();
+    expect(mockBudgetService.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        periodType: 'monthly',
+        month: 7,
+        year: 2026,
+      }),
+    );
     expect(mockBudgetService.update).not.toHaveBeenCalled();
-  });
-
-  it("rolls a December monthly copy into January of the next year", () => {
-    component["prepareCopyPeriod"]({
-      periodType: "monthly",
-      month: 12,
-      year: 2026,
-      startDate: { toDate: () => new Date(2026, 11, 1) },
-    } as any);
-    expect(component.month).toBe(1);
-    expect(component.year).toBe(2027);
-  });
-
-  it("advances yearly copies and requires new dates for custom copies", () => {
-    component["prepareCopyPeriod"]({
-      periodType: "yearly",
-      year: 2026,
-      startDate: { toDate: () => new Date(2026, 0, 1) },
-    } as any);
-    expect(component.year).toBe(2027);
-    component.customStart = "2026-01-01";
-    component.customEnd = "2026-01-31";
-    component["prepareCopyPeriod"]({ periodType: "custom" } as any);
-    expect(component.customStart).toBe("");
-    expect(component.customEnd).toBe("");
   });
 });

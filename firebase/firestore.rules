@@ -101,6 +101,54 @@ service cloud.firestore {
       return periodType in ["monthly", "yearly", "custom"];
     }
 
+    function hasNoActivePeriod(data) {
+      return !data.keys().hasAny(["activePeriod"]) || data.activePeriod == null;
+    }
+
+    function validMonthlyActivePeriod(period) {
+      return period.periodType == "monthly"
+        && period.month is number
+        && period.month >= 1
+        && period.month <= 12
+        && period.year is number
+        && period.year >= 2020
+        && period.year <= 2100
+        && period.customStart == null
+        && period.customEnd == null;
+    }
+
+    function validYearlyActivePeriod(period) {
+      return period.periodType == "yearly"
+        && period.month == null
+        && period.year is number
+        && period.year >= 2020
+        && period.year <= 2100
+        && period.customStart == null
+        && period.customEnd == null;
+    }
+
+    function validCustomActivePeriod(period) {
+      return period.periodType == "custom"
+        && period.month == null
+        && period.year == null
+        && period.customStart is timestamp
+        && period.customEnd is timestamp
+        && period.customStart <= period.customEnd;
+    }
+
+    function validFamilyActivePeriod(data) {
+      return hasNoActivePeriod(data)
+        || (
+          data.activePeriod is map
+          && data.activePeriod.keys().hasOnly(["periodType", "month", "year", "customStart", "customEnd"])
+          && (
+            validMonthlyActivePeriod(data.activePeriod)
+            || validYearlyActivePeriod(data.activePeriod)
+            || validCustomActivePeriod(data.activePeriod)
+          )
+        );
+    }
+
     function validBudgetStatus(status) {
       return status in ["active", "inactive"];
     }
@@ -159,6 +207,7 @@ service cloud.firestore {
         && request.resource.data.ownerUserId == request.auth.uid
         && request.resource.data.name is string
         && validCurrency(request.resource.data.mainCurrency)
+        && validFamilyActivePeriod(request.resource.data)
         && validFamilyStatus(request.resource.data.status);
 
       allow update: if isOwner(familyId)
@@ -166,6 +215,7 @@ service cloud.firestore {
         && request.resource.data.ownerUserId == resource.data.ownerUserId
         && request.resource.data.name is string
         && validCurrency(request.resource.data.mainCurrency)
+        && validFamilyActivePeriod(request.resource.data)
         && validFamilyStatus(request.resource.data.status);
 
       allow delete: if false;

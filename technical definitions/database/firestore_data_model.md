@@ -147,6 +147,13 @@ Use an auto-generated Firestore ID.
       "name": "Garcia Family",
       "mainCurrency": "COP",
       "ownerUserId": "user_123",
+      "activePeriod": {
+        "periodType": "monthly",
+        "month": 6,
+        "year": 2026,
+        "customStart": null,
+        "customEnd": null
+      },
       "createdAt": "2026-06-04T10:00:00Z",
       "updatedAt": "2026-06-04T10:00:00Z",
       "status": "active"
@@ -160,6 +167,7 @@ Use an auto-generated Firestore ID.
 | name | string | yes | Family name |
 | mainCurrency | string | yes | COP or USD |
 | ownerUserId | string | yes | User ID of the owner |
+| activePeriod | map | no | Family-wide active period used by dashboard and new budgets |
 | createdAt | timestamp | yes | Creation date |
 | updatedAt | timestamp | yes | Last update date |
 | status | string | yes | active or inactive |
@@ -169,6 +177,8 @@ Use an auto-generated Firestore ID.
 Each family has one main currency in the MVP.
 
 The MVP does not support mixed currencies inside the same family.
+
+Existing family documents without activePeriod should fall back to the current monthly period in the client until Settings is saved.
 
 ---
 

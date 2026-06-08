@@ -134,6 +134,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'accounts/:id/edit',
+        canActivate: [adminOrOwnerGuard],
+        loadComponent: () =>
+          import('./features/accounts/create-account.component').then(
+            (module) => module.CreateAccountComponent,
+          ),
+      },
+      {
         path: 'categories',
         loadComponent: () =>
           import('./features/categories/categories-list.component').then(

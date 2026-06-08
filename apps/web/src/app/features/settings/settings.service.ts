@@ -4,7 +4,7 @@ import { doc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { AuthService } from '../../core/auth/auth.service';
 import { FamilyContextService } from '../../core/family-context/family-context.service';
 import { firestore } from '../../core/firebase/firebase';
-import { UserLanguage, UserProfile } from '../../shared/models/domain.models';
+import { ActivePeriod, UserLanguage, UserProfile } from '../../shared/models/domain.models';
 
 @Injectable({ providedIn: 'root' })
 export class SettingsService {
@@ -41,6 +41,18 @@ export class SettingsService {
     }
     await updateDoc(doc(firestore, `families/${familyId}`), {
       name: name.trim(),
+      updatedAt: serverTimestamp(),
+    });
+  }
+
+  async updateFamilyActivePeriod(activePeriod: ActivePeriod): Promise<void> {
+    const familyId = this.familyContext.selectedFamilyId();
+    if (!familyId) {
+      throw new Error('Selecciona una familia.');
+    }
+
+    await updateDoc(doc(firestore, `families/${familyId}`), {
+      activePeriod,
       updatedAt: serverTimestamp(),
     });
   }

@@ -7,7 +7,11 @@ import { SelectedFamilyService } from '../../core/family-context/selected-family
 import { I18nService } from '../../core/i18n/i18n.service';
 import { PeriodService } from '../../core/period/period.service';
 import { Currency, UserLanguage, UserProfile } from '../../shared/models/domain.models';
-import { ReportPeriodType } from '../../shared/utils/period';
+import {
+  ReportPeriodType,
+  activePeriodToState,
+  stateToActivePeriod,
+} from '../../shared/utils/period';
 import { SettingsService } from './settings.service';
 
 @Component({
@@ -65,11 +69,11 @@ import { SettingsService } from './settings.service';
 
         <form class="space-y-5 rounded-lg border border-neutral-200 bg-white p-4" (ngSubmit)="savePeriod()">
           <h3 class="font-semibold text-neutral-900 border-b border-neutral-100 pb-2">Periodo de registro y control</h3>
-          <p class="text-xs text-neutral-500">Define el periodo activo para el registro y visualizacion de tus movimientos en el Dashboard.</p>
+          <p class="text-xs text-neutral-500">Define el periodo activo de la familia para el Dashboard y nuevos presupuestos.</p>
 
           <label class="block">
             <span class="text-sm font-medium text-neutral-800">Tipo de periodo</span>
-            <select name="periodType" [(ngModel)]="periodType" class="mt-2 w-full rounded-lg border border-neutral-300 px-3 py-3">
+            <select name="periodType" [(ngModel)]="periodType" [disabled]="!isOwner()" class="mt-2 w-full rounded-lg border border-neutral-300 px-3 py-3 disabled:bg-neutral-100">
               <option value="monthly">Mensual</option>
               <option value="yearly">Anual</option>
               <option value="custom">Personalizado</option>
@@ -80,27 +84,27 @@ import { SettingsService } from './settings.service';
             <div class="grid grid-cols-2 gap-3">
               <label class="block">
                 <span class="text-xs font-medium text-neutral-700">Mes</span>
-                <input name="month" type="number" min="1" max="12" inputmode="numeric" [(ngModel)]="month" class="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-3" />
+                <input name="month" type="number" min="1" max="12" inputmode="numeric" [(ngModel)]="month" [disabled]="!isOwner()" class="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-3 disabled:bg-neutral-100" />
               </label>
               <label class="block">
                 <span class="text-xs font-medium text-neutral-700">Ano</span>
-                <input name="year" type="number" inputmode="numeric" [(ngModel)]="year" class="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-3" />
+                <input name="year" type="number" inputmode="numeric" [(ngModel)]="year" [disabled]="!isOwner()" class="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-3 disabled:bg-neutral-100" />
               </label>
             </div>
           } @else if (periodType === 'yearly') {
             <label class="block">
               <span class="text-xs font-medium text-neutral-700">Ano</span>
-              <input name="year" type="number" inputmode="numeric" [(ngModel)]="year" class="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-3" />
+              <input name="year" type="number" inputmode="numeric" [(ngModel)]="year" [disabled]="!isOwner()" class="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-3 disabled:bg-neutral-100" />
             </label>
           } @else if (periodType === 'custom') {
             <div class="grid grid-cols-2 gap-3">
               <label class="block">
                 <span class="text-xs font-medium text-neutral-700">Fecha inicio</span>
-                <input name="customStart" type="date" [(ngModel)]="customStart" class="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-3" />
+                <input name="customStart" type="date" [(ngModel)]="customStart" [disabled]="!isOwner()" class="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-3 disabled:bg-neutral-100" />
               </label>
               <label class="block">
                 <span class="text-xs font-medium text-neutral-700">Fecha fin</span>
-                <input name="customEnd" type="date" [(ngModel)]="customEnd" class="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-3" />
+                <input name="customEnd" type="date" [(ngModel)]="customEnd" [disabled]="!isOwner()" class="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-3 disabled:bg-neutral-100" />
               </label>
             </div>
           }
@@ -112,7 +116,7 @@ import { SettingsService } from './settings.service';
             <p class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{ periodError() }}</p>
           }
 
-          <button type="submit" [disabled]="savingPeriod()" class="w-full rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50">
+          <button type="submit" [disabled]="savingPeriod() || !isOwner()" class="w-full rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50">
             {{ savingPeriod() ? 'Guardando...' : 'Guardar periodo' }}
           </button>
         </form>
@@ -178,6 +182,11 @@ export class SettingsComponent {
   }
 
   async savePeriod(): Promise<void> {
+    if (!this.isOwner()) {
+      this.periodError.set('Solo el propietario puede cambiar el periodo de la familia.');
+      return;
+    }
+
     this.savingPeriod.set(true);
     this.periodError.set(null);
     this.periodMessage.set(null);
@@ -194,14 +203,17 @@ export class SettingsComponent {
         }
       }
 
-      this.periodService.update({
+      const periodState = {
         periodType: this.periodType,
         month: this.month,
         year: this.year,
         customStart: this.customStart,
         customEnd: this.customEnd,
-      });
-      this.periodMessage.set('Periodo de registro guardado.');
+      };
+      const activePeriod = stateToActivePeriod(periodState);
+      await this.settings.updateFamilyActivePeriod(activePeriod);
+      this.periodService.update(periodState);
+      this.periodMessage.set('Periodo de la familia guardado.');
     } catch (error) {
       this.periodError.set(error instanceof Error ? error.message : 'No fue posible guardar el periodo.');
     } finally {
@@ -227,7 +239,8 @@ export class SettingsComponent {
       this.currency.set(context.family.mainCurrency);
       this.isOwner.set(context.membership.role === 'owner');
 
-      const p = this.periodService.state();
+      const p = activePeriodToState(context.family.activePeriod);
+      this.periodService.update(p);
       this.periodType = p.periodType;
       this.month = p.month;
       this.year = p.year;

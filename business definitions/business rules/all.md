@@ -248,6 +248,8 @@ Every budget must have a valid period.
 * A monthly budget must have a month and year.
 * A yearly budget must have a year.
 * A custom budget must have a start date and an end date.
+* New budgets use the active family period configured in Settings.
+* Changing the active family period must not change the period stored on existing budgets.
 * For custom budgets, the start date must be before the end date.
 
 ### Reason
@@ -275,9 +277,7 @@ A family should not have duplicate budgets for the same category and period.
 * Different categories can have budgets for the same period.
 * A completed budget can be copied to create a new budget for a later period.
 * Copying preserves the name, category, planned amount, and currency.
-* Monthly copies default to the following month, including the year rollover from December to January.
-* Yearly copies default to the following year.
-* Custom-period copies require the user to select a new start date and end date.
+* Copied budgets use the active family period configured in Settings.
 * A copied budget is a new budget and does not inherit spent amount, remaining amount, percentage used, or matched transactions.
 * The copied budget remains subject to the duplicate category-and-period validation.
 

@@ -134,7 +134,7 @@ export class BudgetsListComponent {
   }
 
   copyLabel(): string {
-    return this.i18n.translate('Copiar al siguiente periodo');
+    return this.i18n.translate('Copiar al periodo configurado');
   }
 
   money(value: number): string {

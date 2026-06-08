@@ -2,10 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   query,
   serverTimestamp,
   setDoc,
+  updateDoc,
   where,
 } from 'firebase/firestore';
 
@@ -19,6 +21,10 @@ export interface CreateAccountInput {
   type: AccountType;
   initialBalance: number;
   currency: Currency;
+}
+
+export interface UpdateAccountInput {
+  name: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -63,11 +69,51 @@ export class AccountService {
     return accountRef.id;
   }
 
+  async getById(accountId: string): Promise<Account> {
+    const familyId = this.requireFamilyId();
+    const accountRef = doc(firestore, `families/${familyId}/accounts/${accountId}`);
+    const snapshot = await getDoc(accountRef);
+
+    if (!snapshot.exists()) {
+      throw new Error('Cuenta no encontrada.');
+    }
+
+    return snapshot.data() as Account;
+  }
+
+  async update(accountId: string, input: UpdateAccountInput): Promise<void> {
+    this.requireUser('actualizar');
+    const familyId = this.requireFamilyId();
+    const accountRef = doc(firestore, `families/${familyId}/accounts/${accountId}`);
+
+    await updateDoc(accountRef, {
+      name: input.name.trim(),
+      updatedAt: serverTimestamp(),
+    });
+  }
+
+  async deactivate(accountId: string): Promise<void> {
+    this.requireUser('desactivar');
+    const familyId = this.requireFamilyId();
+    const accountRef = doc(firestore, `families/${familyId}/accounts/${accountId}`);
+
+    await updateDoc(accountRef, {
+      status: 'inactive',
+      updatedAt: serverTimestamp(),
+    });
+  }
+
   private requireFamilyId(): string {
     const familyId = this.familyContext.selectedFamilyId();
     if (!familyId) {
       throw new Error('Selecciona una familia para continuar.');
     }
     return familyId;
+  }
+
+  private requireUser(action: string): void {
+    if (!this.auth.currentUser()) {
+      throw new Error(`Debes iniciar sesion para ${action} una cuenta.`);
+    }
   }
 }

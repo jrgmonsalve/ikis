@@ -1,6 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { SelectedFamilyService } from '../../core/family-context/selected-family.service';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -24,7 +24,9 @@ import { NumericFormatterDirective } from '../../shared/directives/numeric-forma
             <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
           </svg>
         </a>
-        <h1 class="text-2xl font-semibold text-neutral-950">Crear cuenta</h1>
+        <h1 class="text-2xl font-semibold text-neutral-950">
+          {{ isEdit() ? 'Editar cuenta' : 'Crear cuenta' }}
+        </h1>
       </div>
       <p class="mt-2 text-sm text-neutral-500 pl-13">{{ familyCurrencyLabel() }}</p>
 
@@ -47,6 +49,8 @@ import { NumericFormatterDirective } from '../../shared/directives/numeric-forma
             id="type"
             name="type"
             [(ngModel)]="type"
+            [disabled]="isEdit()"
+            [class.floating-filled]="isEdit()"
             class="floating-select appearance-none bg-white pr-10"
           >
             <option value="savings">Ahorros</option>
@@ -69,6 +73,8 @@ import { NumericFormatterDirective } from '../../shared/directives/numeric-forma
             [(ngModel)]="initialBalance"
             appNumericFormatter
             required
+            [disabled]="isEdit()"
+            [class.floating-filled]="isEdit()"
             placeholder=" "
             class="floating-input"
           />
@@ -86,7 +92,7 @@ import { NumericFormatterDirective } from '../../shared/directives/numeric-forma
           [disabled]="saving()"
           class="w-full rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {{ saving() ? 'Guardando...' : 'Guardar cuenta' }}
+          {{ saving() ? 'Guardando...' : (isEdit() ? 'Guardar cambios' : 'Guardar cuenta') }}
         </button>
       </form>
     </section>
@@ -96,12 +102,16 @@ export class CreateAccountComponent {
   private readonly accountService = inject(AccountService);
   private readonly selectedFamily = inject(SelectedFamilyService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly i18n = inject(I18nService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   name = '';
   type: AccountType = 'savings';
   initialBalance = 0;
   readonly currency = signal<Currency>('COP');
+  readonly isEdit = signal(false);
+  readonly accountId = signal<string | null>(null);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
 
@@ -118,7 +128,7 @@ export class CreateAccountComponent {
       this.error.set('Ingresa el nombre de la cuenta.');
       return;
     }
-    if (!Number.isFinite(this.initialBalance) || this.initialBalance < 0) {
+    if (!this.isEdit() && (!Number.isFinite(this.initialBalance) || this.initialBalance < 0)) {
       this.error.set('El saldo inicial debe ser cero o mayor.');
       return;
     }
@@ -126,15 +136,20 @@ export class CreateAccountComponent {
     this.saving.set(true);
     this.error.set(null);
     try {
-      await this.accountService.create({
-        name: this.name,
-        type: this.type,
-        initialBalance: this.initialBalance,
-        currency: this.currency(),
-      });
+      const id = this.accountId();
+      if (this.isEdit() && id) {
+        await this.accountService.update(id, { name: this.name });
+      } else {
+        await this.accountService.create({
+          name: this.name,
+          type: this.type,
+          initialBalance: this.initialBalance,
+          currency: this.currency(),
+        });
+      }
       await this.router.navigateByUrl('/app/accounts');
     } catch (error) {
-      this.error.set(error instanceof Error ? error.message : 'No fue posible crear la cuenta.');
+      this.error.set(error instanceof Error ? error.message : 'No fue posible guardar la cuenta.');
     } finally {
       this.saving.set(false);
     }
@@ -148,8 +163,21 @@ export class CreateAccountComponent {
         return;
       }
       this.currency.set(context.family.mainCurrency);
+
+      const id = this.route.snapshot.paramMap.get('id');
+      if (id) {
+        this.isEdit.set(true);
+        this.accountId.set(id);
+        const account = await this.accountService.getById(id);
+        this.name = account.name;
+        this.type = account.type;
+        this.initialBalance = account.initialBalance;
+        this.currency.set(account.currency);
+      }
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'No fue posible cargar la familia.');
+    } finally {
+      this.cdr.detectChanges();
     }
   }
 }

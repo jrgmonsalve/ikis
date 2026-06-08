@@ -10,8 +10,17 @@ export type AccountType = 'savings' | 'cash' | 'digital_wallet' | 'credit_card';
 export type TransactionType = 'income' | 'expense' | 'transfer';
 export type TransactionStatus = 'active' | 'cancelled';
 export type TransactionSource = 'manual' | 'recurring_payment';
-export type BudgetPeriodType = 'monthly' | 'yearly' | 'custom';
+export type ActivePeriodType = 'monthly' | 'yearly' | 'custom';
+export type BudgetPeriodType = ActivePeriodType;
 export type RecurringFrequency = 'weekly' | 'biweekly' | 'monthly' | 'yearly' | 'custom';
+
+export interface ActivePeriod {
+  periodType: ActivePeriodType;
+  month?: number | null;
+  year?: number | null;
+  customStart?: Timestamp | null;
+  customEnd?: Timestamp | null;
+}
 
 export interface UserProfile {
   id: string;
@@ -32,6 +41,7 @@ export interface Family {
   name: string;
   mainCurrency: Currency;
   ownerUserId: string;
+  activePeriod?: ActivePeriod | null;
   createdAt: Timestamp;
   updatedAt: Timestamp;
   status: EntityStatus;
