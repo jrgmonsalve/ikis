@@ -42,8 +42,8 @@ import { FamilyService } from './family.service';
           <p class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{{ error() }}</p>
         }
 
-        <button class="w-full rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white" type="submit">
-          Crear familia
+        <button class="w-full rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50" type="submit" [disabled]="saving()">
+          {{ saving() ? 'Guardando...' : 'Crear familia' }}
         </button>
       </form>
     </section>
@@ -56,18 +56,27 @@ export class CreateFamilyComponent {
   name = '';
   currency: Currency = 'COP';
   readonly error = signal<string | null>(null);
+  readonly saving = signal(false);
 
   async submit(): Promise<void> {
+    if (this.saving()) {
+      return;
+    }
+
     if (!this.name.trim()) {
       this.error.set('Ingresa un nombre de familia.');
       return;
     }
 
     try {
+      this.saving.set(true);
+      this.error.set(null);
       await this.familyService.createFamily(this.name, this.currency);
       await this.router.navigateByUrl('/app/dashboard');
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'No se pudo crear la familia.');
+    } finally {
+      this.saving.set(false);
     }
   }
 }

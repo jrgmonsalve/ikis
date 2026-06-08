@@ -110,6 +110,7 @@ The screen should include:
   - COP
   - USD
 - Create family button.
+- Loading state while the family is being created.
 
 ## Main Actions
 
@@ -126,6 +127,7 @@ Possible messages:
 - Family name is required.
 - Main currency is required.
 - Unable to create family. Please try again.
+- Repeated submissions must not create duplicate families for the same user and normalized name.
 
 ## Mobile Behavior
 

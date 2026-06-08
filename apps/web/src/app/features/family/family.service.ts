@@ -16,6 +16,10 @@ interface CreateFamilyResponse {
   familyId: string;
 }
 
+function normalizeFamilyName(name: string): string {
+  return name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('es-CO');
+}
+
 @Injectable({ providedIn: 'root' })
 export class FamilyService {
   private readonly auth = inject(AuthService);
@@ -25,6 +29,15 @@ export class FamilyService {
     const user = this.auth.currentUser();
     if (!user) {
       throw new Error('Debes iniciar sesion para crear una familia.');
+    }
+
+    const normalizedName = normalizeFamilyName(name);
+    const existingFamily = (await this.listCurrentUserFamilies()).find(
+      (item) => normalizeFamilyName(item.family.name) === normalizedName,
+    );
+    if (existingFamily) {
+      this.familyContext.selectFamily(existingFamily.family.id);
+      return existingFamily.family.id;
     }
 
     const createFamilyFn = httpsCallable<{ name: string; mainCurrency: Currency }, CreateFamilyResponse>(
