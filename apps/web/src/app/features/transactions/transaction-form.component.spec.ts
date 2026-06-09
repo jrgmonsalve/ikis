@@ -45,6 +45,7 @@ describe('TransactionFormComponent', () => {
         { id: 'cat-1', name: 'Food' },
         { id: 'cat-2', name: 'Leisure' },
       ]),
+      listActiveSubcategories: vi.fn().mockResolvedValue([]),
     };
 
     mockRouter = {
@@ -109,6 +110,7 @@ describe('TransactionFormComponent', () => {
       amount: 12000,
       accountId: 'acc-1',
       categoryId: 'cat-1',
+      subcategoryId: null,
       description: 'Lunch',
       transactionDate: expect.any(String),
     });
@@ -136,9 +138,51 @@ describe('TransactionFormComponent', () => {
       amount: 85000,
       accountId: 'acc-1',
       categoryId: 'cat-1',
+      subcategoryId: null,
       description: 'Updated Description',
       transactionDate: expect.any(String),
     });
     expect(mockRouter.navigateByUrl).toHaveBeenCalledWith('/app/dashboard');
+  });
+
+  it('should require a subcategory when the selected category has active subcategories', async () => {
+    mockCategoryService.listActiveSubcategories.mockResolvedValue([
+      { id: 'sub-1', name: 'Groceries', categoryId: 'cat-1' },
+    ]);
+
+    component.mode.set('expense');
+    component.amount = 12000;
+    component.accountId = 'acc-1';
+    component.categoryId = 'cat-1';
+    await component['loadSubcategories']('cat-1');
+
+    await component.submit();
+
+    expect(component.error()).toBe('Selecciona una subcategoria.');
+    expect(mockTransactionService.createExpense).not.toHaveBeenCalled();
+  });
+
+  it('should send subcategoryId when a required subcategory is selected', async () => {
+    mockCategoryService.listActiveSubcategories.mockResolvedValue([
+      { id: 'sub-1', name: 'Groceries', categoryId: 'cat-1' },
+    ]);
+
+    component.mode.set('expense');
+    component.amount = 12000;
+    component.accountId = 'acc-1';
+    component.categoryId = 'cat-1';
+    await component['loadSubcategories']('cat-1');
+    component.subcategoryId = 'sub-1';
+
+    await component.submit();
+
+    expect(mockTransactionService.createExpense).toHaveBeenCalledWith({
+      amount: 12000,
+      accountId: 'acc-1',
+      categoryId: 'cat-1',
+      subcategoryId: 'sub-1',
+      description: '',
+      transactionDate: expect.any(String),
+    });
   });
 });

@@ -23,6 +23,7 @@ export interface ExpenseIncomeInput {
   amount: number;
   accountId: string;
   categoryId: string;
+  subcategoryId?: string | null;
   description?: string;
   transactionDate: string;
 }

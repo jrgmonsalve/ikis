@@ -97,6 +97,18 @@ export interface Category {
   status: EntityStatus;
 }
 
+export interface Subcategory {
+  id: string;
+  familyId: string;
+  categoryId: string;
+  name: string;
+  normalizedName: string;
+  createdByUserId: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  status: EntityStatus;
+}
+
 export interface Transaction {
   id: string;
   familyId: string;
@@ -107,6 +119,7 @@ export interface Transaction {
   sourceAccountId?: string;
   destinationAccountId?: string;
   categoryId?: string;
+  subcategoryId?: string | null;
   description?: string;
   transactionDate: Timestamp;
   createdByUserId: string;

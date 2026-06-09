@@ -27,4 +27,17 @@ describe('I18nService', () => {
     expect(service.translate(service.resolveSource('Settings'))).toBe('Configuracion');
     expect(service.locale()).toBe('es-CO');
   });
+
+  it('translates dashboard budget summary and subcategory labels to English', () => {
+    const service = TestBed.inject(I18nService);
+
+    service.setLanguage('en');
+
+    expect(service.translate('Resumen presupuestal')).toBe('Budget summary');
+    expect(service.translate('Total presupuesto')).toBe('Total budget');
+    expect(service.translate('Saldo esperado')).toBe('Expected balance');
+    expect(service.translate('Subcategorias')).toBe('Subcategories');
+    expect(service.translate('Selecciona una subcategoria.')).toBe('Select a subcategory.');
+    expect(service.translate('Desactivar esta subcategoria?')).toBe('Deactivate this subcategory?');
+  });
 });

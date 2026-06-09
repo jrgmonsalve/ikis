@@ -40,6 +40,7 @@ The rules assume this structure:
       invitations/{invitationId}
       accounts/{accountId}
       categories/{categoryId}
+        subcategories/{subcategoryId}
       transactions/{transactionId}
       budgets/{budgetId}
       recurringPayments/{recurringPaymentId}
@@ -84,6 +85,7 @@ The rules deny direct deletion for:
 - Invitations
 - Accounts
 - Categories
+- Subcategories
 - Transactions
 - Budgets
 - Recurring payments
@@ -104,6 +106,7 @@ Can:
 - Manage invitations.
 - Manage accounts.
 - Manage categories.
+- Manage subcategories.
 - Manage budgets.
 - Manage recurring payments.
 - Read and create transactions.
@@ -116,6 +119,7 @@ Can:
 - Read family data.
 - Manage accounts.
 - Manage categories.
+- Manage subcategories.
 - Manage budgets.
 - Manage recurring payments.
 - Read and create transactions.
@@ -133,12 +137,13 @@ Can:
 
 - Read family data.
 - Create transactions.
-- View accounts, categories, budgets, recurring payments, reports, and dashboard data.
+- View accounts, categories, subcategories, budgets, recurring payments, reports, and dashboard data.
 
 Cannot:
 
 - Manage accounts.
 - Manage categories.
+- Manage subcategories.
 - Manage budgets.
 - Manage recurring payments.
 - Manage members.
@@ -161,10 +166,12 @@ Operations like these affect multiple documents:
 
 Recommended implementation:
 
-- Use Cloud Functions for critical financial writes, or
-- Use Firestore client transactions carefully.
+- Use Cloud Functions for critical financial writes.
+- Keep direct client writes to transactions blocked.
 
-The generated rules allow transaction creation by active members, but account balance updates must still be handled atomically in the application or server-side logic.
+The generated rules should allow members to read transactions but should not allow direct transaction creation, update, or delete from the client.
+
+Cloud Functions that create income or expense transactions must validate any subcategoryId against the selected family and parent category.
 
 ---
 

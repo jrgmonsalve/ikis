@@ -1,4 +1,4 @@
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Transaction as FirestoreTransaction } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
 import { assertAuthenticated, assertPositiveAmount, assertString } from '../shared/errors';
@@ -13,6 +13,7 @@ interface CreateTransactionInput {
   destinationAccountId?: string;
   description?: string;
   transactionDate?: string;
+  subcategoryId?: string | null;
 }
 
 export const createExpense = onCall<CreateTransactionInput>(async (request) => {
@@ -27,6 +28,8 @@ export const createExpense = onCall<CreateTransactionInput>(async (request) => {
   await assertActiveMember(familyId, uid);
   const family = await getActiveFamily(familyId);
   const transactionDate = toTimestamp(request.data.transactionDate ?? new Date().toISOString());
+  const subcategoryId = normalizeOptionalSubcategoryId(request.data.subcategoryId);
+  await assertSubcategorySelection(familyId, categoryId, subcategoryId);
 
   return db.runTransaction(async (tx) => {
     const accountRef = db.doc(`families/${familyId}/accounts/${accountId}`);
@@ -38,6 +41,9 @@ export const createExpense = onCall<CreateTransactionInput>(async (request) => {
     }
     if (!categorySnapshot.exists || categorySnapshot.get('status') !== 'active') {
       throw new HttpsError('not-found', 'Category was not found.');
+    }
+    if (subcategoryId) {
+      await assertActiveSubcategoryInTransaction(tx, familyId, categoryId, subcategoryId);
     }
 
     const account = accountSnapshot.data() as AccountDoc;
@@ -52,6 +58,7 @@ export const createExpense = onCall<CreateTransactionInput>(async (request) => {
       currency: family.mainCurrency,
       accountId,
       categoryId,
+      subcategoryId,
       description: request.data.description?.trim() || null,
       transactionDate,
       createdByUserId: uid,
@@ -82,6 +89,8 @@ export const createIncome = onCall<CreateTransactionInput>(async (request) => {
   await assertActiveMember(familyId, uid);
   const family = await getActiveFamily(familyId);
   const transactionDate = toTimestamp(request.data.transactionDate ?? new Date().toISOString());
+  const subcategoryId = normalizeOptionalSubcategoryId(request.data.subcategoryId);
+  await assertSubcategorySelection(familyId, categoryId, subcategoryId);
 
   return db.runTransaction(async (tx) => {
     const accountRef = db.doc(`families/${familyId}/accounts/${accountId}`);
@@ -93,6 +102,9 @@ export const createIncome = onCall<CreateTransactionInput>(async (request) => {
     }
     if (!categorySnapshot.exists || categorySnapshot.get('status') !== 'active') {
       throw new HttpsError('not-found', 'Category was not found.');
+    }
+    if (subcategoryId) {
+      await assertActiveSubcategoryInTransaction(tx, familyId, categoryId, subcategoryId);
     }
 
     const account = accountSnapshot.data() as AccountDoc;
@@ -106,6 +118,7 @@ export const createIncome = onCall<CreateTransactionInput>(async (request) => {
       currency: family.mainCurrency,
       accountId,
       categoryId,
+      subcategoryId,
       description: request.data.description?.trim() || null,
       transactionDate,
       createdByUserId: uid,
@@ -181,3 +194,51 @@ export const createTransfer = onCall<CreateTransactionInput>(async (request) => 
     return { transactionId: transactionRef.id };
   });
 });
+
+function normalizeOptionalSubcategoryId(value: unknown): string | null {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+  if (typeof value !== 'string') {
+    throw new HttpsError('invalid-argument', 'subcategoryId must be a string.');
+  }
+  return value;
+}
+
+async function assertSubcategorySelection(
+  familyId: string,
+  categoryId: string,
+  subcategoryId: string | null,
+): Promise<void> {
+  const activeSubcategories = await db
+    .collection(`families/${familyId}/categories/${categoryId}/subcategories`)
+    .where('status', '==', 'active')
+    .limit(1)
+    .get();
+
+  if (!activeSubcategories.empty && !subcategoryId) {
+    throw new HttpsError('invalid-argument', 'Select a subcategory for this category.');
+  }
+}
+
+async function assertActiveSubcategoryInTransaction(
+  tx: FirestoreTransaction,
+  familyId: string,
+  categoryId: string,
+  subcategoryId: string,
+): Promise<void> {
+  const subcategoryRef = db.doc(
+    `families/${familyId}/categories/${categoryId}/subcategories/${subcategoryId}`,
+  );
+  const subcategorySnapshot = await tx.get(subcategoryRef);
+
+  if (!subcategorySnapshot.exists || subcategorySnapshot.get('status') !== 'active') {
+    throw new HttpsError('not-found', 'Subcategory was not found.');
+  }
+  if (
+    subcategorySnapshot.get('familyId') !== familyId ||
+    subcategorySnapshot.get('categoryId') !== categoryId
+  ) {
+    throw new HttpsError('invalid-argument', 'Subcategory does not belong to the selected category.');
+  }
+}

@@ -47,6 +47,7 @@ describe('budget calculations', () => {
   it('uses only matching active expenses inside the period', () => {
     const result = calculateBudgetProgress(budget, [
       transaction({ amount: 400 }),
+      transaction({ id: 'subcategory-expense', amount: 250, subcategoryId: 'groceries' }),
       transaction({ id: 'income', type: 'income', amount: 900 }),
       transaction({ id: 'other-category', categoryId: 'transport', amount: 300 }),
       transaction({
@@ -57,9 +58,9 @@ describe('budget calculations', () => {
     ]);
 
     expect(result).toEqual({
-      spentAmount: 400,
-      remainingAmount: 600,
-      percentageUsed: 40,
+      spentAmount: 650,
+      remainingAmount: 350,
+      percentageUsed: 65,
       exceeded: false,
     });
   });

@@ -17,6 +17,12 @@ describe('CreateCategoryComponent', () => {
     mockCategoryService = {
       create: vi.fn().mockResolvedValue('cat-123'),
       update: vi.fn().mockResolvedValue(undefined),
+      listActiveSubcategories: vi.fn().mockResolvedValue([
+        { id: 'sub-1', name: 'Groceries', categoryId: 'cat-edit-123' },
+      ]),
+      createSubcategory: vi.fn().mockResolvedValue('sub-2'),
+      updateSubcategory: vi.fn().mockResolvedValue(undefined),
+      deactivateSubcategory: vi.fn().mockResolvedValue(undefined),
       getById: vi.fn().mockResolvedValue({
         id: 'cat-edit-123',
         name: 'Restaurantes',
@@ -117,5 +123,40 @@ describe('CreateCategoryComponent', () => {
       icon: 'fa-utensils',
     });
     expect(mockRouter.navigateByUrl).toHaveBeenCalledWith('/app/categories');
+  });
+
+  it('should list and create subcategories in edit mode', async () => {
+    createComponent('cat-edit-123');
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(mockCategoryService.listActiveSubcategories).toHaveBeenCalledWith('cat-edit-123');
+    expect(component.subcategories()).toEqual([
+      { id: 'sub-1', name: 'Groceries', categoryId: 'cat-edit-123' },
+    ]);
+
+    component.subcategoryName = 'Fast food';
+    await component.saveSubcategory();
+
+    expect(mockCategoryService.createSubcategory).toHaveBeenCalledWith('cat-edit-123', {
+      name: 'Fast food',
+    });
+  });
+
+  it('should update and deactivate subcategories in edit mode', async () => {
+    vi.spyOn(globalThis, 'confirm').mockReturnValue(true);
+    createComponent('cat-edit-123');
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    component.startSubcategoryEdit({ id: 'sub-1', name: 'Groceries' } as any);
+    component.subcategoryName = 'Market';
+    await component.saveSubcategory();
+
+    expect(mockCategoryService.updateSubcategory).toHaveBeenCalledWith('cat-edit-123', 'sub-1', {
+      name: 'Market',
+    });
+
+    await component.deactivateSubcategory('sub-1');
+
+    expect(mockCategoryService.deactivateSubcategory).toHaveBeenCalledWith('cat-edit-123', 'sub-1');
   });
 });

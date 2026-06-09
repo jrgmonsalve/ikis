@@ -18,6 +18,7 @@ export const NUMERIC_FORMATTER_VALUE_ACCESSOR: Provider = {
 })
 export class NumericFormatterDirective implements ControlValueAccessor {
   private readonly el = inject(ElementRef<HTMLInputElement>);
+  private previousValue = '';
 
   private onChange: (value: number | null) => void = () => {};
   private onTouched: () => void = () => {};
@@ -28,11 +29,16 @@ export class NumericFormatterDirective implements ControlValueAccessor {
     const rawValue = inputEl.value;
     const selectionStart = inputEl.selectionStart;
 
+    const inputEvent = event as InputEvent;
+    const isDeletion = (inputEvent.inputType && inputEvent.inputType.startsWith('delete'))
+      || (inputEvent.inputType === undefined && rawValue.length < this.previousValue.length);
+
     // 1. Format the value
-    const formattedValue = this.formatNumberWithDots(rawValue);
+    const formattedValue = this.formatNumberWithDots(rawValue, isDeletion);
 
     // 2. Set formatted value on input
     inputEl.value = formattedValue;
+    this.previousValue = formattedValue;
 
     // 3. Restore cursor position
     if (selectionStart !== null) {
@@ -74,6 +80,7 @@ export class NumericFormatterDirective implements ControlValueAccessor {
     }
     const formatted = this.formatNumberWithDots(value);
     this.el.nativeElement.value = formatted;
+    this.previousValue = formatted;
   }
 
   registerOnChange(fn: (value: number | null) => void): void {
@@ -88,7 +95,7 @@ export class NumericFormatterDirective implements ControlValueAccessor {
     this.el.nativeElement.disabled = isDisabled;
   }
 
-  private formatNumberWithDots(val: number | string | null | undefined): string {
+  private formatNumberWithDots(val: number | string | null | undefined, isDeletion = false): string {
     if (val === null || val === undefined || val === '') return '';
 
     let str = '';
@@ -104,12 +111,15 @@ export class NumericFormatterDirective implements ControlValueAccessor {
     }
 
     // If there is a dot followed by 1 or 2 digits at the end and no comma, treat it as decimal
-    const lastDotIndex = str.lastIndexOf('.');
-    const commaIndex = str.indexOf(',');
-    if (commaIndex === -1 && lastDotIndex !== -1) {
-      const afterDot = str.substring(lastDotIndex + 1);
-      if (/^\d{1,2}$/.test(afterDot) && str.length > 4) {
-        str = str.substring(0, lastDotIndex) + ',' + afterDot;
+    // only if it's not a deletion event.
+    if (!isDeletion) {
+      const lastDotIndex = str.lastIndexOf('.');
+      const commaIndex = str.indexOf(',');
+      if (commaIndex === -1 && lastDotIndex !== -1) {
+        const afterDot = str.substring(lastDotIndex + 1);
+        if (/^\d{1,2}$/.test(afterDot)) {
+          str = str.substring(0, lastDotIndex) + ',' + afterDot;
+        }
       }
     }
 

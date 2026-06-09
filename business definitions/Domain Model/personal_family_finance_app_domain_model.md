@@ -42,6 +42,7 @@ The core entities are:
 - Invitation
 - Account
 - Category
+- Subcategory
 - Transaction
 - Budget
 - RecurringPayment
@@ -117,6 +118,7 @@ Represents a financial workspace where one or more users manage shared or person
 - A family has many family members.
 - A family has many accounts.
 - A family has many categories.
+- A family has many subcategories through categories.
 - A family has many transactions.
 - A family has many budgets.
 - A family has many recurring payments.
@@ -304,6 +306,7 @@ Represents a classification used for income and expenses.
 ## Relationships
 
 - A category belongs to one family.
+- A category can have many subcategories.
 - A category can be used by many transactions.
 - A category can be used by many budgets.
 - A category can be suggested for recurring payments.
@@ -321,7 +324,51 @@ The category color and icon help improve visual recognition in reports and trans
 
 ---
 
-# 9. Entity: Transaction
+# 9. Entity: Subcategory
+
+## Description
+
+Represents a more specific classification under a parent category.
+
+## Main Attributes
+
+- id
+- familyId
+- categoryId
+- name
+- normalizedName
+- createdByUserId
+- createdAt
+- updatedAt
+- status
+
+## Allowed Status Values
+
+- Active
+- Inactive
+
+## Relationships
+
+- A subcategory belongs to one category.
+- A subcategory belongs to the same family as its parent category.
+- A subcategory can be used by many income and expense transactions.
+- Transfers do not use subcategories.
+
+## Business Rules
+
+- A category cannot have two active subcategories with the same name.
+- Two different categories can have subcategories with the same name.
+- If a category has active subcategories, an income or expense must select one active subcategory.
+- If a category has no active subcategories, an income or expense is recorded directly under the category.
+- Subcategories with historical transactions should be deactivated instead of permanently deleted.
+
+## Notes
+
+Budgets remain tied to the parent category. A transaction with a subcategory still stores the parent categoryId.
+
+---
+
+# 10. Entity: Transaction
 
 ## Description
 
@@ -338,6 +385,7 @@ Represents a financial movement inside a family.
 - sourceAccountId
 - destinationAccountId
 - categoryId
+- subcategoryId
 - description
 - transactionDate
 - createdByUserId
@@ -362,6 +410,7 @@ Represents a financial movement inside a family.
 - A transaction is created by one user.
 - An income transaction belongs to one account and one category.
 - An expense transaction belongs to one account and one category.
+- An income or expense may reference one subcategory under its category.
 - A transfer transaction has one source account and one destination account.
 - A transaction can be created from a recurring payment when the payment is marked as paid.
 
@@ -377,6 +426,7 @@ Represents a financial movement inside a family.
 - Transfer is not income or expense.
 - Transfer must not affect budget usage.
 - Transactions must only use accounts and categories from the same family.
+- If present, the transaction subcategory must belong to the selected category.
 - Historical transactions should remain available even if accounts or categories are later deactivated.
 
 ## Notes
@@ -385,7 +435,7 @@ A transaction should preserve historical accuracy. Future changes to account or 
 
 ---
 
-# 10. Entity: Budget
+# 11. Entity: Budget
 
 ## Description
 
@@ -435,6 +485,7 @@ Represents a planned spending limit for a category and period.
 - Income transactions do not affect budget usage.
 - Transfer transactions do not affect budget usage.
 - The expense category must match the budget category.
+- Expenses with subcategories are included through their parent category.
 - The expense transaction date must be inside the budget period.
 - The spent amount is the sum of matching expenses.
 - Remaining amount equals planned amount minus spent amount.
@@ -447,7 +498,7 @@ Calculated values such as spentAmount, remainingAmount, and percentageUsed can b
 
 ---
 
-# 11. Entity: RecurringPayment
+# 12. Entity: RecurringPayment
 
 ## Description
 
@@ -505,7 +556,7 @@ Recurring payments are not categories. They are independent domain concepts with
 
 ---
 
-# 12. Relationship Summary
+# 13. Relationship Summary
 
 ## User and Family
 
@@ -517,6 +568,7 @@ Recurring payments are not categories. They are independent domain concepts with
 
 - One family has many accounts.
 - One family has many categories.
+- One family has many subcategories through categories.
 - One family has many transactions.
 - One family has many budgets.
 - One family has many recurring payments.
@@ -535,6 +587,12 @@ Recurring payments are not categories. They are independent domain concepts with
 - One category can classify many expense transactions.
 - Transfers do not require a category.
 
+## Category and Subcategory
+
+- One category can have many subcategories.
+- One subcategory belongs to one category.
+- Subcategories are optional unless the selected category has active subcategories.
+
 ## Category and Budget
 
 - One category can have many budgets.
@@ -548,7 +606,7 @@ Recurring payments are not categories. They are independent domain concepts with
 
 ---
 
-# 13. Ownership and Access Rules
+# 14. Ownership and Access Rules
 
 ## Family Scope
 
@@ -558,6 +616,7 @@ This applies to:
 
 - Accounts
 - Categories
+- Subcategories
 - Transactions
 - Budgets
 - Recurring payments
@@ -578,7 +637,7 @@ Data from one family must never be mixed with data from another family.
 
 ---
 
-# 14. Language and Currency Rules
+# 15. Language and Currency Rules
 
 ## Language
 
@@ -620,7 +679,7 @@ The MVP does not include:
 
 ---
 
-# 15. Future Domain Concepts
+# 16. Future Domain Concepts
 
 The following concepts are out of scope for MVP and can be added in future versions:
 
@@ -638,7 +697,7 @@ The following concepts are out of scope for MVP and can be added in future versi
 
 ---
 
-# 16. Firestore Modeling Notes
+# 17. Firestore Modeling Notes
 
 This domain model should later be adapted to Cloud Firestore.
 
@@ -662,7 +721,7 @@ The Firestore data model should not be created only by translating entities dire
 
 ---
 
-# 17. Domain Model Summary
+# 18. Domain Model Summary
 
 The MVP domain model includes:
 
@@ -672,6 +731,7 @@ The MVP domain model includes:
 - Invitation
 - Account
 - Category
+- Subcategory
 - Transaction
 - Budget
 - RecurringPayment

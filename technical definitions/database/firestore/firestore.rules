@@ -83,6 +83,10 @@ service cloud.firestore {
       return status in ["active", "inactive"];
     }
 
+    function validSubcategoryStatus(status) {
+      return status in ["active", "inactive"];
+    }
+
     function validTransactionType(type) {
       return type in ["income", "expense", "transfer"];
     }
@@ -256,6 +260,30 @@ service cloud.firestore {
           && validCategoryStatus(request.resource.data.status);
 
         allow delete: if false;
+
+        match /subcategories/{subcategoryId} {
+          allow read: if isActiveMember(familyId);
+
+          allow create: if isAdminOrOwner(familyId)
+            && request.resource.data.id == subcategoryId
+            && request.resource.data.familyId == familyId
+            && request.resource.data.categoryId == categoryId
+            && request.resource.data.name is string
+            && request.resource.data.normalizedName is string
+            && request.resource.data.createdByUserId == request.auth.uid
+            && validSubcategoryStatus(request.resource.data.status);
+
+          allow update: if isAdminOrOwner(familyId)
+            && request.resource.data.id == resource.data.id
+            && request.resource.data.familyId == familyId
+            && request.resource.data.categoryId == categoryId
+            && request.resource.data.createdByUserId == resource.data.createdByUserId
+            && request.resource.data.name is string
+            && request.resource.data.normalizedName is string
+            && validSubcategoryStatus(request.resource.data.status);
+
+          allow delete: if false;
+        }
       }
 
       match /transactions/{transactionId} {

@@ -37,6 +37,7 @@ describe('DashboardComponent', () => {
       listActive: vi.fn().mockResolvedValue([
         { id: 'acc-1', name: 'Debit Card', type: 'savings', currentBalance: 250000, status: 'active' },
         { id: 'acc-2', name: 'Cash Wallet', type: 'cash', currentBalance: 50000, status: 'active' },
+        { id: 'acc-3', name: 'Credit Card', type: 'credit_card', currentBalance: 900000, status: 'active' },
       ]),
     };
 
@@ -63,6 +64,17 @@ describe('DashboardComponent', () => {
             endDate: { toDate: () => new Date('2026-06-30') },
           },
           progress: { spentAmount: 40000, remainingAmount: 60000, percentageUsed: 40, exceeded: false },
+        },
+        {
+          budget: {
+            id: 'bud-2',
+            name: 'Transport budget',
+            categoryId: 'cat-2',
+            plannedAmount: 80000,
+            startDate: { toDate: () => new Date('2026-06-01') },
+            endDate: { toDate: () => new Date('2026-06-30') },
+          },
+          progress: { spentAmount: 30000, remainingAmount: 50000, percentageUsed: 38, exceeded: false },
         },
       ]),
     };
@@ -171,15 +183,26 @@ describe('DashboardComponent', () => {
     expect(mockCategoryService.listActive).toHaveBeenCalled();
     expect(mockTransactionService.listRecent).toHaveBeenCalledWith(10);
 
-    expect(component.availableBalance()).toBe(300000); // 250k + 50k
+    expect(component.availableBalance()).toBe(300000); // 250k + 50k, excluding credit cards
     expect(component.familyName()).toBe('Family Team');
     expect(component.dateLabel(component.recentTransactions()[0])).toContain('10:30');
   });
 
   it('should correctly filter and map budgets active in the selected period', async () => {
     await fixture.whenStable();
-    expect(component.budgets().length).toBe(1);
+    expect(component.budgets().length).toBe(2);
     expect(component.budgets()[0].budget.name).toBe('Food budget');
+  });
+
+  it('should calculate budget summary against available balance excluding credit cards', async () => {
+    await fixture.whenStable();
+    const summary = component.budgetSummary();
+
+    expect(summary.totalBudgeted).toBe(180000);
+    expect(summary.totalExecuted).toBe(70000);
+    expect(summary.expectedAvailableBalance).toBe(110000);
+    expect(summary.actualAvailableBalance).toBe(300000);
+    expect(summary.difference).toBe(190000);
   });
 
   it('should correctly compute donut chart conic gradient and legend data', async () => {

@@ -31,6 +31,7 @@ Recommended structure:
     families/{familyId}/invitations/{invitationId}
     families/{familyId}/accounts/{accountId}
     families/{familyId}/categories/{categoryId}
+    families/{familyId}/categories/{categoryId}/subcategories/{subcategoryId}
     families/{familyId}/transactions/{transactionId}
     families/{familyId}/budgets/{budgetId}
     families/{familyId}/recurringPayments/{recurringPaymentId}
@@ -65,6 +66,7 @@ Each family document contains these subcollections:
 - invitations
 - accounts
 - categories
+- categories/{categoryId}/subcategories
 - transactions
 - budgets
 - recurringPayments
@@ -409,6 +411,62 @@ Recommended MVP approach:
 
 ---
 
+## Subcollection under categories: subcategories
+
+## Path
+
+    families/{familyId}/categories/{categoryId}/subcategories/{subcategoryId}
+
+## Purpose
+
+Stores optional subcategories used to classify income and expenses more specifically under a parent category.
+
+## Document ID
+
+Use an auto-generated Firestore ID.
+
+## Example Document
+
+    {
+      "id": "subcategory_123",
+      "familyId": "family_123",
+      "categoryId": "category_food",
+      "name": "Groceries",
+      "normalizedName": "groceries",
+      "createdByUserId": "user_123",
+      "createdAt": "2026-06-04T10:00:00Z",
+      "updatedAt": "2026-06-04T10:00:00Z",
+      "status": "active"
+    }
+
+## Fields
+
+| Field | Type | Required | Notes |
+|---|---|---:|---|
+| id | string | yes | Subcategory ID |
+| familyId | string | yes | Parent family ID |
+| categoryId | string | yes | Parent category ID |
+| name | string | yes | Subcategory display name |
+| normalizedName | string | yes | Lowercase name for duplicate validation inside the category |
+| createdByUserId | string | yes | Creator |
+| createdAt | timestamp | yes | Creation date |
+| updatedAt | timestamp | yes | Last update date |
+| status | string | yes | active or inactive |
+
+## Suggested Indexes
+
+- normalizedName + status
+
+## Notes
+
+Subcategory names are unique only under the parent category. Different categories may have subcategories with the same name.
+
+Subcategories are deactivated instead of physically deleted so historical transactions can keep their references.
+
+Budgets remain tied to the parent category, not to subcategories.
+
+---
+
 # 9. Subcollection: transactions
 
 ## Path
@@ -433,6 +491,7 @@ Use an auto-generated Firestore ID.
       "currency": "COP",
       "accountId": "account_nequi",
       "categoryId": "category_food",
+      "subcategoryId": "subcategory_groceries",
       "description": "Groceries",
       "transactionDate": "2026-06-04T00:00:00Z",
       "createdByUserId": "user_123",
@@ -476,6 +535,7 @@ Use an auto-generated Firestore ID.
 | sourceAccountId | string | conditional | Required for transfer |
 | destinationAccountId | string | conditional | Required for transfer |
 | categoryId | string | conditional | Required for income and expense |
+| subcategoryId | string | no | Required for income and expense only when the selected category has active subcategories |
 | description | string | no | Optional |
 | transactionDate | timestamp | yes | Financial date |
 | createdByUserId | string | yes | Creator |
@@ -499,6 +559,10 @@ Use an auto-generated Firestore ID.
 Reports and budgets should use transactionDate, not createdAt.
 
 Transaction creation should update account balances atomically.
+
+Income and expense transactions always store the parent categoryId. If a subcategory is selected, subcategoryId stores that specific subcategory.
+
+Budget usage continues to match by categoryId, so expenses with subcategories count toward the parent category budget.
 
 For MVP, transactions should not be physically deleted.
 
@@ -988,6 +1052,7 @@ Recommended structure:
       invitations/{invitationId}
       accounts/{accountId}
       categories/{categoryId}
+        subcategories/{subcategoryId}
       transactions/{transactionId}
       budgets/{budgetId}
       recurringPayments/{recurringPaymentId}

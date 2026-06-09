@@ -153,7 +153,31 @@ Duplicate categories create confusion in reports, budgets, and transaction class
 
 ---
 
-## BR-007: Transactions Must Belong to a Family
+## BR-007: Subcategory Uniqueness per Category
+
+### Title
+
+Subcategory uniqueness per category
+
+### Business Rule
+
+A category cannot have two active subcategories with the same name.
+
+### Details
+
+* Subcategory names must be unique inside the same parent category.
+* Two different categories can have active subcategories with the same name.
+* Subcategory comparison should ignore uppercase and lowercase differences.
+* Subcategories should be deactivated instead of physically deleted.
+* Historical transactions may keep referencing an inactive subcategory.
+
+### Reason
+
+Subcategories refine transaction classification without changing the main category used by reports and budgets.
+
+---
+
+## BR-008: Transactions Must Belong to a Family
 
 ### Title
 
@@ -168,6 +192,8 @@ Every transaction must belong to one family and must only use accounts and categ
 * A transaction must be created inside a specific family.
 * The selected account must belong to the same family.
 * The selected category must belong to the same family.
+* If selected, the subcategory must belong to the same family and selected category.
+* If the selected category has active subcategories, income and expense transactions must select one active subcategory.
 * For transfers, both source and destination accounts must belong to the same family.
 * A transaction cannot mix accounts or categories from different families.
 
@@ -177,7 +203,7 @@ Transactions must remain consistent with family data isolation. Mixing financial
 
 ---
 
-## BR-008: Transfer Is Not Income or Expense
+## BR-009: Transfer Is Not Income or Expense
 
 ### Title
 
@@ -196,6 +222,7 @@ A transfer between accounts must not be treated as income or expense.
 * Transfers must be excluded from expense reports.
 * Transfers must be excluded from income reports.
 * Transfers must not affect budget usage.
+* Transfers do not use categories or subcategories.
 
 ### Reason
 
@@ -203,7 +230,7 @@ A transfer only moves money between accounts. It does not represent new money re
 
 ---
 
-## BR-009: Budget Usage Calculation
+## BR-010: Budget Usage Calculation
 
 ### Title
 
@@ -219,6 +246,7 @@ A budget usage must be calculated only from expense transactions that match the 
 * Income transactions must not affect budget usage.
 * Transfer transactions must not affect budget usage.
 * The expense category must match the budget category.
+* Expenses with subcategories still affect the budget for their parent category.
 * The expense transaction date must be inside the budget period.
 * The spent amount is the sum of all matching expenses.
 * The remaining amount is calculated as planned amount minus spent amount.
@@ -230,7 +258,7 @@ Budgets are intended to control spending, not income or money transfers.
 
 ---
 
-## BR-010: Budget Period Validation
+## BR-011: Budget Period Validation
 
 ### Title
 
@@ -258,7 +286,7 @@ The system needs a clear period to calculate budget usage correctly.
 
 ---
 
-## BR-011: Budget Uniqueness per Family
+## BR-012: Budget Uniqueness per Family
 
 ### Title
 
@@ -287,7 +315,7 @@ Duplicate budgets for the same category and period would create confusion in cal
 
 ---
 
-## BR-012: Recurring Payment Does Not Automatically Create an Expense
+## BR-013: Recurring Payment Does Not Automatically Create an Expense
 
 ### Title
 
@@ -311,7 +339,7 @@ A pending payment is not the same as a real paid expense.
 
 ---
 
-## BR-013: Marking a Recurring Payment as Paid Creates an Expense
+## BR-014: Marking a Recurring Payment as Paid Creates an Expense
 
 ### Title
 
@@ -339,7 +367,7 @@ Once paid, the recurring payment becomes a real financial transaction.
 
 ---
 
-## BR-014: Reports Must Use Only Valid Transactions
+## BR-015: Reports Must Use Only Valid Transactions
 
 ### Title
 
@@ -355,6 +383,7 @@ Reports and dashboards must be calculated using valid transactions from the sele
 * Income reports must include only income transactions.
 * Transfer transactions must not be counted as income or expenses.
 * Budget reports must use only expense transactions that match the budget category and period.
+* Current category reports can group by main category even when transactions have subcategories.
 * Account balance reports must use valid transactions associated with each account.
 * Reports must only use data from the selected family.
 
@@ -364,7 +393,7 @@ Reports must reflect accurate financial information.
 
 ---
 
-## BR-015: Total Available Balance Excludes Credit Card Debt
+## BR-016: Total Available Balance Excludes Credit Card Debt
 
 ### Title
 
@@ -389,7 +418,7 @@ Credit cards represent owed money, not available money.
 
 ---
 
-## BR-016: Financial Data Must Be Scoped by Selected Family
+## BR-017: Financial Data Must Be Scoped by Selected Family
 
 ### Title
 
@@ -414,7 +443,7 @@ A user may participate in different financial groups, and their data must not be
 
 ---
 
-## BR-017: Transactions Should Preserve Historical Accuracy
+## BR-018: Transactions Should Preserve Historical Accuracy
 
 ### Title
 
@@ -430,7 +459,9 @@ Transactions should keep the financial data that was valid at the time they were
 * A transaction should keep its transaction date.
 * A transaction should keep its selected account.
 * A transaction should keep its selected category.
+* A transaction should keep its selected subcategory when one was selected.
 * If a category is later renamed, historical reports should remain understandable.
+* If a subcategory is later deactivated, historical transactions should remain available.
 * If an account is later deactivated, historical transactions should remain available.
 
 ### Reason
@@ -439,7 +470,7 @@ Financial history must remain reliable even if accounts or categories change lat
 
 ---
 
-## BR-018: Deactivation Preferred Over Deletion
+## BR-019: Deactivation Preferred Over Deletion
 
 ### Title
 
@@ -453,6 +484,7 @@ Important financial entities should be deactivated instead of permanently delete
 
 * Accounts with transactions should not be permanently deleted.
 * Categories with transactions should not be permanently deleted.
+* Subcategories with transactions should not be permanently deleted.
 * Budgets with historical usage should not be permanently deleted.
 * Recurring payments with payment history should not be permanently deleted.
 * Deactivated entities should not appear as default options for new records.
@@ -464,7 +496,7 @@ Permanent deletion can break historical records, balances, and reports.
 
 ---
 
-## BR-019: Transaction Amount Must Be Positive
+## BR-020: Transaction Amount Must Be Positive
 
 ### Title
 
@@ -488,7 +520,7 @@ Using positive amounts with explicit transaction types keeps calculations simple
 
 ---
 
-## BR-020: Transaction Date Required
+## BR-021: Transaction Date Required
 
 ### Title
 
@@ -520,6 +552,7 @@ The MVP business rules cover:
 * Account balance calculations.
 * Credit card handling.
 * Category uniqueness.
+* Subcategory classification.
 * Transaction consistency.
 * Transfer behavior.
 * Budget calculations.

@@ -7,7 +7,7 @@ import {
   assertSucceeds,
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { Timestamp, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { Timestamp, deleteDoc, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 
 const projectId = 'ikis-rules-tests';
@@ -70,6 +70,16 @@ beforeEach(async () => {
       email: 'admin@example.com',
       displayName: 'Admin',
       role: 'admin',
+      status: 'active',
+    });
+    await setDoc(doc(db, 'families/family-a/categories/category-a'), {
+      id: 'category-a',
+      familyId: 'family-a',
+      name: 'Food',
+      normalizedName: 'food',
+      createdByUserId: 'owner-a',
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
       status: 'active',
     });
   });
@@ -189,11 +199,11 @@ describe('Firestore family security', () => {
   it('allows admin to create a valid category', async () => {
     const db = environment.authenticatedContext('admin-a').firestore();
     await assertSucceeds(
-      setDoc(doc(db, 'families/family-a/categories/category-a'), {
-        id: 'category-a',
+      setDoc(doc(db, 'families/family-a/categories/category-b'), {
+        id: 'category-b',
         familyId: 'family-a',
-        name: 'Food',
-        normalizedName: 'food',
+        name: 'Transport',
+        normalizedName: 'transport',
         color: '#16a34a',
         icon: 'utensils',
         createdByUserId: 'admin-a',
@@ -349,6 +359,124 @@ describe('Firestore family security', () => {
         createdByUserId: 'owner-a',
         status: 'active',
       }),
+    );
+  });
+
+  it('allows owner and admin to manage valid subcategories', async () => {
+    const ownerDb = environment.authenticatedContext('owner-a').firestore();
+    await assertSucceeds(
+      setDoc(doc(ownerDb, 'families/family-a/categories/category-a/subcategories/subcategory-a'), {
+        id: 'subcategory-a',
+        familyId: 'family-a',
+        categoryId: 'category-a',
+        name: 'Groceries',
+        normalizedName: 'groceries',
+        createdByUserId: 'owner-a',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        status: 'active',
+      }),
+    );
+
+    const adminDb = environment.authenticatedContext('admin-a').firestore();
+    await assertSucceeds(
+      updateDoc(
+        doc(adminDb, 'families/family-a/categories/category-a/subcategories/subcategory-a'),
+        {
+          name: 'Market',
+          normalizedName: 'market',
+          updatedAt: Timestamp.now(),
+        },
+      ),
+    );
+    await assertSucceeds(
+      updateDoc(
+        doc(adminDb, 'families/family-a/categories/category-a/subcategories/subcategory-a'),
+        {
+          status: 'inactive',
+          updatedAt: Timestamp.now(),
+        },
+      ),
+    );
+  });
+
+  it('denies member subcategory writes but allows reads', async () => {
+    await environment.withSecurityRulesDisabled(async (context) => {
+      await setDoc(
+        doc(context.firestore(), 'families/family-a/categories/category-a/subcategories/subcategory-a'),
+        {
+          id: 'subcategory-a',
+          familyId: 'family-a',
+          categoryId: 'category-a',
+          name: 'Groceries',
+          normalizedName: 'groceries',
+          createdByUserId: 'owner-a',
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+          status: 'active',
+        },
+      );
+    });
+
+    const db = environment.authenticatedContext('member-a').firestore();
+    await assertSucceeds(
+      getDoc(doc(db, 'families/family-a/categories/category-a/subcategories/subcategory-a')),
+    );
+    await assertFails(
+      setDoc(doc(db, 'families/family-a/categories/category-a/subcategories/subcategory-b'), {
+        id: 'subcategory-b',
+        familyId: 'family-a',
+        categoryId: 'category-a',
+        name: 'Fast food',
+        normalizedName: 'fast-food',
+        createdByUserId: 'member-a',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        status: 'active',
+      }),
+    );
+    await assertFails(
+      updateDoc(
+        doc(db, 'families/family-a/categories/category-a/subcategories/subcategory-a'),
+        {
+          status: 'inactive',
+          updatedAt: Timestamp.now(),
+        },
+      ),
+    );
+  });
+
+  it('denies invalid subcategory payloads and physical deletes', async () => {
+    const db = environment.authenticatedContext('owner-a').firestore();
+    await assertFails(
+      setDoc(doc(db, 'families/family-a/categories/category-a/subcategories/subcategory-a'), {
+        id: 'subcategory-a',
+        familyId: 'family-a',
+        categoryId: 'other-category',
+        name: 'Groceries',
+        normalizedName: 'groceries',
+        createdByUserId: 'owner-a',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        status: 'active',
+      }),
+    );
+
+    await assertSucceeds(
+      setDoc(doc(db, 'families/family-a/categories/category-a/subcategories/subcategory-b'), {
+        id: 'subcategory-b',
+        familyId: 'family-a',
+        categoryId: 'category-a',
+        name: 'Groceries',
+        normalizedName: 'groceries',
+        createdByUserId: 'owner-a',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        status: 'active',
+      }),
+    );
+    await assertFails(
+      deleteDoc(doc(db, 'families/family-a/categories/category-a/subcategories/subcategory-b')),
     );
   });
 });

@@ -42,6 +42,60 @@ const emptySummary: FinancialSummary = {
       } @else if (error()) {
         <p class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error() }}</p>
       } @else {
+        <!-- Budget Health Summary Card -->
+        <article class="rounded-lg border border-neutral-200 bg-white p-5">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h2 class="text-sm font-semibold text-neutral-500 uppercase tracking-wider">{{ t('Resumen presupuestal') }}</h2>
+              <p class="mt-1 text-xs text-neutral-500">{{ t('Comparacion del presupuesto con tu saldo disponible') }}</p>
+            </div>
+            <span
+              class="rounded-lg px-2.5 py-1 text-xs font-semibold"
+              [class.bg-emerald-50]="budgetSummary().difference >= 0"
+              [class.text-emerald-700]="budgetSummary().difference >= 0"
+              [class.bg-red-50]="budgetSummary().difference < 0"
+              [class.text-red-700]="budgetSummary().difference < 0"
+            >
+              {{ budgetSummary().difference >= 0 ? t('Cubierto') : t('Faltante') }}
+            </span>
+          </div>
+
+          <div class="mt-5 grid grid-cols-2 gap-3">
+            <div class="rounded-lg bg-neutral-50 px-3 py-3">
+              <p class="text-xs font-medium text-neutral-500">{{ t('Total presupuesto') }}</p>
+              <p class="mt-1 text-base font-bold text-neutral-950">{{ money(budgetSummary().totalBudgeted) }}</p>
+            </div>
+            <div class="rounded-lg bg-neutral-50 px-3 py-3">
+              <p class="text-xs font-medium text-neutral-500">{{ t('Total ejecutado') }}</p>
+              <p class="mt-1 text-base font-bold text-neutral-950">{{ money(budgetSummary().totalExecuted) }}</p>
+            </div>
+            <div class="rounded-lg bg-neutral-50 px-3 py-3">
+              <p class="text-xs font-medium text-neutral-500">{{ t('Saldo esperado') }}</p>
+              <p class="mt-1 text-base font-bold text-neutral-950">{{ money(budgetSummary().expectedAvailableBalance) }}</p>
+            </div>
+            <div
+              class="rounded-lg px-3 py-3"
+              [class.bg-emerald-50]="budgetSummary().difference >= 0"
+              [class.bg-red-50]="budgetSummary().difference < 0"
+            >
+              <p
+                class="text-xs font-medium"
+                [class.text-emerald-700]="budgetSummary().difference >= 0"
+                [class.text-red-700]="budgetSummary().difference < 0"
+              >
+                {{ t('Diferencia') }}
+              </p>
+              <p
+                class="mt-1 text-base font-bold"
+                [class.text-emerald-800]="budgetSummary().difference >= 0"
+                [class.text-red-800]="budgetSummary().difference < 0"
+              >
+                {{ money(budgetSummary().difference) }}
+              </p>
+            </div>
+          </div>
+        </article>
+
         <!-- Available Balance Donut Chart Card -->
         <article class="rounded-lg border border-neutral-200 bg-white p-5">
           <h2 class="text-sm font-semibold text-neutral-500 uppercase tracking-wider">{{ t('Saldo disponible') }}</h2>
@@ -138,6 +192,23 @@ const emptySummary: FinancialSummary = {
 
         <div>
           <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-neutral-950">{{ t('Gastos por categoria') }}</h2>
+            <a routerLink="/app/reports" class="text-sm font-medium text-emerald-700">{{ t('Reporte') }}</a>
+          </div>
+          <div class="mt-3 space-y-2">
+            @for (item of summary().expensesByCategory.slice(0, 4); track item.categoryId) {
+              <div class="flex justify-between rounded-lg border border-neutral-200 bg-white px-4 py-3 text-sm">
+                <span class="font-medium text-neutral-800">{{ categoryName(item.categoryId) }}</span>
+                <span class="font-semibold text-neutral-950">{{ money(item.amount) }}</span>
+              </div>
+            } @empty {
+              <p class="rounded-lg border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">{{ t('Sin gastos en el periodo.') }}</p>
+            }
+          </div>
+        </div>
+        
+        <div>
+          <div class="flex items-center justify-between">
             <h2 class="text-lg font-semibold text-neutral-950">{{ t('Movimientos') }}</h2>
             <a routerLink="/app/transactions" class="text-sm font-medium text-emerald-700 hover:underline">{{ t('Ver todos') }}</a>
           </div>
@@ -174,23 +245,6 @@ const emptySummary: FinancialSummary = {
               </div>
             } @empty {
               <p class="rounded-lg border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">{{ t('Movimientos') }}</p>
-            }
-          </div>
-        </div>
-
-        <div>
-          <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-neutral-950">{{ t('Gastos por categoria') }}</h2>
-            <a routerLink="/app/reports" class="text-sm font-medium text-emerald-700">{{ t('Reporte') }}</a>
-          </div>
-          <div class="mt-3 space-y-2">
-            @for (item of summary().expensesByCategory.slice(0, 4); track item.categoryId) {
-              <div class="flex justify-between rounded-lg border border-neutral-200 bg-white px-4 py-3 text-sm">
-                <span class="font-medium text-neutral-800">{{ categoryName(item.categoryId) }}</span>
-                <span class="font-semibold text-neutral-950">{{ money(item.amount) }}</span>
-              </div>
-            } @empty {
-              <p class="rounded-lg border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">{{ t('Sin gastos en el periodo.') }}</p>
             }
           </div>
         </div>
@@ -282,6 +336,28 @@ export class DashboardComponent {
       gradient,
       legend,
       hasData: true,
+    };
+  });
+
+  readonly budgetSummary = computed(() => {
+    const totalBudgeted = this.budgets().reduce(
+      (total, item) => total + item.budget.plannedAmount,
+      0,
+    );
+    const totalExecuted = this.budgets().reduce(
+      (total, item) => total + item.progress.spentAmount,
+      0,
+    );
+    const expectedAvailableBalance = totalBudgeted - totalExecuted;
+    const actualAvailableBalance = this.availableBalance();
+    const difference = actualAvailableBalance - expectedAvailableBalance;
+
+    return {
+      totalBudgeted,
+      totalExecuted,
+      expectedAvailableBalance,
+      actualAvailableBalance,
+      difference,
     };
   });
 
@@ -390,8 +466,8 @@ export class DashboardComponent {
         return diffDays <= 14;
       }
       case 'monthly': {
-        return lastPaid.getMonth() === today.getMonth() && 
-               lastPaid.getFullYear() === today.getFullYear();
+        return lastPaid.getMonth() === today.getMonth() &&
+          lastPaid.getFullYear() === today.getFullYear();
       }
       case 'yearly': {
         return lastPaid.getFullYear() === today.getFullYear();

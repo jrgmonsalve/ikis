@@ -4,7 +4,7 @@ import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 
 import { AccountService } from '../accounts/account.service';
 import { CategoryService } from '../categories/category.service';
-import { Account, Category, TransactionType } from '../../shared/models/domain.models';
+import { Account, Category, Subcategory, TransactionType } from '../../shared/models/domain.models';
 import { TransactionService } from './transaction.service';
 import { NumericFormatterDirective } from '../../shared/directives/numeric-formatter.directive';
 
@@ -108,6 +108,7 @@ const titles: Record<TransactionType, string> = {
                 id="categoryId"
                 name="categoryId"
                 [(ngModel)]="categoryId"
+                (ngModelChange)="onCategoryChange($event)"
                 required
                 class="floating-select appearance-none bg-white pr-10"
               >
@@ -123,6 +124,31 @@ const titles: Record<TransactionType, string> = {
                 </svg>
               </div>
             </div>
+
+            @if (loadingSubcategories()) {
+              <p class="text-sm text-neutral-500">Cargando subcategorias...</p>
+            } @else if (subcategories().length > 0) {
+              <div class="floating-group">
+                <select
+                  id="subcategoryId"
+                  name="subcategoryId"
+                  [(ngModel)]="subcategoryId"
+                  required
+                  class="floating-select appearance-none bg-white pr-10"
+                >
+                  <option value="" disabled selected hidden></option>
+                  @for (subcategory of subcategories(); track subcategory.id) {
+                    <option [value]="subcategory.id">{{ subcategory.name }}</option>
+                  }
+                </select>
+                <label for="subcategoryId" class="floating-label">Subcategoria</label>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-400">
+                  <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                  </svg>
+                </div>
+              </div>
+            }
           }
 
           <div class="floating-group">
@@ -188,6 +214,8 @@ export class TransactionFormComponent implements OnInit {
   readonly mode = signal<TransactionType>('expense');
   readonly accounts = signal<Account[]>([]);
   readonly categories = signal<Category[]>([]);
+  readonly subcategories = signal<Subcategory[]>([]);
+  readonly loadingSubcategories = signal(false);
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
@@ -197,6 +225,7 @@ export class TransactionFormComponent implements OnInit {
   amount = 0;
   accountId = '';
   categoryId = '';
+  subcategoryId = '';
   sourceAccountId = '';
   destinationAccountId = '';
   description = '';
@@ -220,7 +249,10 @@ export class TransactionFormComponent implements OnInit {
     if (this.mode() === 'transfer') {
       return this.accounts().length >= 2;
     }
-    return this.categories().length > 0;
+    if (this.loadingSubcategories()) {
+      return false;
+    }
+    return this.categories().length > 0 && (this.subcategories().length === 0 || !!this.subcategoryId);
   }
 
   async submit(): Promise<void> {
@@ -257,10 +289,14 @@ export class TransactionFormComponent implements OnInit {
         if (!this.accountId || !this.categoryId) {
           throw new Error('Selecciona una cuenta y una categoria.');
         }
+        if (this.subcategories().length > 0 && !this.subcategoryId) {
+          throw new Error('Selecciona una subcategoria.');
+        }
         const inputData = {
           amount: this.amount,
           accountId: this.accountId,
           categoryId: this.categoryId,
+          subcategoryId: this.subcategoryId || null,
           description: this.description,
           transactionDate,
         };
@@ -294,6 +330,7 @@ export class TransactionFormComponent implements OnInit {
         this.amount = transaction.amount;
         this.accountId = transaction.accountId || '';
         this.categoryId = transaction.categoryId || '';
+        this.subcategoryId = transaction.subcategoryId || '';
         this.sourceAccountId = transaction.sourceAccountId || '';
         this.destinationAccountId = transaction.destinationAccountId || '';
         this.description = transaction.description || '';
@@ -308,10 +345,42 @@ export class TransactionFormComponent implements OnInit {
       ]);
       this.accounts.set(accounts);
       this.categories.set(categories);
+      if (this.mode() !== 'transfer' && this.categoryId) {
+        await this.loadSubcategories(this.categoryId, this.subcategoryId);
+      }
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'No fue posible cargar las opciones.');
     } finally {
       this.loading.set(false);
+      this.cdr.detectChanges();
+    }
+  }
+
+  onCategoryChange(categoryId: string): void {
+    this.subcategoryId = '';
+    void this.loadSubcategories(categoryId);
+  }
+
+  private async loadSubcategories(categoryId: string, selectedSubcategoryId = ''): Promise<void> {
+    if (!categoryId) {
+      this.subcategories.set([]);
+      this.subcategoryId = '';
+      return;
+    }
+
+    this.loadingSubcategories.set(true);
+    try {
+      const subcategories = await this.categoryService.listActiveSubcategories(categoryId);
+      this.subcategories.set(subcategories);
+      this.subcategoryId = subcategories.some((subcategory) => subcategory.id === selectedSubcategoryId)
+        ? selectedSubcategoryId
+        : '';
+    } catch (error) {
+      this.subcategories.set([]);
+      this.subcategoryId = '';
+      this.error.set(error instanceof Error ? error.message : 'No fue posible cargar las subcategorias.');
+    } finally {
+      this.loadingSubcategories.set(false);
       this.cdr.detectChanges();
     }
   }
