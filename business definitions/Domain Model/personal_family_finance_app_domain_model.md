@@ -428,10 +428,15 @@ Represents a financial movement inside a family.
 - Transactions must only use accounts and categories from the same family.
 - If present, the transaction subcategory must belong to the selected category.
 - Historical transactions should remain available even if accounts or categories are later deactivated.
+- Active manual transactions may be edited without changing their transaction type.
+- Editing a transaction must adjust affected account balances atomically.
+- Active transactions may be cancelled instead of deleted.
+- Cancelled transactions must not affect reports, dashboards, or budget usage.
+- Transactions created from recurring payments may be cancelled but not edited through the transaction edit flow.
 
 ## Notes
 
-A transaction should preserve historical accuracy. Future changes to account or category names should not break reports or history.
+A transaction should preserve historical accuracy. Controlled corrections are allowed for active manual transactions, and cancellation should preserve the transaction record while removing its financial impact from active calculations.
 
 ---
 

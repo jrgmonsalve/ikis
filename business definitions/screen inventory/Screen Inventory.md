@@ -465,7 +465,6 @@ Allow the user or family owner to configure basic preferences.
   * USD
 * Family name.
 * Current user profile information.
-* Sign out button.
 
 ## Related Flow
 
@@ -497,3 +496,46 @@ The MVP requires these screens:
 * Family Members
 * Invite Family Member
 * Settings
+* Transactions History
+* Profile Menu
+
+---
+
+# 21. Transactions History
+
+## Purpose
+
+Allow a family member to review, edit, or cancel active transactions.
+
+## Main Elements
+
+* Date range filter.
+* Transaction list.
+* Edit action for active manual transactions.
+* Cancel action for active transactions.
+* Validation and confirmation messages.
+
+## Related Flows
+
+* UF-006: Register an Expense
+* UF-007: Register an Income
+* UF-008: Register a Transfer
+
+---
+
+# 22. Profile Menu
+
+## Purpose
+
+Allow the authenticated user to see their name and current family role, and sign out.
+
+## Main Elements
+
+* Profile icon.
+* Authenticated user name.
+* Current family role.
+* Sign out action.
+
+## Related Flow
+
+* UF-001: Sign in with Google

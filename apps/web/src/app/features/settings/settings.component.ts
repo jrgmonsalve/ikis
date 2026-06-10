@@ -1,8 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-
-import { AuthService } from '../../core/auth/auth.service';
 import { SelectedFamilyService } from '../../core/family-context/selected-family.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { PeriodService } from '../../core/period/period.service';
@@ -120,10 +117,6 @@ import { SettingsService } from './settings.service';
             {{ savingPeriod() ? 'Guardando...' : 'Guardar periodo' }}
           </button>
         </form>
-
-        <button type="button" class="w-full rounded-lg border border-red-300 px-4 py-3 text-sm font-semibold text-red-700" (click)="logout()">
-          Cerrar sesion
-        </button>
       }
     </section>
   `,
@@ -131,10 +124,8 @@ import { SettingsService } from './settings.service';
 export class SettingsComponent {
   private readonly settings = inject(SettingsService);
   private readonly selectedFamily = inject(SelectedFamilyService);
-  private readonly auth = inject(AuthService);
   private readonly i18n = inject(I18nService);
   private readonly periodService = inject(PeriodService);
-  private readonly router = inject(Router);
 
   readonly profile = signal<UserProfile | null>(null);
   readonly currency = signal<Currency>('COP');
@@ -219,11 +210,6 @@ export class SettingsComponent {
     } finally {
       this.savingPeriod.set(false);
     }
-  }
-
-  async logout(): Promise<void> {
-    await this.auth.signOut();
-    await this.router.navigateByUrl('/sign-in');
   }
 
   private async load(): Promise<void> {

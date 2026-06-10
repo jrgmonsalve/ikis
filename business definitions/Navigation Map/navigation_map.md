@@ -63,6 +63,7 @@ From the dashboard, the user can access:
 * Add Expense
 * Add Income
 * Add Transfer
+* Transactions History
 * View Accounts
 * View Budgets
 * View Recurring Payments
@@ -81,6 +82,7 @@ Transactions
 * Add Expense
 * Add Income
 * Add Transfer
+* Transactions History
 
 ## Access
 
@@ -100,6 +102,7 @@ Use a primary floating action button:
   * Add Expense
   * Add Income
   * Add Transfer
+  * View transaction history
 
 ---
 
@@ -297,7 +300,6 @@ The user can access settings from:
   * COP
   * USD
 * View user profile information.
-* Sign out.
 
 ---
 
@@ -339,6 +341,7 @@ The user sees this screen when:
 * Add Expense
 * Add Income
 * Add Transfer
+* Transactions History
 
 ## More Menu
 
@@ -360,3 +363,21 @@ The MVP navigation should prioritize:
 * Simple access to budgets and reports.
 * Secondary configuration grouped under More.
 * Clear family selection when the user belongs to multiple families.
+
+---
+
+# 16. Profile Menu Navigation
+
+## Screen Area
+
+Application shell header
+
+## Access
+
+The user can access the profile menu from the top-right profile icon.
+
+## Profile Menu Options
+
+* View authenticated user name.
+* View current family role.
+* Sign out.

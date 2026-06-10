@@ -4,9 +4,10 @@ import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 
 import { AccountService } from '../accounts/account.service';
 import { CategoryService } from '../categories/category.service';
-import { Account, Category, Subcategory, TransactionType } from '../../shared/models/domain.models';
+import { Account, Category, Subcategory, Transaction, TransactionType } from '../../shared/models/domain.models';
 import { TransactionService } from './transaction.service';
 import { NumericFormatterDirective } from '../../shared/directives/numeric-formatter.directive';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 const titles: Record<TransactionType, string> = {
   expense: 'Registrar gasto',
@@ -209,6 +210,7 @@ export class TransactionFormComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly i18n = inject(I18nService);
 
   readonly modeInput = input<TransactionType>(undefined, { alias: 'mode' });
   readonly mode = signal<TransactionType>('expense');
@@ -221,6 +223,7 @@ export class TransactionFormComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly isEdit = signal(false);
   readonly transactionId = signal<string | null>(null);
+  readonly originalTransaction = signal<Transaction | null>(null);
 
   amount = 0;
   accountId = '';
@@ -237,12 +240,15 @@ export class TransactionFormComponent implements OnInit {
 
   title(): string {
     if (this.isEdit()) {
-      return `Editar ${this.mode() === 'expense' ? 'gasto' : this.mode() === 'income' ? 'ingreso' : 'transferencia'}`;
+      return this.t(this.mode() === 'expense' ? 'Editar gasto' : this.mode() === 'income' ? 'Editar ingreso' : 'Editar transferencia');
     }
-    return titles[this.mode()];
+    return this.t(titles[this.mode()]);
   }
 
   canSubmit(): boolean {
+    if (this.originalTransaction()?.source === 'recurring_payment') {
+      return false;
+    }
     if (this.accounts().length === 0) {
       return false;
     }
@@ -266,9 +272,8 @@ export class TransactionFormComponent implements OnInit {
     this.error.set(null);
 
     try {
-      if (this.isEdit() && this.transactionId()) {
-        const originalTx = await this.transactionService.getTransactionById(this.transactionId()!);
-        await this.transactionService.cancelTransaction(originalTx);
+      if (this.originalTransaction()?.source === 'recurring_payment') {
+        throw new Error(this.t('Los movimientos de pagos recurrentes no se pueden editar. Puedes cancelarlos desde el historial.'));
       }
 
       if (this.mode() === 'transfer') {
@@ -278,13 +283,21 @@ export class TransactionFormComponent implements OnInit {
         if (this.sourceAccountId === this.destinationAccountId) {
           throw new Error('Las cuentas de origen y destino deben ser diferentes.');
         }
-        await this.transactionService.createTransfer({
+        const inputData = {
           amount: this.amount,
           sourceAccountId: this.sourceAccountId,
           destinationAccountId: this.destinationAccountId,
           description: this.description,
           transactionDate,
-        });
+        };
+        if (this.isEdit() && this.transactionId()) {
+          await this.transactionService.updateTransaction({
+            transactionId: this.transactionId()!,
+            ...inputData,
+          });
+        } else {
+          await this.transactionService.createTransfer(inputData);
+        }
       } else {
         if (!this.accountId || !this.categoryId) {
           throw new Error('Selecciona una cuenta y una categoria.');
@@ -300,7 +313,12 @@ export class TransactionFormComponent implements OnInit {
           description: this.description,
           transactionDate,
         };
-        if (this.mode() === 'expense') {
+        if (this.isEdit() && this.transactionId()) {
+          await this.transactionService.updateTransaction({
+            transactionId: this.transactionId()!,
+            ...inputData,
+          });
+        } else if (this.mode() === 'expense') {
           await this.transactionService.createExpense(inputData);
         } else {
           await this.transactionService.createIncome(inputData);
@@ -326,6 +344,10 @@ export class TransactionFormComponent implements OnInit {
         this.isEdit.set(true);
         this.transactionId.set(id);
         const transaction = await this.transactionService.getTransactionById(id);
+        this.originalTransaction.set(transaction);
+        if (transaction.source === 'recurring_payment') {
+          this.error.set(this.t('Los movimientos de pagos recurrentes no se pueden editar. Puedes cancelarlos desde el historial.'));
+        }
         this.mode.set(transaction.type);
         this.amount = transaction.amount;
         this.accountId = transaction.accountId || '';
@@ -359,6 +381,10 @@ export class TransactionFormComponent implements OnInit {
   onCategoryChange(categoryId: string): void {
     this.subcategoryId = '';
     void this.loadSubcategories(categoryId);
+  }
+
+  t(source: string): string {
+    return this.i18n.translate(source);
   }
 
   private async loadSubcategories(categoryId: string, selectedSubcategoryId = ''): Promise<void> {

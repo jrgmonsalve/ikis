@@ -360,6 +360,29 @@ describe('Firestore family security', () => {
         status: 'active',
       }),
     );
+
+    await environment.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'families/family-a/transactions/transaction-a'), {
+        id: 'transaction-a',
+        familyId: 'family-a',
+        type: 'expense',
+        amount: 50,
+        currency: 'COP',
+        accountId: 'account-a',
+        categoryId: 'category-a',
+        transactionDate: Timestamp.now(),
+        createdByUserId: 'owner-a',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        status: 'active',
+        source: 'manual',
+        recurringPaymentId: null,
+      });
+    });
+
+    const transactionRef = doc(db, 'families/family-a/transactions/transaction-a');
+    await assertFails(updateDoc(transactionRef, { amount: 100 }));
+    await assertFails(deleteDoc(transactionRef));
   });
 
   it('allows owner and admin to manage valid subcategories', async () => {

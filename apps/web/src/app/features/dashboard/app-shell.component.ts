@@ -4,6 +4,7 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { AuthService } from '../../core/auth/auth.service';
 import { FamilyContextService } from '../../core/family-context/family-context.service';
 import { SelectedFamilyService } from '../../core/family-context/selected-family.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-shell',
@@ -16,10 +17,35 @@ import { SelectedFamilyService } from '../../core/family-context/selected-family
           <button type="button" class="text-left" routerLink="/select-family">
             <span class="block text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">IKIS</span>
             <span class="block max-w-48 truncate text-sm text-neutral-500">
-              {{ familyName() || 'Seleccionar familia' }}
+              {{ familyName() || t('Seleccionar familia') }}
             </span>
           </button>
-          <button type="button" class="text-sm font-medium text-neutral-700" (click)="logout()">Salir</button>
+          <div class="relative">
+            <button
+              type="button"
+              class="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-950 text-sm font-semibold uppercase text-white"
+              (click)="toggleProfileMenu()"
+              [attr.aria-label]="t('Abrir menu de perfil')"
+              [attr.aria-expanded]="profileMenuOpen()"
+            >
+              {{ profileInitials() }}
+            </button>
+
+            @if (profileMenuOpen()) {
+              <div class="absolute right-0 mt-2 w-64 rounded-lg border border-neutral-200 bg-white p-4 text-left shadow-lg">
+                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-400">{{ t('Perfil') }}</p>
+                <p class="mt-2 truncate text-sm font-semibold text-neutral-950">{{ profileName() }}</p>
+                <p class="mt-1 text-xs text-neutral-500">{{ t('Rol') }}: {{ roleLabel(profileRole()) }}</p>
+                <button
+                  type="button"
+                  class="mt-4 w-full rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700"
+                  (click)="logout()"
+                >
+                  {{ t('Cerrar sesion') }}
+                </button>
+              </div>
+            }
+          </div>
         </div>
       </header>
 
@@ -65,7 +91,7 @@ import { SelectedFamilyService } from '../../core/family-context/selected-family
                 }
               }
               <span class="text-[10px] font-semibold tracking-tight whitespace-nowrap">
-                {{ item.label }}
+                {{ t(item.label) }}
               </span>
             </a>
           }
@@ -79,7 +105,11 @@ export class AppShellComponent {
   private readonly router = inject(Router);
   readonly familyContext = inject(FamilyContextService);
   private readonly selectedFamily = inject(SelectedFamilyService);
+  private readonly i18n = inject(I18nService);
   readonly familyName = signal('');
+  readonly profileName = signal('Usuario');
+  readonly profileRole = signal('member');
+  readonly profileMenuOpen = signal(false);
 
   constructor() {
     void this.loadFamilyName();
@@ -100,13 +130,40 @@ export class AppShellComponent {
 
     try {
       const context = await this.selectedFamily.load();
+      const user = this.auth.currentUser();
       this.familyName.set(context.family.name);
+      this.profileName.set(user?.displayName || context.membership.displayName || user?.email || 'Usuario');
+      this.profileRole.set(context.membership.role);
     } catch {
-      this.familyName.set('Familia no disponible');
+      this.familyName.set(this.t('Familia no disponible'));
     }
   }
 
+
+  toggleProfileMenu(): void {
+    this.profileMenuOpen.set(!this.profileMenuOpen());
+  }
+
+  profileInitials(): string {
+    return this.profileName()
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase() || 'U';
+  }
+
+  roleLabel(role: string): string {
+    return this.t(role === 'owner' ? 'Owner' : role === 'admin' ? 'Admin' : 'Miembro');
+  }
+
+  t(source: string): string {
+    return this.i18n.translate(source);
+  }
+
   async logout(): Promise<void> {
+    this.profileMenuOpen.set(false);
     await this.auth.signOut();
     await this.router.navigateByUrl('/sign-in');
   }

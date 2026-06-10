@@ -6,6 +6,7 @@ import { CategoryService } from '../categories/category.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { provideRouter } from '@angular/router';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 describe('TransactionFormComponent', () => {
   let component: TransactionFormComponent;
@@ -22,6 +23,7 @@ describe('TransactionFormComponent', () => {
       createIncome: vi.fn().mockResolvedValue('tx-id-2'),
       createTransfer: vi.fn().mockResolvedValue('tx-id-3'),
       cancelTransaction: vi.fn().mockResolvedValue(undefined),
+      updateTransaction: vi.fn().mockResolvedValue('tx-edit-123'),
       getTransactionById: vi.fn().mockResolvedValue({
         id: 'tx-edit-123',
         type: 'expense',
@@ -30,6 +32,8 @@ describe('TransactionFormComponent', () => {
         categoryId: 'cat-1',
         description: 'Edit description',
         transactionDate: { toDate: () => new Date('2026-06-05') },
+        status: 'active',
+        source: 'manual',
       }),
     };
 
@@ -61,6 +65,7 @@ describe('TransactionFormComponent', () => {
         { provide: AccountService, useValue: mockAccountService },
         { provide: CategoryService, useValue: mockCategoryService },
         { provide: Router, useValue: mockRouter },
+        { provide: I18nService, useValue: { translate: (source: string) => source } },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -117,24 +122,22 @@ describe('TransactionFormComponent', () => {
     expect(mockRouter.navigateByUrl).toHaveBeenCalledWith('/app/dashboard');
   });
 
-  it('should call cancelTransaction and then createExpense when editing', async () => {
+  it('should call updateTransaction when editing', async () => {
     mockParamMapGet.mockReturnValue('tx-edit-123');
-    
-    // Re-trigger initialize
+
     await component['loadOptions']();
-    
+
     expect(component.isEdit()).toBe(true);
     expect(component.transactionId()).toBe('tx-edit-123');
     expect(component.amount).toBe(85000);
     expect(component.description).toBe('Edit description');
 
-    // Make a change
     component.description = 'Updated Description';
 
     await component.submit();
 
-    expect(mockTransactionService.cancelTransaction).toHaveBeenCalled();
-    expect(mockTransactionService.createExpense).toHaveBeenCalledWith({
+    expect(mockTransactionService.updateTransaction).toHaveBeenCalledWith({
+      transactionId: 'tx-edit-123',
       amount: 85000,
       accountId: 'acc-1',
       categoryId: 'cat-1',
@@ -142,7 +145,30 @@ describe('TransactionFormComponent', () => {
       description: 'Updated Description',
       transactionDate: expect.any(String),
     });
+    expect(mockTransactionService.cancelTransaction).not.toHaveBeenCalled();
+    expect(mockTransactionService.createExpense).not.toHaveBeenCalled();
     expect(mockRouter.navigateByUrl).toHaveBeenCalledWith('/app/dashboard');
+  });
+
+  it('should block editing recurring payment transactions', async () => {
+    mockParamMapGet.mockReturnValue('tx-edit-123');
+    mockTransactionService.getTransactionById.mockResolvedValueOnce({
+      id: 'tx-edit-123',
+      type: 'expense',
+      amount: 85000,
+      accountId: 'acc-1',
+      categoryId: 'cat-1',
+      description: 'Recurring payment',
+      transactionDate: { toDate: () => new Date('2026-06-05') },
+      status: 'active',
+      source: 'recurring_payment',
+    });
+
+    await component['loadOptions']();
+    await component.submit();
+
+    expect(component.error()).toBe('Los movimientos de pagos recurrentes no se pueden editar. Puedes cancelarlos desde el historial.');
+    expect(mockTransactionService.updateTransaction).not.toHaveBeenCalled();
   });
 
   it('should require a subcategory when the selected category has active subcategories', async () => {

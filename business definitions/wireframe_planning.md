@@ -1228,14 +1228,12 @@ The screen should include:
   - USD
 - Family name.
 - Current user profile information.
-- Sign out button.
 
 ## Main Actions
 
 - Change language.
 - Change family main currency if allowed.
 - Update family name if allowed.
-- Sign out.
 
 ## Empty State
 
@@ -1248,13 +1246,32 @@ Possible messages:
 - Unable to update language.
 - Unable to update currency.
 - Unable to update family settings.
-- Unable to sign out. Please try again.
 
 ## Mobile Behavior
 
 - Settings should be grouped in simple sections.
-- Sign out should be visible but not confused with regular settings.
 - Currency change should show a warning if changing it affects existing financial data.
+
+---
+
+# Application Shell Profile Menu
+
+## Purpose
+
+Allow the authenticated user to view basic profile context and sign out from the main application shell.
+
+## Main Content
+
+The profile menu should include:
+
+- Authenticated user name.
+- Current family role.
+- Sign out action.
+
+## Mobile Behavior
+
+- The profile menu should be opened from the top-right profile icon.
+- The sign out action should live in this profile menu instead of the Settings screen.
 
 ---
 

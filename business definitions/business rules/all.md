@@ -447,26 +447,27 @@ A user may participate in different financial groups, and their data must not be
 
 ### Title
 
-Transactions should preserve historical accuracy
+Transactions should preserve historical accuracy while allowing controlled corrections
 
 ### Business Rule
 
-Transactions should keep the financial data that was valid at the time they were created.
+Transactions should preserve historical context, but active manual transactions may be corrected when a family member made an input mistake.
 
 ### Details
 
-* A transaction should keep its original amount.
-* A transaction should keep its transaction date.
-* A transaction should keep its selected account.
-* A transaction should keep its selected category.
-* A transaction should keep its selected subcategory when one was selected.
+* An active manual transaction may be edited by an active family member.
+* Editing a transaction keeps the same transaction ID.
+* Editing a transaction must not change its transaction type.
+* Editing a transaction may change amount, transaction date, description, account, category, or subcategory according to the transaction type.
+* Editing a transaction must adjust affected account balances atomically.
+* A transaction created from a recurring payment must not be edited through the transaction edit flow.
 * If a category is later renamed, historical reports should remain understandable.
 * If a subcategory is later deactivated, historical transactions should remain available.
 * If an account is later deactivated, historical transactions should remain available.
 
 ### Reason
 
-Financial history must remain reliable even if accounts or categories change later.
+Financial history must remain reliable while still allowing users to correct honest data entry mistakes without creating inconsistent balances.
 
 ---
 
@@ -520,7 +521,34 @@ Using positive amounts with explicit transaction types keeps calculations simple
 
 ---
 
-## BR-021: Transaction Date Required
+## BR-021: Transaction Cancellation Rolls Back Account Balances
+
+### Title
+
+Transaction cancellation rolls back account balances
+
+### Business Rule
+
+When an active transaction is cancelled, the transaction must remain in history with cancelled status and the affected account balances must be rolled back.
+
+### Details
+
+* An active family member may cancel an active transaction inside the selected family.
+* Cancelled transactions must not be physically deleted.
+* Cancelled transactions must not affect reports, dashboards, or budget usage calculations.
+* Cancelling an expense restores the affected account balance.
+* Cancelling an income reverses the affected account balance increase.
+* Cancelling a transfer reverses both the source and destination account balance impacts.
+* Cancelling a transaction created from a recurring payment does not update the recurring payment's last paid date or next due date.
+
+### Reason
+
+Cancellation preserves an audit-friendly financial history while keeping account balances and calculations consistent.
+
+---
+
+
+## BR-022: Transaction Date Required
 
 ### Title
 

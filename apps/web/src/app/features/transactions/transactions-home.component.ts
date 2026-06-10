@@ -124,18 +124,20 @@ import { TransactionService } from './transaction.service';
 
                     <!-- Edit / Cancel Actions -->
                     <div class="mt-3 flex items-center justify-end gap-3 text-xs">
-                      <a
-                        [routerLink]="['/app/transactions', tx.id, 'edit']"
-                        class="font-semibold text-emerald-700 hover:underline"
-                      >
-                        Editar
-                      </a>
+                      @if (tx.source !== 'recurring_payment') {
+                        <a
+                          [routerLink]="['/app/transactions', tx.id, 'edit']"
+                          class="font-semibold text-emerald-700 hover:underline"
+                        >
+                          {{ t('Editar') }}
+                        </a>
+                      }
                       <button
                         type="button"
                         (click)="cancel(tx)"
                         class="font-semibold text-red-600 hover:underline"
                       >
-                        Cancelar
+                        {{ t('Cancelar') }}
                       </button>
                     </div>
                   </div>
@@ -261,6 +263,10 @@ export class TransactionsHomeComponent {
     return `${start} - ${end}`;
   }
 
+  t(source: string): string {
+    return this.i18n.translate(source);
+  }
+
   typeLabel(type: string): string {
     if (type === 'expense') return 'Gasto';
     if (type === 'income') return 'Ingreso';
@@ -302,7 +308,7 @@ export class TransactionsHomeComponent {
 
   async cancel(tx: Transaction): Promise<void> {
     const confirmCancel = confirm(
-      '¿Estás seguro de que deseas cancelar este movimiento? Esto revertirá los cambios en los saldos de tus cuentas.'
+      this.t('¿Estás seguro de que deseas cancelar este movimiento? Esto revertirá los cambios en los saldos de tus cuentas.')
     );
     if (!confirmCancel) return;
 
@@ -311,7 +317,7 @@ export class TransactionsHomeComponent {
       await this.transactionService.cancelTransaction(tx);
       await this.load();
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : 'No fue posible cancelar el movimiento.');
+      this.error.set(err instanceof Error ? err.message : this.t('No fue posible cancelar el movimiento.'));
       this.loading.set(false);
       this.cdr.detectChanges();
     }

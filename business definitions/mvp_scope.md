@@ -105,6 +105,8 @@ The MVP includes:
 - Assign transaction date.
 - Add optional description.
 - Update balances based on transactions.
+- Edit active manual transactions and adjust affected account balances.
+- Cancel active transactions and roll back affected account balances.
 
 The MVP does not include:
 

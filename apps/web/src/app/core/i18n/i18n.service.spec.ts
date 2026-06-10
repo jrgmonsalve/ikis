@@ -39,5 +39,9 @@ describe('I18nService', () => {
     expect(service.translate('Subcategorias')).toBe('Subcategories');
     expect(service.translate('Selecciona una subcategoria.')).toBe('Select a subcategory.');
     expect(service.translate('Desactivar esta subcategoria?')).toBe('Deactivate this subcategory?');
+    expect(service.translate('Cerrar sesion')).toBe('Sign out');
+    expect(service.translate('Abrir menu de perfil')).toBe('Open profile menu');
+    expect(service.translate('Los movimientos de pagos recurrentes no se pueden editar. Puedes cancelarlos desde el historial.')).toBe('Recurring payment transactions cannot be edited. You can cancel them from the history.');
+    expect(service.translate('¿Estás seguro de que deseas cancelar este movimiento? Esto revertirá los cambios en los saldos de tus cuentas.')).toBe('Are you sure you want to cancel this transaction? This will reverse the changes in your account balances.');
   });
 });
