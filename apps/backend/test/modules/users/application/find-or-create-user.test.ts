@@ -1,25 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { findOrCreateUser } from "../../../../src/modules/users/application/find-or-create-user";
-import type { User } from "../../../../src/modules/users/domain/user";
-import type { NewUser, UserRepository } from "../../../../src/modules/users/domain/user-repository";
-
-class InMemoryUserRepository implements UserRepository {
-  private users: User[] = [];
-
-  async findByGoogleId(googleId: string) {
-    return this.users.find((user) => user.googleId === googleId) ?? null;
-  }
-
-  async create(input: NewUser) {
-    const user: User = {
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-      ...input,
-    };
-    this.users.push(user);
-    return user;
-  }
-}
+import { InMemoryUserRepository } from "../in-memory-user-repository";
 
 describe("findOrCreateUser", () => {
   it("creates a new user when none exists for the google id", async () => {

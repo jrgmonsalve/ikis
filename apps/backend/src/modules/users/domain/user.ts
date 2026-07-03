@@ -3,5 +3,6 @@ export type User = {
   googleId: string;
   email: string;
   name: string;
+  familyId: string | null;
   createdAt: Date;
 };
