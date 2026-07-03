@@ -24,6 +24,14 @@ jobs:
 
       - run: pnpm typecheck
 
+      - name: Write test-only .dev.vars
+        run: |
+          cat <<'EOF' > apps/backend/.dev.vars
+          JWT_SECRET=ci-test-secret-not-used-anywhere-else
+          GOOGLE_CLIENT_ID=ci-test-client-id.apps.googleusercontent.com
+          DEV_AUTH=true
+          EOF
+
       - run: pnpm test
 
   deploy:

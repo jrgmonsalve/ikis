@@ -91,3 +91,5 @@ El Client ID es público (va en `wrangler.toml`, commiteado); el Client Secret s
 - `src/shared/jwt.ts` (`signAppJwt` / `verifyAppJwt`) tiene tests unitarios directos con un secreto fijo de prueba (`test/shared/jwt.test.ts`).
 - Los casos de uso `loginWithGoogle` / `loginAsDevUser` se testean con un `GoogleIdTokenVerifier` fake — no llaman a Google real (`test/modules/auth/application/`).
 - Las rutas HTTP (`/auth/dev`, validación de `/auth/google`) tienen un test de integración contra D1 local (`test/modules/auth/infrastructure/auth-routes.test.ts`). No se testea el flujo de Google real automatizado (requiere un ID token real); para eso usar el flujo manual del Playground descrito arriba.
+
+Como `.dev.vars` está gitignorado, no existe en el runner de GitHub Actions. El job `test` de `.github/workflows/ci.yml` genera su propio `.dev.vars` descartable (valores fijos sin ningún uso real, solo para que `jose` pueda firmar/verificar JWTs durante los tests) antes de correr `pnpm test`. Si se corre `pnpm test` en una máquina nueva sin haber hecho el setup local de arriba, va a fallar por el mismo motivo — hay que crear `apps/backend/.dev.vars` primero.
