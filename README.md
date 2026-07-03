@@ -43,7 +43,7 @@ pnpm --filter @ikis/backend db:migrate:remote # aplicar migraciones a D1 en Clou
 El workflow `.github/workflows/ci.yml` corre en cada push/PR a `main`:
 
 - **test**: `pnpm install` + `pnpm typecheck` + `pnpm test`.
-- **deploy**: solo en push a `main` (y tras pasar `test`) despliega `apps/backend` a Cloudflare Workers con `wrangler deploy`.
+- **deploy**: solo en push a `main` (y tras pasar `test`) aplica las migraciones pendientes a la D1 remota (`wrangler d1 migrations apply ikis --remote`) y luego despliega `apps/backend` a Cloudflare Workers con `wrangler deploy`.
 
 Para que el job `deploy` funcione hace falta configurar, una sola vez:
 
