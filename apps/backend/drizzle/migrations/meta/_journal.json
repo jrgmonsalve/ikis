@@ -15,6 +15,13 @@
       "when": 1783111066950,
       "tag": "0001_milky_maginty",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1783115278423,
+      "tag": "0002_nostalgic_the_twelve",
+      "breakpoints": true
     }
   ]
 }
