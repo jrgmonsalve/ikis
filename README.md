@@ -11,6 +11,7 @@ Aplicación de gestión financiera para familias. Monorepo con el backend (Hono 
 
 ```bash
 pnpm install         # instalar dependencias del monorepo
+cp apps/backend/.dev.vars.example apps/backend/.dev.vars   # variables de entorno locales (ver apps/backend/AUTH.md)
 pnpm dev             # levantar el backend (Wrangler + D1 local, sin Cloudflare remoto)
 ```
 
@@ -37,6 +38,20 @@ pnpm --filter @ikis/backend db:generate       # generar migraciones a partir del
 pnpm --filter @ikis/backend db:migrate:local  # aplicar migraciones a D1 local
 pnpm --filter @ikis/backend db:migrate:remote # aplicar migraciones a D1 en Cloudflare
 ```
+
+Para inspeccionar el contenido de la D1 local (debug):
+
+```bash
+pnpm --filter @ikis/backend exec wrangler d1 execute ikis --local --command "SELECT * FROM users"
+```
+
+### Notas para escribir tests de integración con D1
+
+El pool de tests (`@cloudflare/vitest-pool-workers`) **no resetea el storage de D1 entre `it()` de un mismo archivo** — las filas se acumulan. Si un test asume que empieza de cero (ej. contar filas de una familia), usar `crypto.randomUUID()` para los ids de scoping (`familyId`, etc.) en vez de strings fijos como `"family-1"`, así los tests no colisionan entre sí sin importar el orden en que corran.
+
+## Autenticación
+
+El backend usa Google Sign-In + JWT propio. Setup de variables de entorno (`JWT_SECRET`, `GOOGLE_CLIENT_ID`, `DEV_AUTH`), cómo probar login sin Google (endpoint de desarrollo) y cómo probar con un token real de Google (OAuth 2.0 Playground): ver **[`apps/backend/AUTH.md`](apps/backend/AUTH.md)**.
 
 ## CI/CD (GitHub Actions → Cloudflare Workers)
 
