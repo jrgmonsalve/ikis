@@ -9,5 +9,5 @@ enabled = true
 [[d1_databases]]
 binding = "DB"
 database_name = "ikis"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "e7a50072-3af4-423c-a517-0523d8ac0f28"
 migrations_dir = "drizzle/migrations"
