@@ -6,6 +6,10 @@ compatibility_flags = ["nodejs_compat"]
 [observability]
 enabled = true
 
+[vars]
+DEV_AUTH = "false"
+GOOGLE_CLIENT_ID = "REPLACE_WITH_GOOGLE_CLIENT_ID"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "ikis"

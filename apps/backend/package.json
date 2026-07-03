@@ -15,7 +15,8 @@
   },
   "dependencies": {
     "drizzle-orm": "^0.44.6",
-    "hono": "^4.10.7"
+    "hono": "^4.10.7",
+    "jose": "^6.2.3"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.18.0",
