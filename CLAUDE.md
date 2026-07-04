@@ -51,7 +51,6 @@ Se registran los **gastos** de una familia, clasificados mediante **categorías 
 | Pruebas | Vitest (`@cloudflare/vitest-pool-workers` para tests de adaptadores/D1) |
 | Tooling Cloudflare | Wrangler |
 | Auth | Google Sign-In + JWT propio |
-| Front (futuro) | PWA — por definir |
 
 ## Estructura del repositorio (monorepo)
 
@@ -60,12 +59,13 @@ Objetivo (se irá creando en la primera entrega):
 ```
 /
 ├─ apps/
-│  └─ backend/          # API Hono sobre Workers
-├─ .github/workflows/   # CI/CD
+│  ├─ backend/           # API Hono sobre Workers
+│  └─ frontend/          # PWA React + Vite (ver sección "Frontend (PWA)")
+├─ .github/workflows/    # CI/CD
 └─ pnpm-workspace.yaml
 ```
 
-El frontend se añadirá bajo `apps/` cuando se defina.
+`apps/frontend` todavía no está scaffoldeado; el stack y la estructura ya están definidos abajo.
 
 ## Arquitectura (hexagonal simple) — backend
 
@@ -98,6 +98,53 @@ Modelo **multi-tenant con una sola base de datos D1**. Cada entidad de familia l
 **Regla de seguridad (obligatoria):**
 - El `familyId` **siempre** se deriva del usuario autenticado (del JWT), **nunca** de un `familyId` recibido en body/query/params.
 - **Todo repositorio filtra obligatoriamente por `familyId`**. El scoping por tenant se centraliza en la capa `infrastructure` (repositorios); ningún caso de uso debe poder leer/escribir datos de otra familia.
+
+## Frontend (PWA)
+
+### Stack
+
+| Capa | Tecnología |
+|------|------------|
+| Framework | React + Vite |
+| Lenguaje | TypeScript |
+| Estilos | Tailwind CSS |
+| Componentes UI | shadcn/ui (primitivas Radix, código copiado al repo — no una dependencia de npm que hay que pelear para personalizar) |
+| Routing | React Router |
+| Server state / data fetching | TanStack Query |
+| Formularios | react-hook-form + zod |
+| i18n | i18next / react-i18next |
+| PWA (manifest, service worker) | vite-plugin-pwa |
+| Pruebas | Vitest + React Testing Library |
+| Gestor de paquetes | pnpm (mismo workspace que el backend) |
+| Deploy | Cloudflare Pages, subdominio `ikis.renegarcia.work` |
+
+**Por qué shadcn/ui y no Material UI:** los componentes de shadcn/ui se copian al repo como código propio en vez de instalarse como dependencia — da la velocidad de tener inputs/diálogos/tablas ya resueltos y accesibles, sin heredar el look de "panel de admin" de Material Design ni pelear un sistema de temas ajeno para personalizar. Es más liviano (importa para una PWA instalable) y sus formularios están pensados nativamente para trabajar con `react-hook-form` + `zod`, que es lo que necesita una app con tantos formularios (gastos, categorías, presupuestos).
+
+**Estado y complejidad:** nada de Redux/Zustand por ahora — TanStack Query cubre el server state (categorías, familia, transacciones) y `useState`/Context de React alcanza para el estado de UI local. No sobre-diseñar esto hasta que el tamaño real de la app lo pida.
+
+**PWA = instalable, no offline-first:** el alcance de "PWA" acá es manifest + ícono + carga de app shell cacheada para que se pueda instalar: no incluye sincronización de datos offline (crear/editar transacciones sin conexión). Eso queda fuera del MVP.
+
+### Estructura (al scaffoldear `apps/frontend`)
+
+```
+apps/frontend/src/
+├─ routes/            # pantallas (login, onboarding, dashboard, categorías, ...)
+├─ features/          # un folder por dominio, espejando los módulos del backend
+│  └─ <feature>/      # ej. auth/, family/, categories/, transactions/
+│     ├─ api.ts        # llamadas al backend (fetch + hooks de TanStack Query)
+│     ├─ components/
+│     └─ hooks.ts
+├─ components/ui/     # componentes shadcn/ui
+├─ lib/               # cliente API, storage del JWT, utils
+└─ i18n/              # traducciones
+```
+
+### Autenticación en el frontend
+
+1. Botón de Google Sign-In (Google Identity Services JS) → devuelve un ID token de Google.
+2. `POST /auth/google` con ese ID token → el backend responde con el JWT propio.
+3. El JWT se guarda en `localStorage` (suficiente para el MVP; el backend ya espera `Authorization: Bearer <token>`, no cookies) y se manda en cada request a la API.
+4. **Pendiente en el backend:** hoy no existe un endpoint que devuelva el usuario autenticado (`GET /me` o similar) con su `familyId`. Sin eso, el frontend no tiene una forma limpia de decidir si mostrar el onboarding (crear familia) o el dashboard después del login — hay que agregarlo antes de construir el flujo de pantallas post-login.
 
 ## Primera entrega (alcance actual)
 
@@ -149,5 +196,6 @@ pnpm db:migrate:remote       # aplicar migraciones a D1 en Cloudflare
 ## Definiciones pendientes
 
 - Nombre y estructura definitiva de las tablas (se cierra al escribir el schema de Drizzle).
-- Detalles del frontend (PWA): framework, i18n.
+- Endpoint `GET /me` (o similar) en el backend para que el frontend sepa si el usuario ya tiene familia — necesario antes de construir el flujo post-login.
+- Flujo detallado de cada pantalla del frontend (login, onboarding/crear familia, dashboard, categorías, etc.) — se define pantalla por pantalla en las próximas sesiones.
 - Reglas de invitación de miembros a la familia (fuera del MVP actual).
