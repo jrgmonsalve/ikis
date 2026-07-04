@@ -1,15 +1,11 @@
 import { eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/d1";
+import type { Db } from "../../../../shared/db";
 import type { User } from "../../domain/user";
 import type { NewUser, UserRepository } from "../../domain/user-repository";
 import { users } from "./users.schema";
 
 export class DrizzleUserRepository implements UserRepository {
-  private readonly db: ReturnType<typeof drizzle>;
-
-  constructor(d1: D1Database) {
-    this.db = drizzle(d1);
-  }
+  constructor(private readonly db: Db) {}
 
   async findById(id: string): Promise<User | null> {
     const [row] = await this.db.select().from(users).where(eq(users.id, id)).limit(1);

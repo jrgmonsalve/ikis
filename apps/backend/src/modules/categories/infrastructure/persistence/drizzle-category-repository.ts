@@ -1,15 +1,11 @@
 import { and, eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/d1";
+import type { Db } from "../../../../shared/db";
 import type { Category } from "../../domain/category";
 import type { CategoryRepository, NewCategory } from "../../domain/category-repository";
 import { categories } from "./categories.schema";
 
 export class DrizzleCategoryRepository implements CategoryRepository {
-  private readonly db: ReturnType<typeof drizzle>;
-
-  constructor(d1: D1Database) {
-    this.db = drizzle(d1);
-  }
+  constructor(private readonly db: Db) {}
 
   async findById(familyId: string, id: string): Promise<Category | null> {
     const [row] = await this.db

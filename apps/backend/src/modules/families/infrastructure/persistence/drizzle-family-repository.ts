@@ -1,14 +1,10 @@
-import { drizzle } from "drizzle-orm/d1";
+import type { Db } from "../../../../shared/db";
 import type { Family } from "../../domain/family";
 import type { FamilyRepository, NewFamily } from "../../domain/family-repository";
 import { families } from "./families.schema";
 
 export class DrizzleFamilyRepository implements FamilyRepository {
-  private readonly db: ReturnType<typeof drizzle>;
-
-  constructor(d1: D1Database) {
-    this.db = drizzle(d1);
-  }
+  constructor(private readonly db: Db) {}
 
   async create(input: NewFamily): Promise<Family> {
     const row: Family = {

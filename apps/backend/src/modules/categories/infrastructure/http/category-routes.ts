@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { AuthVariables } from "../../../../shared/auth-middleware";
 import { authMiddleware } from "../../../../shared/auth-middleware";
+import { createDb } from "../../../../shared/db";
 import type { Bindings } from "../../../../shared/env";
 import { createCategory } from "../../application/create-category";
 import { deleteCategory } from "../../application/delete-category";
@@ -21,7 +22,7 @@ categoryRoutes.use("*", async (c, next) => {
 
 categoryRoutes.get("/", async (c) => {
   const familyId = c.get("familyId") as string;
-  const categoryRepository = new DrizzleCategoryRepository(c.env.DB);
+  const categoryRepository = new DrizzleCategoryRepository(createDb(c.env.DB));
 
   const tree = await listCategoryTree({ categoryRepository }, { familyId });
   return c.json(tree);
@@ -34,7 +35,7 @@ categoryRoutes.post("/", async (c) => {
     return c.json({ error: "name is required" }, 400);
   }
 
-  const categoryRepository = new DrizzleCategoryRepository(c.env.DB);
+  const categoryRepository = new DrizzleCategoryRepository(createDb(c.env.DB));
 
   try {
     const category = await createCategory(
@@ -58,7 +59,7 @@ categoryRoutes.patch("/:id", async (c) => {
     return c.json({ error: "name is required" }, 400);
   }
 
-  const categoryRepository = new DrizzleCategoryRepository(c.env.DB);
+  const categoryRepository = new DrizzleCategoryRepository(createDb(c.env.DB));
 
   try {
     const category = await renameCategory({ categoryRepository }, { familyId, id, name: body.name });
@@ -74,7 +75,7 @@ categoryRoutes.patch("/:id", async (c) => {
 categoryRoutes.delete("/:id", async (c) => {
   const familyId = c.get("familyId") as string;
   const id = c.req.param("id");
-  const categoryRepository = new DrizzleCategoryRepository(c.env.DB);
+  const categoryRepository = new DrizzleCategoryRepository(createDb(c.env.DB));
 
   try {
     await deleteCategory({ categoryRepository }, { familyId, id });

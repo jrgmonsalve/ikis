@@ -1,5 +1,6 @@
 import type { MiddlewareHandler } from "hono";
 import { DrizzleUserRepository } from "../modules/users/infrastructure/persistence/drizzle-user-repository";
+import { createDb } from "./db";
 import type { Bindings } from "./env";
 import { verifyAppJwt } from "./jwt";
 
@@ -18,7 +19,7 @@ export const authMiddleware: MiddlewareHandler<{ Bindings: Bindings; Variables: 
 
   try {
     const payload = await verifyAppJwt(c.env.JWT_SECRET, token);
-    const userRepository = new DrizzleUserRepository(c.env.DB);
+    const userRepository = new DrizzleUserRepository(createDb(c.env.DB));
     const user = await userRepository.findById(payload.sub);
 
     if (!user) {

@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { createDb } from "../../../../shared/db";
 import type { Bindings } from "../../../../shared/env";
 import { DrizzleUserRepository } from "../../../users/infrastructure/persistence/drizzle-user-repository";
 import { loginAsDevUser } from "../../application/login-as-dev-user";
@@ -13,7 +14,7 @@ authRoutes.post("/google", async (c) => {
     return c.json({ error: "idToken is required" }, 400);
   }
 
-  const userRepository = new DrizzleUserRepository(c.env.DB);
+  const userRepository = new DrizzleUserRepository(createDb(c.env.DB));
   const googleIdTokenVerifier = new JoseGoogleIdTokenVerifier(c.env.GOOGLE_CLIENT_ID);
 
   try {
@@ -32,7 +33,7 @@ authRoutes.post("/dev", async (c) => {
     return c.json({ error: "Not found" }, 404);
   }
 
-  const userRepository = new DrizzleUserRepository(c.env.DB);
+  const userRepository = new DrizzleUserRepository(createDb(c.env.DB));
   const token = await loginAsDevUser({ userRepository, jwtSecret: c.env.JWT_SECRET });
 
   return c.json({ token });

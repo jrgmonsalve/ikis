@@ -1,11 +1,12 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
+import { createDb } from "../../../../src/shared/db";
 import { DrizzleFamilyRepository } from "../../../../src/modules/families/infrastructure/persistence/drizzle-family-repository";
 import { DrizzleUserRepository } from "../../../../src/modules/users/infrastructure/persistence/drizzle-user-repository";
 
 describe("DrizzleUserRepository", () => {
   it("creates a user and finds it by google id", async () => {
-    const repository = new DrizzleUserRepository(env.DB);
+    const repository = new DrizzleUserRepository(createDb(env.DB));
 
     const created = await repository.create({
       googleId: "google-123",
@@ -19,7 +20,7 @@ describe("DrizzleUserRepository", () => {
   });
 
   it("returns null when no user matches the google id", async () => {
-    const repository = new DrizzleUserRepository(env.DB);
+    const repository = new DrizzleUserRepository(createDb(env.DB));
 
     const found = await repository.findByGoogleId("does-not-exist");
 
@@ -27,7 +28,7 @@ describe("DrizzleUserRepository", () => {
   });
 
   it("finds a user by id", async () => {
-    const repository = new DrizzleUserRepository(env.DB);
+    const repository = new DrizzleUserRepository(createDb(env.DB));
     const created = await repository.create({
       googleId: "google-456",
       email: "found@example.com",
@@ -40,8 +41,8 @@ describe("DrizzleUserRepository", () => {
   });
 
   it("assigns a family to a user", async () => {
-    const repository = new DrizzleUserRepository(env.DB);
-    const familyRepository = new DrizzleFamilyRepository(env.DB);
+    const repository = new DrizzleUserRepository(createDb(env.DB));
+    const familyRepository = new DrizzleFamilyRepository(createDb(env.DB));
     const created = await repository.create({
       googleId: "google-789",
       email: "family@example.com",

@@ -1,13 +1,14 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
+import { createDb } from "../../../../src/shared/db";
 import { createApp } from "../../../../src/app";
 import { DrizzleFamilyRepository } from "../../../../src/modules/families/infrastructure/persistence/drizzle-family-repository";
 import { DrizzleUserRepository } from "../../../../src/modules/users/infrastructure/persistence/drizzle-user-repository";
 import { signAppJwt } from "../../../../src/shared/jwt";
 
 const createAuthenticatedUserWithFamily = async () => {
-  const userRepository = new DrizzleUserRepository(env.DB);
-  const familyRepository = new DrizzleFamilyRepository(env.DB);
+  const userRepository = new DrizzleUserRepository(createDb(env.DB));
+  const familyRepository = new DrizzleFamilyRepository(createDb(env.DB));
   const user = await userRepository.create({
     googleId: crypto.randomUUID(),
     email: `${crypto.randomUUID()}@example.com`,
@@ -23,7 +24,7 @@ const createAuthenticatedUserWithFamily = async () => {
 describe("category routes", () => {
   it("rejects when the user has no family yet", async () => {
     const app = createApp();
-    const userRepository = new DrizzleUserRepository(env.DB);
+    const userRepository = new DrizzleUserRepository(createDb(env.DB));
     const user = await userRepository.create({
       googleId: crypto.randomUUID(),
       email: "no-family@example.com",

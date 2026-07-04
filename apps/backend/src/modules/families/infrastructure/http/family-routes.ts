@@ -3,6 +3,7 @@ import { DrizzleCategoryRepository } from "../../../categories/infrastructure/pe
 import { DrizzleUserRepository } from "../../../users/infrastructure/persistence/drizzle-user-repository";
 import type { AuthVariables } from "../../../../shared/auth-middleware";
 import { authMiddleware } from "../../../../shared/auth-middleware";
+import { createDb } from "../../../../shared/db";
 import type { Bindings } from "../../../../shared/env";
 import { createFamilyForUser } from "../../application/create-family-for-user";
 import { DrizzleFamilyRepository } from "../persistence/drizzle-family-repository";
@@ -18,9 +19,10 @@ familyRoutes.post("/", async (c) => {
   }
 
   const userId = c.get("userId");
-  const familyRepository = new DrizzleFamilyRepository(c.env.DB);
-  const userRepository = new DrizzleUserRepository(c.env.DB);
-  const categoryRepository = new DrizzleCategoryRepository(c.env.DB);
+  const db = createDb(c.env.DB);
+  const familyRepository = new DrizzleFamilyRepository(db);
+  const userRepository = new DrizzleUserRepository(db);
+  const categoryRepository = new DrizzleCategoryRepository(db);
 
   try {
     const family = await createFamilyForUser(

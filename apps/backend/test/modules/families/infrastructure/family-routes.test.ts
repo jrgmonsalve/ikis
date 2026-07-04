@@ -1,5 +1,6 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
+import { createDb } from "../../../../src/shared/db";
 import { createApp } from "../../../../src/app";
 import { DrizzleUserRepository } from "../../../../src/modules/users/infrastructure/persistence/drizzle-user-repository";
 import { signAppJwt } from "../../../../src/shared/jwt";
@@ -9,7 +10,7 @@ const authHeaderFor = async (userId: string) => `Bearer ${await signAppJwt(env.J
 describe("family routes", () => {
   it("creates a family for the authenticated user", async () => {
     const app = createApp();
-    const userRepository = new DrizzleUserRepository(env.DB);
+    const userRepository = new DrizzleUserRepository(createDb(env.DB));
     const user = await userRepository.create({
       googleId: crypto.randomUUID(),
       email: "ana@example.com",
@@ -33,7 +34,7 @@ describe("family routes", () => {
 
   it("rejects when the user already belongs to a family", async () => {
     const app = createApp();
-    const userRepository = new DrizzleUserRepository(env.DB);
+    const userRepository = new DrizzleUserRepository(createDb(env.DB));
     const user = await userRepository.create({
       googleId: crypto.randomUUID(),
       email: "ben@example.com",
