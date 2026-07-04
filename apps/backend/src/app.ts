@@ -1,5 +1,7 @@
 import { Hono } from "hono";
 import { authRoutes } from "./modules/auth/infrastructure/http/auth-routes";
+import { categoryRoutes } from "./modules/categories/infrastructure/http/category-routes";
+import { familyRoutes } from "./modules/families/infrastructure/http/family-routes";
 import type { Bindings } from "./shared/env";
 
 export const createApp = () => {
@@ -7,6 +9,8 @@ export const createApp = () => {
 
   app.get("/health", (c) => c.json({ status: "ok" }));
   app.route("/auth", authRoutes);
+  app.route("/families", familyRoutes);
+  app.route("/categories", categoryRoutes);
 
   return app;
 };
