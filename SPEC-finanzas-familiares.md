@@ -44,6 +44,7 @@ Cada tabla en su módulo (`src/modules/<accounts|transactions|budgets>/infrastru
 - **transactions**: `id` (text pk), `family_id` (not null), `account_id` (fk accounts), `category_id` (fk categories, nullable — ver nota sobre ingresos arriba), `created_by_user_id` (fk users), `amount` (integer not null; negativo = gasto, positivo = ingreso), `description` (text), `occurred_at` (text ISO date `'YYYY-MM-DD'`, not null), `created_at`, `updated_at`, `deleted_at` (nullable).
 - **budgets**: `id` (text pk), `family_id`, `category_id` (fk categories), `period` (text `'YYYY-MM-01'`), `amount_limit` (integer not null). Unique(`family_id`, `category_id`, `period`).
 - **transaction_revisions**: `id` (text pk), `transaction_id` (fk transactions), `snapshot` (text JSON del estado anterior), `changed_by_user_id`, `changed_at`. Se inserta una fila antes de cada UPDATE/DELETE de una transacción, dentro del mismo batch.
+- **transfers** (no estaba en el planteamiento original, agregada durante la implementación — ver sección "Transferencias entre cuentas" abajo): `id` (text pk), `family_id` (not null), `from_account_id` (fk accounts), `to_account_id` (fk accounts), `created_by_user_id` (fk users), `amount` (integer not null, siempre positivo), `description` (text), `occurred_at` (text ISO date), `created_at`, `updated_at`, `deleted_at` (nullable).
 
 Índices:
 - `idx_tx_family_account` sobre `transactions(family_id, account_id)` WHERE `deleted_at IS NULL`.
@@ -78,6 +79,24 @@ Batch:
 
 ### Punto de extensión (efectos futuros)
 Centralizar la construcción del batch en un helper `buildTransactionEffects({ before, after }): Statement[]` que devuelve las sentencias de efectos colaterales (hoy: solo saldo; mañana: resúmenes mensuales, outbox, etc.). Los casos de uso create/update/delete lo invocan con `before=null` o `after=null` según el caso. NO implementar todavía un event bus ni tabla outbox; solo dejar este helper como costura de extensión.
+
+## Transferencias entre cuentas (`transfers`)
+
+**No estaba en el planteamiento original de este spec** — surgió como pregunta durante la implementación: ¿cómo se mueve dinero entre dos cuentas de la misma familia (ej. Checking → Ahorros)?
+
+Modelarlo como dos `transactions` sueltas (-monto en A, +monto en B) rompería el principio no negociable #1 ("`transactions` es la única fuente de verdad" para presupuestos/reportes): la pata negativa contaría como gasto real en `spent` de algún presupuesto, cuando mover el propio dinero no es ni gasto ni ingreso. Tampoco quedarían vinculadas — borrar una sin la otra descuadra el balance para siempre.
+
+**Decisión:** entidad separada `transfers`, módulo hexagonal propio (`src/modules/transfers/{domain,application,infrastructure}/`), sin relación con `transactions` ni con `categories` (una transferencia no es categorizable, no es gasto ni ingreso). Reglas de dominio: `amount` siempre positivo (dirección la dan `fromAccountId`/`toAccountId`), `fromAccountId !== toAccountId`.
+
+Casos de uso — mismo patrón revert-and-apply que `transactions`, pero **siempre** toca dos cuentas (nunca colapsa al caso "misma cuenta" que sí existe en `updateTransaction`):
+
+- `createTransfer`: batch de 3 — INSERT en `transfers`, `UPDATE accounts SET balance = balance - :amount WHERE id = :fromAccountId`, `UPDATE accounts SET balance = balance + :amount WHERE id = :toAccountId`.
+- `updateTransfer`: batch de 5 — UPDATE de `transfers`, luego revierte el efecto viejo (+amount viejo en el from viejo, -amount viejo en el to viejo) y aplica el nuevo (-amount nuevo en el from nuevo, +amount nuevo en el to nuevo). Si alguna cuenta no cambió, son dos UPDATEs seguidos a la misma fila dentro del mismo batch — correcto y atómico, solo un poco menos eficiente que colapsar el caso; se prefirió así por ser un único camino de código en vez de bifurcar según qué cambió.
+- `deleteTransfer`: batch de 3 — soft delete + revertir ambas cuentas.
+
+Implementado y testeado (`test/modules/transfers/`): casos de uso con repo en memoria (validaciones: monto ≤0, mismo origen/destino, cuenta de otra familia) + integración contra D1 real (débito/crédito al crear, ajuste por diferencia de monto, mover el destino de una cuenta a otra, soft delete revierte ambas, aislamiento multi-tenant).
+
+**Pendiente:** exponer `GET/POST/PATCH/DELETE /api/v1/transfers` (mismo paso que falta para `transactions`/`accounts`); decidir si el endpoint de listado de "actividad de una cuenta" combina `transactions` + `transfers` o se consultan por separado desde el frontend.
 
 ## Consulta de presupuestos
 
@@ -137,10 +156,11 @@ Como mínimo:
 
 ## Orden de implementación
 
-1. Schema + migración inicial (`accounts`, `transactions`, `budgets`, `transaction_revisions`).
-2. Casos de uso de `transactions` con los batches (corazón del sistema) + tests 1–4.
-3. Casos de uso de `budgets` + test 5.
-4. Rutas Hono (sin prefijo, detrás de `authMiddleware`) + test 6.
-5. Reconciliación + test 7.
+1. ~~Schema + migración inicial (`accounts`, `transactions`)~~ → hecho.
+2. ~~Casos de uso de `transactions` con los batches (corazón del sistema) + tests 1, 2, 3, 4, 6~~ → hecho.
+3. ~~Schema + casos de uso de `transfers`~~ → hecho (ver sección "Transferencias entre cuentas" arriba; no estaba en el plan original).
+4. Rutas Hono para `accounts`, `transactions`, `transfers` (bajo `/api/v1`, detrás de `authMiddleware`).
+5. Schema + casos de uso de `budgets` + test 5.
+6. Reconciliación + test 7.
 
 Trabajar por fases: al terminar cada fase, correr los tests y mostrar un resumen antes de continuar con la siguiente.

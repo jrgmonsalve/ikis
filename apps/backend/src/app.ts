@@ -1,8 +1,11 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { accountRoutes } from "./modules/accounts/infrastructure/http/account-routes";
 import { authRoutes } from "./modules/auth/infrastructure/http/auth-routes";
 import { categoryRoutes } from "./modules/categories/infrastructure/http/category-routes";
 import { familyRoutes } from "./modules/families/infrastructure/http/family-routes";
+import { transactionRoutes } from "./modules/transactions/infrastructure/http/transaction-routes";
+import { transferRoutes } from "./modules/transfers/infrastructure/http/transfer-routes";
 import { userRoutes } from "./modules/users/infrastructure/http/user-routes";
 import type { Bindings } from "./shared/env";
 
@@ -25,6 +28,9 @@ export const createApp = () => {
   v1.route("/", userRoutes);
   v1.route("/families", familyRoutes);
   v1.route("/categories", categoryRoutes);
+  v1.route("/accounts", accountRoutes);
+  v1.route("/transactions", transactionRoutes);
+  v1.route("/transfers", transferRoutes);
   app.route("/api/v1", v1);
 
   return app;
