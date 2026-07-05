@@ -19,10 +19,13 @@ export const createApp = () => {
   );
 
   app.get("/health", (c) => c.json({ status: "ok" }));
-  app.route("/auth", authRoutes);
-  app.route("/", userRoutes);
-  app.route("/families", familyRoutes);
-  app.route("/categories", categoryRoutes);
+
+  const v1 = new Hono<{ Bindings: Bindings }>();
+  v1.route("/auth", authRoutes);
+  v1.route("/", userRoutes);
+  v1.route("/families", familyRoutes);
+  v1.route("/categories", categoryRoutes);
+  app.route("/api/v1", v1);
 
   return app;
 };

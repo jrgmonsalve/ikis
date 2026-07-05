@@ -16,7 +16,7 @@ describe("GET /me", () => {
     });
     const token = await signAppJwt(env.JWT_SECRET, { sub: user.id });
 
-    const response = await app.request("/me", { headers: { Authorization: `Bearer ${token}` } }, env);
+    const response = await app.request("/api/v1/me", { headers: { Authorization: `Bearer ${token}` } }, env);
 
     expect(response.status).toBe(200);
     const body = await response.json<{ id: string; email: string; name: string; familyId: string | null }>();
@@ -34,7 +34,7 @@ describe("GET /me", () => {
     const token = await signAppJwt(env.JWT_SECRET, { sub: user.id });
 
     await app.request(
-      "/families",
+      "/api/v1/families",
       {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -43,7 +43,7 @@ describe("GET /me", () => {
       env,
     );
 
-    const response = await app.request("/me", { headers: { Authorization: `Bearer ${token}` } }, env);
+    const response = await app.request("/api/v1/me", { headers: { Authorization: `Bearer ${token}` } }, env);
     const body = await response.json<{ familyId: string | null }>();
 
     expect(body.familyId).not.toBeNull();
@@ -52,7 +52,7 @@ describe("GET /me", () => {
   it("requires authentication", async () => {
     const app = createApp();
 
-    const response = await app.request("/me", {}, env);
+    const response = await app.request("/api/v1/me", {}, env);
 
     expect(response.status).toBe(401);
   });

@@ -32,7 +32,7 @@ describe("category routes", () => {
     });
     const token = await signAppJwt(env.JWT_SECRET, { sub: user.id });
 
-    const response = await app.request("/categories", { headers: { Authorization: `Bearer ${token}` } }, env);
+    const response = await app.request("/api/v1/categories", { headers: { Authorization: `Bearer ${token}` } }, env);
 
     expect(response.status).toBe(400);
   });
@@ -42,7 +42,7 @@ describe("category routes", () => {
     const { authHeader } = await createAuthenticatedUserWithFamily();
 
     const createResponse = await app.request(
-      "/categories",
+      "/api/v1/categories",
       {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: authHeader },
@@ -53,13 +53,13 @@ describe("category routes", () => {
     expect(createResponse.status).toBe(201);
     const created = await createResponse.json<{ id: string; name: string }>();
 
-    const listResponse = await app.request("/categories", { headers: { Authorization: authHeader } }, env);
+    const listResponse = await app.request("/api/v1/categories", { headers: { Authorization: authHeader } }, env);
     expect(listResponse.status).toBe(200);
     const tree = await listResponse.json<Array<{ id: string }>>();
     expect(tree.some((category) => category.id === created.id)).toBe(true);
 
     const renameResponse = await app.request(
-      `/categories/${created.id}`,
+      `/api/v1/categories/${created.id}`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: authHeader },
@@ -72,7 +72,7 @@ describe("category routes", () => {
     expect(renamed.name).toBe("groceries");
 
     const deleteResponse = await app.request(
-      `/categories/${created.id}`,
+      `/api/v1/categories/${created.id}`,
       { method: "DELETE", headers: { Authorization: authHeader } },
       env,
     );
@@ -84,7 +84,7 @@ describe("category routes", () => {
     const { authHeader } = await createAuthenticatedUserWithFamily();
 
     const rootResponse = await app.request(
-      "/categories",
+      "/api/v1/categories",
       {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: authHeader },
@@ -94,7 +94,7 @@ describe("category routes", () => {
     );
     const root = await rootResponse.json<{ id: string }>();
     const childResponse = await app.request(
-      "/categories",
+      "/api/v1/categories",
       {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: authHeader },
@@ -105,7 +105,7 @@ describe("category routes", () => {
     const child = await childResponse.json<{ id: string }>();
 
     const grandchildResponse = await app.request(
-      "/categories",
+      "/api/v1/categories",
       {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: authHeader },

@@ -18,7 +18,7 @@ describe("family routes", () => {
     });
 
     const response = await app.request(
-      "/families",
+      "/api/v1/families",
       {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: await authHeaderFor(user.id) },
@@ -43,7 +43,7 @@ describe("family routes", () => {
     const header = await authHeaderFor(user.id);
 
     await app.request(
-      "/families",
+      "/api/v1/families",
       {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: header },
@@ -52,7 +52,7 @@ describe("family routes", () => {
       env,
     );
     const response = await app.request(
-      "/families",
+      "/api/v1/families",
       {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: header },
@@ -68,7 +68,7 @@ describe("family routes", () => {
     const app = createApp();
 
     const response = await app.request(
-      "/families",
+      "/api/v1/families",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

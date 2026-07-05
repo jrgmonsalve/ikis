@@ -92,6 +92,9 @@ Reglas de dependencia:
 
 Esto permite probar `domain` y `application` con pruebas unitarias puras (sin D1) y probar los adaptadores contra SQLite local.
 
+### Convención de rutas HTTP
+Todos los endpoints de negocio van prefijados con `/api/v1` (`/api/v1/auth/*`, `/api/v1/me`, `/api/v1/families`, `/api/v1/categories`, y así las futuras entidades del `SPEC-finanzas-familiares.md`). `GET /health` es la única excepción: queda sin prefijar por ser un check de infraestructura, no un recurso de la API.
+
 ### Tenancy y aislamiento de datos
 Modelo **multi-tenant con una sola base de datos D1**. Cada entidad de familia lleva `familyId`. NO se usa una base de datos por familia (los bindings de D1 son estáticos y multiplicaría migraciones/operación).
 
@@ -142,9 +145,9 @@ apps/frontend/src/
 ### Autenticación en el frontend
 
 1. Botón de Google Sign-In (Google Identity Services JS) → devuelve un ID token de Google.
-2. `POST /auth/google` con ese ID token → el backend responde con el JWT propio.
+2. `POST /api/v1/auth/google` con ese ID token → el backend responde con el JWT propio.
 3. El JWT se guarda en `localStorage` (suficiente para el MVP; el backend ya espera `Authorization: Bearer <token>`, no cookies) y se manda en cada request a la API.
-4. `GET /me` devuelve el usuario autenticado con su `familyId`; el frontend lo usa (guard de ruteo) para decidir entre onboarding (crear familia) o dashboard después del login.
+4. `GET /api/v1/me` devuelve el usuario autenticado con su `familyId`; el frontend lo usa (guard de ruteo) para decidir entre onboarding (crear familia) o dashboard después del login.
 
 ## Primera entrega (alcance actual)
 
@@ -173,7 +176,7 @@ El backend verifica el **ID token de Google** y emite su **propio JWT**, que se 
 
 Como en esta etapa **solo existe el backend** (sin frontend que haga el login de Google), para **probar** se recomienda:
 - Un **endpoint de desarrollo** protegido por variable de entorno (p. ej. `DEV_AUTH=true`, deshabilitado en producción) que emita un JWT para un usuario de prueba **sin pasar por Google**.
-- Alternativa: obtener un ID token real desde el [OAuth 2.0 Playground](https://developers.google.com/oauthplayground) y enviarlo a `/auth/google`.
+- Alternativa: obtener un ID token real desde el [OAuth 2.0 Playground](https://developers.google.com/oauthplayground) y enviarlo a `/api/v1/auth/google`.
 - Para pruebas unitarias: generar/verificar JWTs directamente con el secreto de test.
 
 > Cuando lleguemos a la implementación de auth, Claude debe guiar paso a paso la configuración de credenciales de Google y el endpoint de pruebas.
@@ -199,3 +202,4 @@ pnpm --filter @ikis/backend db:migrate:remote # aplicar migraciones a D1 en Clou
 - ~~Endpoint `GET /me`~~ → implementado.
 - ~~Flujo detallado de cada pantalla del frontend~~ → definido en [`apps/frontend/SCREENS.md`](apps/frontend/SCREENS.md).
 - Reglas de invitación de miembros a la familia (fuera del MVP actual).
+- **Siguiente entrega del backend: Transacciones, Cuentas y Presupuestos** → spec completo en [`SPEC-finanzas-familiares.md`](SPEC-finanzas-familiares.md) (ya alineado con lo construido: sin roles, categorías jerárquicas existentes, ids `text`, sin prefijo `/api/v1`, arquitectura hexagonal por módulo).

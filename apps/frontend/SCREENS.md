@@ -1,7 +1,7 @@
 # Flujo de pantallas — Frontend (PWA)
 
-Define el recorrido pantalla por pantalla del MVP, basado en la API actual del backend:
-`POST /auth/google`, `POST /auth/dev`, `GET /me`, `POST /families`, `GET|POST|PATCH|DELETE /categories`.
+Define el recorrido pantalla por pantalla del MVP, basado en la API actual del backend (todo bajo el prefijo `/api/v1`):
+`POST /api/v1/auth/google`, `POST /api/v1/auth/dev`, `GET /api/v1/me`, `POST /api/v1/families`, `GET|POST|PATCH|DELETE /api/v1/categories`.
 
 Todavía no existe la entidad de transacciones/gastos, así que este flujo cubre únicamente
 auth, onboarding de familia y CRUD de categorías.
@@ -13,10 +13,10 @@ auth, onboarding de familia y CRUD de categorías.
 │   /login    │  "Sign in with Google" (GIS)
 │             │  + "Continuar como usuario de prueba" (solo si VITE_DEV_AUTH=true)
 └──────┬──────┘
-       │  POST /auth/google  ó  POST /auth/dev  →  guarda JWT
+       │  POST /api/v1/auth/google  ó  POST /api/v1/auth/dev  →  guarda JWT
        ▼
 ┌───────────────────────┐
-│  Auth bootstrap        │  GET /me → { familyId }
+│  Auth bootstrap        │  GET /api/v1/me → { familyId }
 │  (guard, sin pantalla) │
 └──────┬─────────────────┘
        │
@@ -24,12 +24,12 @@ auth, onboarding de familia y CRUD de categorías.
    ┌───┴────┐
    │ sí     │ no
    ▼        ▼
-┌──────────────────┐   ┌──────────────────────────┐
-│/onboarding/family │   │  /  (dashboard)           │
-│ form: nombre      │   │  saludo + nombre familia  │
-│ POST /families    │   │  nav → /categories        │
-└─────────┬─────────┘   └───────────┬──────────────┘
-          │                         │
+┌───────────────────────────┐   ┌──────────────────────────┐
+│/onboarding/family          │   │  /  (dashboard)           │
+│ form: nombre               │   │  saludo + nombre familia  │
+│ POST /api/v1/families      │   │  nav → /categories        │
+└────────────┬───────────────┘   └───────────┬──────────────┘
+             │                                │
           └───────► /  (dashboard) ◄┘
                           │
                           ▼
@@ -42,18 +42,18 @@ auth, onboarding de familia y CRUD de categorías.
 ## Pantallas
 
 ### 1. `/login`
-- Botón "Sign in with Google" (Google Identity Services JS) → `POST /auth/google { idToken }` → guarda el JWT devuelto.
-- Botón adicional "Continuar como usuario de prueba", visible **solo** si la env var de build `VITE_DEV_AUTH` está en `true` (espejo del `DEV_AUTH` del backend). Nunca debe aparecer en el build de producción. Llama a `POST /auth/dev`.
+- Botón "Sign in with Google" (Google Identity Services JS) → `POST /api/v1/auth/google { idToken }` → guarda el JWT devuelto.
+- Botón adicional "Continuar como usuario de prueba", visible **solo** si la env var de build `VITE_DEV_AUTH` está en `true` (espejo del `DEV_AUTH` del backend). Nunca debe aparecer en el build de producción. Llama a `POST /api/v1/auth/dev`.
 
 ### 2. Auth bootstrap (guard, sin UI propia)
-- Al cargar la app, si hay JWT en `localStorage`, llama a `GET /me`.
+- Al cargar la app, si hay JWT en `localStorage`, llama a `GET /api/v1/me`.
 - Sin JWT válido → redirige a `/login`.
 - `familyId === null` → redirige a `/onboarding/family`.
 - `familyId` presente → deja pasar a las rutas protegidas (dashboard, categorías).
 
 ### 3. `/onboarding/family`
-- Un único input: nombre de la familia → `POST /families { name }`.
-- Si la respuesta es 409 ("el usuario ya pertenece a una familia"), simplemente se refresca `GET /me` y se redirige adentro (no es un error visible para el usuario).
+- Un único input: nombre de la familia → `POST /api/v1/families { name }`.
+- Si la respuesta es 409 ("el usuario ya pertenece a una familia"), simplemente se refresca `GET /api/v1/me` y se redirige adentro (no es un error visible para el usuario).
 - Nota de diseño: el nombre de familia **no es único** — dos familias distintas pueden compartir nombre porque el scoping siempre es por `familyId`, nunca por nombre. Es solo una etiqueta de visualización.
 
 ### 4. `/` — Dashboard (placeholder)
@@ -62,12 +62,12 @@ auth, onboarding de familia y CRUD de categorías.
 - Cáscara mínima por ahora: cuando exista la entidad de gastos, aquí vivirá el resumen/estadísticas.
 
 ### 5. `/categories`
-- Árbol de categorías (raíz → subcategorías), obtenido de `GET /categories`.
+- Árbol de categorías (raíz → subcategorías), obtenido de `GET /api/v1/categories`.
 - Acciones:
   - "Agregar categoría" (raíz).
   - "Agregar subcategoría" — solo disponible sobre categorías raíz, nunca sobre una subcategoría (el backend rechaza un tercer nivel).
-  - Renombrar (`PATCH /categories/:id`).
-  - Borrar (`DELETE /categories/:id`), con confirmación que advierte el borrado en cascada de subcategorías.
+  - Renombrar (`PATCH /api/v1/categories/:id`).
+  - Borrar (`DELETE /api/v1/categories/:id`), con confirmación que advierte el borrado en cascada de subcategorías.
 
 ### 6. Logout
 - Botón en el layout autenticado (header). Limpia el JWT de `localStorage` y redirige a `/login`.

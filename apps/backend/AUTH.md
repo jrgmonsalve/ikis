@@ -41,7 +41,7 @@ Con `DEV_AUTH=true`, `POST /auth/dev` crea (o recupera) un usuario de prueba fij
 ```bash
 pnpm dev   # en otra terminal
 
-curl -X POST http://localhost:8788/auth/dev
+curl -X POST http://localhost:8788/api/v1/auth/dev
 # {"token":"eyJhbGciOiJIUzI1NiJ9...."}
 ```
 
@@ -50,7 +50,7 @@ Si `DEV_AUTH` no es `"true"`, el endpoint responde `404`.
 Usar el token en peticiones a rutas protegidas:
 
 ```bash
-curl http://localhost:8788/algun-endpoint-protegido \
+curl http://localhost:8788/api/v1/algun-endpoint-protegido \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...."
 ```
 
@@ -68,7 +68,7 @@ Sin frontend todavía, se puede sacar un ID token real de Google así:
 Enviarlo al backend:
 
 ```bash
-curl -X POST http://localhost:8788/auth/google \
+curl -X POST http://localhost:8788/api/v1/auth/google \
   -H "Content-Type: application/json" \
   -d '{"idToken":"<pegar el id_token acá>"}'
 ```
@@ -90,6 +90,6 @@ El Client ID es público (va en `wrangler.toml`, commiteado); el Client Secret s
 
 - `src/shared/jwt.ts` (`signAppJwt` / `verifyAppJwt`) tiene tests unitarios directos con un secreto fijo de prueba (`test/shared/jwt.test.ts`).
 - Los casos de uso `loginWithGoogle` / `loginAsDevUser` se testean con un `GoogleIdTokenVerifier` fake — no llaman a Google real (`test/modules/auth/application/`).
-- Las rutas HTTP (`/auth/dev`, validación de `/auth/google`) tienen un test de integración contra D1 local (`test/modules/auth/infrastructure/auth-routes.test.ts`). No se testea el flujo de Google real automatizado (requiere un ID token real); para eso usar el flujo manual del Playground descrito arriba.
+- Las rutas HTTP (`/api/v1/auth/dev`, validación de `/api/v1/auth/google`) tienen un test de integración contra D1 local (`test/modules/auth/infrastructure/auth-routes.test.ts`). No se testea el flujo de Google real automatizado (requiere un ID token real); para eso usar el flujo manual del Playground descrito arriba.
 
 Como `.dev.vars` está gitignorado, no existe en el runner de GitHub Actions. El job `test` de `.github/workflows/ci.yml` genera su propio `.dev.vars` descartable (valores fijos sin ningún uso real, solo para que `jose` pueda firmar/verificar JWTs durante los tests) antes de correr `pnpm test`. Si se corre `pnpm test` en una máquina nueva sin haber hecho el setup local de arriba, va a fallar por el mismo motivo — hay que crear `apps/backend/.dev.vars` primero.

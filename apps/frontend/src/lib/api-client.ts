@@ -1,6 +1,7 @@
 import { getToken } from "./auth-storage";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8787";
+const API_PREFIX = "/api/v1";
 
 export class ApiError extends Error {
   status: number;
@@ -23,7 +24,7 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetch(`${API_URL}${API_PREFIX}${path}`, {
     method: options.method ?? "GET",
     headers,
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
