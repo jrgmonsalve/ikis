@@ -64,3 +64,35 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/backend
           command: deploy
+
+  deploy-frontend:
+    name: Deploy frontend to Cloudflare Pages
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build frontend
+        working-directory: apps/frontend
+        run: pnpm build
+        env:
+          VITE_API_URL: https://ikis-backend.johangarciamonsalve.workers.dev
+          VITE_GOOGLE_CLIENT_ID: 123747138376-16oc38ijefrpah2vc0k9o5o4vkeg0okm.apps.googleusercontent.com
+          VITE_DEV_AUTH: "false"
+
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/frontend
+          command: pages deploy dist --project-name=ikis --branch=main
