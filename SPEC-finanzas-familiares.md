@@ -159,8 +159,11 @@ Como mínimo:
 1. ~~Schema + migración inicial (`accounts`, `transactions`)~~ → hecho.
 2. ~~Casos de uso de `transactions` con los batches (corazón del sistema) + tests 1, 2, 3, 4, 6~~ → hecho.
 3. ~~Schema + casos de uso de `transfers`~~ → hecho (ver sección "Transferencias entre cuentas" arriba; no estaba en el plan original).
-4. Rutas Hono para `accounts`, `transactions`, `transfers` (bajo `/api/v1`, detrás de `authMiddleware`).
-5. Schema + casos de uso de `budgets` + test 5.
+4. ~~Rutas Hono para `accounts`, `transactions`, `transfers`~~ → hecho (bajo `/api/v1`, detrás de `authMiddleware`).
+5. ~~Schema + casos de uso + rutas de `budgets` + test 5~~ → hecho (ver nota de formato de `period` abajo).
 6. Reconciliación + test 7.
+7. `transaction_revisions` (auditoría) — estaba en el spec original, quedó sin implementar al construir `transactions`; decidir si se hace antes o después de reconciliación.
+
+**Nota sobre el formato de `period`:** la API pública (`POST /budgets`, `GET /budgets?period=`) usa `'YYYY-MM'` (lo que produce un `<input type="month">` del frontend), no `'YYYY-MM-01'`. La conversión a formato de almacenamiento (`toStoragePeriod`) pasa en la capa `application`, antes de tocar el repositorio — el `'-01'` es un detalle interno de almacenamiento, no un contrato de la API.
 
 Trabajar por fases: al terminar cada fase, correr los tests y mostrar un resumen antes de continuar con la siguiente.
