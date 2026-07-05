@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { authRoutes } from "./modules/auth/infrastructure/http/auth-routes";
 import { categoryRoutes } from "./modules/categories/infrastructure/http/category-routes";
 import { familyRoutes } from "./modules/families/infrastructure/http/family-routes";
@@ -7,6 +8,15 @@ import type { Bindings } from "./shared/env";
 
 export const createApp = () => {
   const app = new Hono<{ Bindings: Bindings }>();
+
+  app.use(
+    "*",
+    cors({
+      origin: (origin, c) => (origin === c.env.ALLOWED_ORIGIN ? origin : undefined),
+      allowHeaders: ["Content-Type", "Authorization"],
+      allowMethods: ["GET", "POST", "PATCH", "DELETE"],
+    }),
+  );
 
   app.get("/health", (c) => c.json({ status: "ok" }));
   app.route("/auth", authRoutes);

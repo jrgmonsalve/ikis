@@ -1,3 +1,4 @@
 JWT_SECRET=change-me-to-a-long-random-string
 GOOGLE_CLIENT_ID=your-google-oauth-client-id.apps.googleusercontent.com
 DEV_AUTH=true
+ALLOWED_ORIGIN=http://localhost:5173

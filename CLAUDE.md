@@ -65,7 +65,7 @@ Objetivo (se irá creando en la primera entrega):
 └─ pnpm-workspace.yaml
 ```
 
-`apps/frontend` todavía no está scaffoldeado; el stack y la estructura ya están definidos abajo.
+`apps/frontend` ya está scaffoldeado (Vite + React + Tailwind + shadcn/ui) con las pantallas de login, onboarding, dashboard y categorías conectadas a la API real; el stack y la estructura completos están definidos abajo.
 
 ## Arquitectura (hexagonal simple) — backend
 
@@ -124,7 +124,7 @@ Modelo **multi-tenant con una sola base de datos D1**. Cada entidad de familia l
 
 **PWA = instalable, no offline-first:** el alcance de "PWA" acá es manifest + ícono + carga de app shell cacheada para que se pueda instalar: no incluye sincronización de datos offline (crear/editar transacciones sin conexión). Eso queda fuera del MVP.
 
-### Estructura (al scaffoldear `apps/frontend`)
+### Estructura de `apps/frontend`
 
 ```
 apps/frontend/src/
@@ -144,7 +144,7 @@ apps/frontend/src/
 1. Botón de Google Sign-In (Google Identity Services JS) → devuelve un ID token de Google.
 2. `POST /auth/google` con ese ID token → el backend responde con el JWT propio.
 3. El JWT se guarda en `localStorage` (suficiente para el MVP; el backend ya espera `Authorization: Bearer <token>`, no cookies) y se manda en cada request a la API.
-4. **Pendiente en el backend:** hoy no existe un endpoint que devuelva el usuario autenticado (`GET /me` o similar) con su `familyId`. Sin eso, el frontend no tiene una forma limpia de decidir si mostrar el onboarding (crear familia) o el dashboard después del login — hay que agregarlo antes de construir el flujo de pantallas post-login.
+4. `GET /me` devuelve el usuario autenticado con su `familyId`; el frontend lo usa (guard de ruteo) para decidir entre onboarding (crear familia) o dashboard después del login.
 
 ## Primera entrega (alcance actual)
 
@@ -180,22 +180,22 @@ Como en esta etapa **solo existe el backend** (sin frontend que haga el login de
 
 ## Comandos
 
-> Se completan al inicializar el proyecto. Objetivo:
+Corren en todo el monorepo (`pnpm -r`) salvo que se indique lo contrario.
 
 ```bash
-pnpm install                 # instalar dependencias
-pnpm dev                     # levantar backend en local (Wrangler + D1 local)
-pnpm test                    # correr Vitest
-pnpm test <archivo>          # correr un test concreto
-pnpm build                   # build de producción
-pnpm db:generate             # generar migraciones (drizzle-kit)
-pnpm db:migrate:local        # aplicar migraciones a D1 local
-pnpm db:migrate:remote       # aplicar migraciones a D1 en Cloudflare
+pnpm install                              # instalar dependencias
+pnpm dev                                  # backend (Wrangler + D1 local, :8787) y frontend (Vite, :5173) en paralelo
+pnpm test                                 # Vitest en backend y frontend
+pnpm build                                # build de producción de ambos apps
+pnpm typecheck                            # tsc --noEmit en ambos apps
+pnpm --filter @ikis/backend db:generate       # generar migraciones (drizzle-kit)
+pnpm --filter @ikis/backend db:migrate:local  # aplicar migraciones a D1 local
+pnpm --filter @ikis/backend db:migrate:remote # aplicar migraciones a D1 en Cloudflare
 ```
 
 ## Definiciones pendientes
 
-- Nombre y estructura definitiva de las tablas (se cierra al escribir el schema de Drizzle).
-- Endpoint `GET /me` (o similar) en el backend para que el frontend sepa si el usuario ya tiene familia — necesario antes de construir el flujo post-login.
-- Flujo detallado de cada pantalla del frontend (login, onboarding/crear familia, dashboard, categorías, etc.) — se define pantalla por pantalla en las próximas sesiones.
+- ~~Nombre y estructura definitiva de las tablas~~ → cerrado (`users`, `families`, `categories` en Drizzle).
+- ~~Endpoint `GET /me`~~ → implementado.
+- ~~Flujo detallado de cada pantalla del frontend~~ → definido en [`apps/frontend/SCREENS.md`](apps/frontend/SCREENS.md).
 - Reglas de invitación de miembros a la familia (fuera del MVP actual).

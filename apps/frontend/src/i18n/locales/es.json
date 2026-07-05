@@ -1,0 +1,35 @@
+{
+  "login": {
+    "title": "ikis",
+    "subtitle": "Gestión financiera para tu familia",
+    "devLogin": "Continuar como usuario de prueba",
+    "error": "No se pudo iniciar sesión. Intenta de nuevo."
+  },
+  "onboarding": {
+    "title": "Crea tu familia",
+    "nameLabel": "Nombre de la familia",
+    "namePlaceholder": "Ej. Familia García",
+    "submit": "Crear familia"
+  },
+  "dashboard": {
+    "greeting": "Hola, {{name}}",
+    "familyLabel": "Familia",
+    "goToCategories": "Ver categorías"
+  },
+  "categories": {
+    "title": "Categorías",
+    "addRoot": "Agregar categoría",
+    "addSubcategory": "Agregar subcategoría",
+    "rename": "Renombrar",
+    "delete": "Borrar",
+    "deleteConfirm": "¿Borrar \"{{name}}\"? Esto también borrará sus subcategorías.",
+    "nameLabel": "Nombre",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "empty": "Todavía no hay categorías."
+  },
+  "common": {
+    "logout": "Cerrar sesión",
+    "loading": "Cargando…"
+  }
+}

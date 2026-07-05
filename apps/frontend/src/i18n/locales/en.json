@@ -1,0 +1,35 @@
+{
+  "login": {
+    "title": "ikis",
+    "subtitle": "Financial management for your family",
+    "devLogin": "Continue as test user",
+    "error": "Couldn't sign in. Please try again."
+  },
+  "onboarding": {
+    "title": "Create your family",
+    "nameLabel": "Family name",
+    "namePlaceholder": "E.g. The Garcia Family",
+    "submit": "Create family"
+  },
+  "dashboard": {
+    "greeting": "Hi, {{name}}",
+    "familyLabel": "Family",
+    "goToCategories": "View categories"
+  },
+  "categories": {
+    "title": "Categories",
+    "addRoot": "Add category",
+    "addSubcategory": "Add subcategory",
+    "rename": "Rename",
+    "delete": "Delete",
+    "deleteConfirm": "Delete \"{{name}}\"? This will also delete its subcategories.",
+    "nameLabel": "Name",
+    "save": "Save",
+    "cancel": "Cancel",
+    "empty": "No categories yet."
+  },
+  "common": {
+    "logout": "Log out",
+    "loading": "Loading…"
+  }
+}

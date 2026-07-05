@@ -9,6 +9,7 @@ enabled = true
 [vars]
 DEV_AUTH = "false"
 GOOGLE_CLIENT_ID = "123747138376-16oc38ijefrpah2vc0k9o5o4vkeg0okm.apps.googleusercontent.com"
+ALLOWED_ORIGIN = "https://ikis.renegarcia.work"
 
 [[d1_databases]]
 binding = "DB"
