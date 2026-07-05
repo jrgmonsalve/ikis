@@ -14,7 +14,16 @@
   "dashboard": {
     "greeting": "Hi, {{name}}",
     "familyLabel": "Family",
-    "goToCategories": "View categories"
+    "goToCategories": "View categories",
+    "accounts": "Accounts",
+    "budgetThisMonth": "This month's budget",
+    "viewAll": "View all"
+  },
+  "nav": {
+    "accounts": "Accounts",
+    "transactions": "Transactions",
+    "budgets": "Budgets",
+    "categories": "Categories"
   },
   "categories": {
     "title": "Categories",
@@ -27,6 +36,56 @@
     "save": "Save",
     "cancel": "Cancel",
     "empty": "No categories yet."
+  },
+  "accounts": {
+    "title": "Accounts",
+    "add": "Add account",
+    "edit": "Edit account",
+    "empty": "No accounts yet.",
+    "nameLabel": "Name",
+    "typeLabel": "Type",
+    "selectType": "Select a type",
+    "types": {
+      "checking": "Checking",
+      "savings": "Savings",
+      "credit_card": "Credit card",
+      "cash": "Cash"
+    }
+  },
+  "movements": {
+    "title": "Transactions",
+    "add": "Add",
+    "addTitle": "Add movement",
+    "expense": "Expense",
+    "income": "Income",
+    "transfer": "Transfer",
+    "editExpense": "Edit expense",
+    "editIncome": "Edit income",
+    "editTransfer": "Edit transfer",
+    "tabTransactions": "Transactions",
+    "tabTransfers": "Transfers",
+    "account": "Account",
+    "fromAccount": "From account",
+    "toAccount": "To account",
+    "selectAccount": "Select an account",
+    "category": "Category",
+    "selectCategory": "Select a category",
+    "amount": "Amount",
+    "date": "Date",
+    "description": "Description",
+    "save": "Save",
+    "sameAccountError": "The destination account must be different from the source",
+    "deleteConfirm": "Delete this movement?",
+    "emptyTransactions": "No transactions yet.",
+    "emptyTransfers": "No transfers yet."
+  },
+  "budgets": {
+    "title": "Budgets",
+    "add": "Add budget",
+    "edit": "Edit budget",
+    "empty": "No budgets for this month yet.",
+    "categoryLabel": "Category",
+    "amountLabel": "Limit"
   },
   "common": {
     "logout": "Log out",

@@ -20,9 +20,17 @@ export function RootLayout() {
   return (
     <div className="flex min-h-svh flex-col">
       <header className="flex items-center justify-between border-b px-4 py-3">
-        <Link to="/" className="font-heading text-lg font-medium">
-          ikis
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link to="/" className="font-heading text-lg font-medium">
+            ikis
+          </Link>
+          <nav className="flex items-center gap-3 text-sm">
+            <Link to="/accounts">{t("nav.accounts")}</Link>
+            <Link to="/transactions">{t("nav.transactions")}</Link>
+            <Link to="/budgets">{t("nav.budgets")}</Link>
+            <Link to="/categories">{t("nav.categories")}</Link>
+          </nav>
+        </div>
         <Button variant="ghost" size="sm" onClick={handleLogout}>
           {t("common.logout")}
         </Button>

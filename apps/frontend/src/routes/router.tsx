@@ -1,10 +1,13 @@
 import { createBrowserRouter } from "react-router";
+import { AccountsPage } from "./AccountsPage";
+import { BudgetsPage } from "./BudgetsPage";
 import { CategoriesPage } from "./CategoriesPage";
 import { Dashboard } from "./Dashboard";
 import { RequireAuth, RequireFamily, RequireNoFamily } from "./guards";
 import { Login } from "./Login";
 import { OnboardingFamily } from "./OnboardingFamily";
 import { RootLayout } from "./RootLayout";
+import { TransactionsPage } from "./TransactionsPage";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
@@ -23,6 +26,9 @@ export const router = createBrowserRouter([
             children: [
               { path: "/", element: <Dashboard /> },
               { path: "/categories", element: <CategoriesPage /> },
+              { path: "/accounts", element: <AccountsPage /> },
+              { path: "/transactions", element: <TransactionsPage /> },
+              { path: "/budgets", element: <BudgetsPage /> },
             ],
           },
         ],

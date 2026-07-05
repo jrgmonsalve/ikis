@@ -14,7 +14,16 @@
   "dashboard": {
     "greeting": "Hola, {{name}}",
     "familyLabel": "Familia",
-    "goToCategories": "Ver categorías"
+    "goToCategories": "Ver categorías",
+    "accounts": "Cuentas",
+    "budgetThisMonth": "Presupuesto de este mes",
+    "viewAll": "Ver todo"
+  },
+  "nav": {
+    "accounts": "Cuentas",
+    "transactions": "Transacciones",
+    "budgets": "Presupuestos",
+    "categories": "Categorías"
   },
   "categories": {
     "title": "Categorías",
@@ -27,6 +36,56 @@
     "save": "Guardar",
     "cancel": "Cancelar",
     "empty": "Todavía no hay categorías."
+  },
+  "accounts": {
+    "title": "Cuentas",
+    "add": "Agregar cuenta",
+    "edit": "Editar cuenta",
+    "empty": "Todavía no hay cuentas.",
+    "nameLabel": "Nombre",
+    "typeLabel": "Tipo",
+    "selectType": "Selecciona un tipo",
+    "types": {
+      "checking": "Corriente",
+      "savings": "Ahorros",
+      "credit_card": "Tarjeta de crédito",
+      "cash": "Efectivo"
+    }
+  },
+  "movements": {
+    "title": "Transacciones",
+    "add": "Agregar",
+    "addTitle": "Agregar movimiento",
+    "expense": "Gasto",
+    "income": "Ingreso",
+    "transfer": "Transferencia",
+    "editExpense": "Editar gasto",
+    "editIncome": "Editar ingreso",
+    "editTransfer": "Editar transferencia",
+    "tabTransactions": "Movimientos",
+    "tabTransfers": "Transferencias",
+    "account": "Cuenta",
+    "fromAccount": "Cuenta origen",
+    "toAccount": "Cuenta destino",
+    "selectAccount": "Selecciona una cuenta",
+    "category": "Categoría",
+    "selectCategory": "Selecciona una categoría",
+    "amount": "Monto",
+    "date": "Fecha",
+    "description": "Descripción",
+    "save": "Guardar",
+    "sameAccountError": "La cuenta destino debe ser distinta de la de origen",
+    "deleteConfirm": "¿Borrar este movimiento?",
+    "emptyTransactions": "Todavía no hay transacciones.",
+    "emptyTransfers": "Todavía no hay transferencias."
+  },
+  "budgets": {
+    "title": "Presupuestos",
+    "add": "Agregar presupuesto",
+    "edit": "Editar presupuesto",
+    "empty": "Todavía no hay presupuestos para este mes.",
+    "categoryLabel": "Categoría",
+    "amountLabel": "Límite"
   },
   "common": {
     "logout": "Cerrar sesión",
