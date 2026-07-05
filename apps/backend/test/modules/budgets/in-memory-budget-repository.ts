@@ -1,5 +1,5 @@
 import type { Budget, BudgetStatus } from "../../../src/modules/budgets/domain/budget";
-import { nextMonthStart } from "../../../src/modules/budgets/domain/budget";
+import { nextCycleStart } from "../../../src/modules/budgets/domain/budget";
 import type { BudgetChanges, BudgetRepository, NewBudget } from "../../../src/modules/budgets/domain/budget-repository";
 
 type FakeTransaction = {
@@ -10,6 +10,8 @@ type FakeTransaction = {
   deletedAt: Date | null;
 };
 
+const startsInMonth = (period: string, publicPeriod: string) => period.slice(0, 7) === publicPeriod;
+
 export class InMemoryBudgetRepository implements BudgetRepository {
   budgets: Budget[] = [];
 
@@ -19,10 +21,13 @@ export class InMemoryBudgetRepository implements BudgetRepository {
     return this.budgets.find((budget) => budget.familyId === familyId && budget.id === id) ?? null;
   }
 
-  async findByFamilyCategoryAndPeriod(familyId: string, categoryId: string, period: string) {
+  async findByFamilyCategoryAndPeriod(familyId: string, categoryId: string, publicPeriod: string) {
     return (
       this.budgets.find(
-        (budget) => budget.familyId === familyId && budget.categoryId === categoryId && budget.period === period,
+        (budget) =>
+          budget.familyId === familyId &&
+          budget.categoryId === categoryId &&
+          startsInMonth(budget.period, publicPeriod),
       ) ?? null
     );
   }
@@ -48,18 +53,17 @@ export class InMemoryBudgetRepository implements BudgetRepository {
     return budget;
   }
 
-  async getStatusForPeriod(familyId: string, period: string): Promise<BudgetStatus[]> {
-    const periodEnd = nextMonthStart(period);
-
+  async getStatusForPeriod(familyId: string, publicPeriod: string): Promise<BudgetStatus[]> {
     return this.budgets
-      .filter((budget) => budget.familyId === familyId && budget.period === period)
+      .filter((budget) => budget.familyId === familyId && startsInMonth(budget.period, publicPeriod))
       .map((budget) => {
+        const periodEnd = nextCycleStart(budget.period);
         const spent = this.transactions
           .filter(
             (transaction) =>
               transaction.familyId === familyId &&
               transaction.categoryId === budget.categoryId &&
-              transaction.occurredAt >= period &&
+              transaction.occurredAt >= budget.period &&
               transaction.occurredAt < periodEnd &&
               transaction.deletedAt === null &&
               transaction.amount < 0,

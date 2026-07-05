@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { DrizzleCategoryRepository } from "../../../categories/infrastructure/persistence/drizzle-category-repository";
+import { DrizzleFamilyRepository } from "../../../families/infrastructure/persistence/drizzle-family-repository";
 import type { AuthVariables } from "../../../../shared/auth-middleware";
 import { authMiddleware } from "../../../../shared/auth-middleware";
 import { createDb } from "../../../../shared/db";
@@ -50,10 +51,11 @@ budgetRoutes.post("/", async (c) => {
   const db = createDb(c.env.DB);
   const budgetRepository = new DrizzleBudgetRepository(db);
   const categoryRepository = new DrizzleCategoryRepository(db);
+  const familyRepository = new DrizzleFamilyRepository(db);
 
   try {
     const budget = await createBudget(
-      { budgetRepository, categoryRepository },
+      { budgetRepository, categoryRepository, familyRepository },
       { familyId, categoryId: body.categoryId, period: body.period, amountLimit: body.amountLimit },
     );
     return c.json(budget, 201);

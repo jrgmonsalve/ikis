@@ -6,11 +6,47 @@ import { authMiddleware } from "../../../../shared/auth-middleware";
 import { createDb } from "../../../../shared/db";
 import type { Bindings } from "../../../../shared/env";
 import { createFamilyForUser } from "../../application/create-family-for-user";
+import { updateFamilySettings } from "../../application/update-family-settings";
 import { DrizzleFamilyRepository } from "../persistence/drizzle-family-repository";
 
 export const familyRoutes = new Hono<{ Bindings: Bindings; Variables: AuthVariables }>();
 
 familyRoutes.use("*", authMiddleware);
+
+familyRoutes.get("/", async (c) => {
+  const familyId = c.get("familyId");
+  if (!familyId) {
+    return c.json({ error: "User does not belong to a family yet" }, 400);
+  }
+
+  const familyRepository = new DrizzleFamilyRepository(createDb(c.env.DB));
+  const family = await familyRepository.findById(familyId);
+  if (!family) {
+    return c.json({ error: "Family not found" }, 404);
+  }
+
+  return c.json(family);
+});
+
+familyRoutes.patch("/", async (c) => {
+  const familyId = c.get("familyId");
+  if (!familyId) {
+    return c.json({ error: "User does not belong to a family yet" }, 400);
+  }
+
+  const body = await c.req.json<{ budgetCycleStartDay?: number }>();
+  const familyRepository = new DrizzleFamilyRepository(createDb(c.env.DB));
+
+  try {
+    const family = await updateFamilySettings({ familyRepository }, { familyId, changes: body });
+    return c.json(family);
+  } catch (err) {
+    if (err instanceof Error) {
+      return c.json({ error: err.message }, 400);
+    }
+    throw err;
+  }
+});
 
 familyRoutes.post("/", async (c) => {
   const body = await c.req.json<{ name?: string }>();

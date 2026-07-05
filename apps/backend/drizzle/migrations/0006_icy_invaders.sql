@@ -1,0 +1,1 @@
+ALTER TABLE `families` ADD `budget_cycle_start_day` integer DEFAULT 1 NOT NULL;

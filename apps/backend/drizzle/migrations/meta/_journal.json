@@ -43,6 +43,13 @@
       "when": 1783226129297,
       "tag": "0005_lyrical_queen_noir",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1783231110960,
+      "tag": "0006_icy_invaders",
+      "breakpoints": true
     }
   ]
 }

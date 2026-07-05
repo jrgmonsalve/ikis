@@ -2,9 +2,10 @@ import { and, eq, gte, isNull, lt, sql } from "drizzle-orm";
 import type { Db } from "../../../../shared/db";
 import { transactions } from "../../../transactions/infrastructure/persistence/transactions.schema";
 import type { Budget, BudgetStatus } from "../../domain/budget";
-import { nextMonthStart } from "../../domain/budget";
 import type { BudgetChanges, BudgetRepository, NewBudget } from "../../domain/budget-repository";
 import { budgets } from "./budgets.schema";
+
+const startsInMonth = (publicPeriod: string) => sql`substr(${budgets.period}, 1, 7) = ${publicPeriod}`;
 
 export class DrizzleBudgetRepository implements BudgetRepository {
   constructor(private readonly db: Db) {}
@@ -18,13 +19,15 @@ export class DrizzleBudgetRepository implements BudgetRepository {
     return row ?? null;
   }
 
-  async findByFamilyCategoryAndPeriod(familyId: string, categoryId: string, period: string): Promise<Budget | null> {
+  async findByFamilyCategoryAndPeriod(
+    familyId: string,
+    categoryId: string,
+    publicPeriod: string,
+  ): Promise<Budget | null> {
     const [row] = await this.db
       .select()
       .from(budgets)
-      .where(
-        and(eq(budgets.familyId, familyId), eq(budgets.categoryId, categoryId), eq(budgets.period, period)),
-      )
+      .where(and(eq(budgets.familyId, familyId), eq(budgets.categoryId, categoryId), startsInMonth(publicPeriod)))
       .limit(1);
     return row ?? null;
   }
@@ -55,9 +58,7 @@ export class DrizzleBudgetRepository implements BudgetRepository {
     return updated;
   }
 
-  async getStatusForPeriod(familyId: string, period: string): Promise<BudgetStatus[]> {
-    const periodEnd = nextMonthStart(period);
-
+  async getStatusForPeriod(familyId: string, publicPeriod: string): Promise<BudgetStatus[]> {
     return this.db
       .select({
         id: budgets.id,
@@ -73,12 +74,12 @@ export class DrizzleBudgetRepository implements BudgetRepository {
         and(
           eq(transactions.familyId, budgets.familyId),
           eq(transactions.categoryId, budgets.categoryId),
-          gte(transactions.occurredAt, period),
-          lt(transactions.occurredAt, periodEnd),
+          gte(transactions.occurredAt, budgets.period),
+          lt(transactions.occurredAt, sql`date(${budgets.period}, '+1 month')`),
           isNull(transactions.deletedAt),
         ),
       )
-      .where(and(eq(budgets.familyId, familyId), eq(budgets.period, period)))
+      .where(and(eq(budgets.familyId, familyId), startsInMonth(publicPeriod)))
       .groupBy(budgets.id);
   }
 }

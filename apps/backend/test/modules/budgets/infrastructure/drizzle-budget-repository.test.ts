@@ -39,7 +39,25 @@ describe("DrizzleBudgetRepository", () => {
     });
 
     expect(budget.amountLimit).toBe(200000);
-    expect(await budgetRepository.findByFamilyCategoryAndPeriod(familyId, category.id, "2026-07-01")).toEqual(budget);
+    expect(await budgetRepository.findByFamilyCategoryAndPeriod(familyId, category.id, "2026-07")).toEqual(budget);
+  });
+
+  it("keeps a budget reachable after the family later changes its cycle start day", async () => {
+    const { budgetRepository, categoryRepository } = await setup();
+    const familyId = crypto.randomUUID();
+    const category = await categoryRepository.create({ familyId, parentId: null, name: "food" });
+    // Created back when the family's cycle started on the 1st.
+    const budget = await budgetRepository.create({
+      familyId,
+      categoryId: category.id,
+      period: "2026-07-01",
+      amountLimit: 200000,
+    });
+
+    // The family's setting changes later — the stored budget is never rewritten,
+    // but it must still show up when asking for "2026-07".
+    const status = await budgetRepository.getStatusForPeriod(familyId, "2026-07");
+    expect(status).toEqual([{ id: budget.id, categoryId: category.id, amountLimit: 200000, spent: 0 }]);
   });
 
   it("derives spent purely from transactions: creations, edits and deletions all reflect without touching the budget", async () => {
@@ -54,7 +72,7 @@ describe("DrizzleBudgetRepository", () => {
       amountLimit: 200000,
     });
 
-    const initialStatus = await budgetRepository.getStatusForPeriod(familyId, "2026-07-01");
+    const initialStatus = await budgetRepository.getStatusForPeriod(familyId, "2026-07");
     expect(initialStatus).toEqual([{ id: budget.id, categoryId: category.id, amountLimit: 200000, spent: 0 }]);
 
     const { transaction } = await transactionRepository.create({
@@ -67,17 +85,17 @@ describe("DrizzleBudgetRepository", () => {
       occurredAt: "2026-07-10",
     });
 
-    const afterCreate = await budgetRepository.getStatusForPeriod(familyId, "2026-07-01");
+    const afterCreate = await budgetRepository.getStatusForPeriod(familyId, "2026-07");
     expect(afterCreate[0]?.spent).toBe(15000);
 
     await transactionRepository.update(familyId, transaction.id, transaction, { amount: -40000 });
 
-    const afterEdit = await budgetRepository.getStatusForPeriod(familyId, "2026-07-01");
+    const afterEdit = await budgetRepository.getStatusForPeriod(familyId, "2026-07");
     expect(afterEdit[0]?.spent).toBe(40000);
 
     await transactionRepository.delete(familyId, transaction.id, { ...transaction, amount: -40000 });
 
-    const afterDelete = await budgetRepository.getStatusForPeriod(familyId, "2026-07-01");
+    const afterDelete = await budgetRepository.getStatusForPeriod(familyId, "2026-07");
     expect(afterDelete[0]?.spent).toBe(0);
   });
 
@@ -112,7 +130,60 @@ describe("DrizzleBudgetRepository", () => {
       occurredAt: "2026-07-15",
     });
 
-    const status = await budgetRepository.getStatusForPeriod(familyId, "2026-07-01");
+    const status = await budgetRepository.getStatusForPeriod(familyId, "2026-07");
     expect(status).toEqual([{ id: budget.id, categoryId: category.id, amountLimit: 200000, spent: 0 }]);
+  });
+
+  it("supports a cycle that doesn't start on the 1st (e.g. payday on the 27th)", async () => {
+    const { budgetRepository, categoryRepository, accountRepository, transactionRepository, userId } = await setup();
+    const familyId = crypto.randomUUID();
+    const category = await categoryRepository.create({ familyId, parentId: null, name: "food" });
+    const account = await accountRepository.create({ familyId, name: "Checking", type: "checking" });
+    const budget = await budgetRepository.create({
+      familyId,
+      categoryId: category.id,
+      period: "2026-07-27",
+      amountLimit: 200000,
+    });
+
+    await transactionRepository.create({
+      familyId,
+      accountId: account.id,
+      categoryId: category.id,
+      createdByUserId: userId,
+      amount: -1000,
+      description: "Before cycle start",
+      occurredAt: "2026-07-20",
+    });
+    await transactionRepository.create({
+      familyId,
+      accountId: account.id,
+      categoryId: category.id,
+      createdByUserId: userId,
+      amount: -2000,
+      description: "On cycle start",
+      occurredAt: "2026-07-27",
+    });
+    await transactionRepository.create({
+      familyId,
+      accountId: account.id,
+      categoryId: category.id,
+      createdByUserId: userId,
+      amount: -4000,
+      description: "Last day of cycle",
+      occurredAt: "2026-08-26",
+    });
+    await transactionRepository.create({
+      familyId,
+      accountId: account.id,
+      categoryId: category.id,
+      createdByUserId: userId,
+      amount: -8000,
+      description: "Next cycle",
+      occurredAt: "2026-08-27",
+    });
+
+    const status = await budgetRepository.getStatusForPeriod(familyId, "2026-07");
+    expect(status).toEqual([{ id: budget.id, categoryId: category.id, amountLimit: 200000, spent: 6000 }]);
   });
 });

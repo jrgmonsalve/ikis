@@ -79,4 +79,92 @@ describe("family routes", () => {
 
     expect(response.status).toBe(401);
   });
+
+  it("gets and updates the family's budgetCycleStartDay", async () => {
+    const app = createApp();
+    const userRepository = new DrizzleUserRepository(createDb(env.DB));
+    const user = await userRepository.create({
+      googleId: crypto.randomUUID(),
+      email: `${crypto.randomUUID()}@example.com`,
+      name: "Test",
+    });
+    const header = await authHeaderFor(user.id);
+    await app.request(
+      "/api/v1/families",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: header },
+        body: JSON.stringify({ name: "García" }),
+      },
+      env,
+    );
+
+    const getResponse = await app.request("/api/v1/families", { headers: { Authorization: header } }, env);
+    expect(getResponse.status).toBe(200);
+    const family = await getResponse.json<{ budgetCycleStartDay: number }>();
+    expect(family.budgetCycleStartDay).toBe(1);
+
+    const patchResponse = await app.request(
+      "/api/v1/families",
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: header },
+        body: JSON.stringify({ budgetCycleStartDay: 27 }),
+      },
+      env,
+    );
+    expect(patchResponse.status).toBe(200);
+    const updated = await patchResponse.json<{ budgetCycleStartDay: number }>();
+    expect(updated.budgetCycleStartDay).toBe(27);
+  });
+
+  it("rejects an out-of-range budgetCycleStartDay", async () => {
+    const app = createApp();
+    const userRepository = new DrizzleUserRepository(createDb(env.DB));
+    const user = await userRepository.create({
+      googleId: crypto.randomUUID(),
+      email: `${crypto.randomUUID()}@example.com`,
+      name: "Test",
+    });
+    const header = await authHeaderFor(user.id);
+    await app.request(
+      "/api/v1/families",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: header },
+        body: JSON.stringify({ name: "García" }),
+      },
+      env,
+    );
+
+    const response = await app.request(
+      "/api/v1/families",
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: header },
+        body: JSON.stringify({ budgetCycleStartDay: 31 }),
+      },
+      env,
+    );
+
+    expect(response.status).toBe(400);
+  });
+
+  it("returns 400 getting settings before the user has a family", async () => {
+    const app = createApp();
+    const userRepository = new DrizzleUserRepository(createDb(env.DB));
+    const user = await userRepository.create({
+      googleId: crypto.randomUUID(),
+      email: `${crypto.randomUUID()}@example.com`,
+      name: "Test",
+    });
+
+    const response = await app.request(
+      "/api/v1/families",
+      { headers: { Authorization: await authHeaderFor(user.id) } },
+      env,
+    );
+
+    expect(response.status).toBe(400);
+  });
 });

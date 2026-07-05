@@ -2,7 +2,7 @@ export type Budget = {
   id: string;
   familyId: string;
   categoryId: string;
-  /** Storage format, always the first day of the month: 'YYYY-MM-01'. */
+  /** Storage format 'YYYY-MM-DD' — the day is the family's budgetCycleStartDay, not necessarily 01. */
   period: string;
   amountLimit: number;
   createdAt: Date;
@@ -30,10 +30,17 @@ export const assertValidAmountLimit = (amountLimit: number): void => {
   }
 };
 
-export const toStoragePeriod = (period: string): string => `${period}-01`;
+/**
+ * A period cycle doesn't have to start on the 1st — a family can set its own
+ * budgetCycleStartDay (e.g. payday). 'YYYY-MM' names the cycle that STARTS in
+ * that calendar month.
+ */
+export const toStoragePeriod = (period: string, cycleStartDay: number): string =>
+  `${period}-${String(cycleStartDay).padStart(2, "0")}`;
 
-export const nextMonthStart = (storagePeriod: string): string => {
+export const nextCycleStart = (storagePeriod: string): string => {
   const year = Number(storagePeriod.slice(0, 4));
   const month = Number(storagePeriod.slice(5, 7));
-  return new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10);
+  const day = Number(storagePeriod.slice(8, 10));
+  return new Date(Date.UTC(year, month, day)).toISOString().slice(0, 10);
 };

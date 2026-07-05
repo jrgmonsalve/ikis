@@ -85,7 +85,8 @@
     "edit": "Editar presupuesto",
     "empty": "Todavía no hay presupuestos para este mes.",
     "categoryLabel": "Categoría",
-    "amountLabel": "Límite"
+    "amountLabel": "Límite",
+    "cycleStartDayLabel": "Tu presupuesto empieza el día"
   },
   "common": {
     "logout": "Cerrar sesión",

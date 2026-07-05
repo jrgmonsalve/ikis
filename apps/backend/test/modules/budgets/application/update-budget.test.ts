@@ -2,20 +2,23 @@ import { describe, expect, it } from "vitest";
 import { createBudget } from "../../../../src/modules/budgets/application/create-budget";
 import { updateBudget } from "../../../../src/modules/budgets/application/update-budget";
 import { InMemoryCategoryRepository } from "../../categories/in-memory-category-repository";
+import { InMemoryFamilyRepository } from "../../families/in-memory-family-repository";
 import { InMemoryBudgetRepository } from "../in-memory-budget-repository";
 
 const setup = () => {
   const budgetRepository = new InMemoryBudgetRepository();
   const categoryRepository = new InMemoryCategoryRepository();
-  return { budgetRepository, categoryRepository };
+  const familyRepository = new InMemoryFamilyRepository();
+  familyRepository.families.push({ id: "family-1", name: "F1", budgetCycleStartDay: 1, createdAt: new Date() });
+  return { budgetRepository, categoryRepository, familyRepository };
 };
 
 describe("updateBudget", () => {
   it("updates the amount limit", async () => {
-    const { budgetRepository, categoryRepository } = setup();
+    const { budgetRepository, categoryRepository, familyRepository } = setup();
     const category = await categoryRepository.create({ familyId: "family-1", parentId: null, name: "food" });
     const budget = await createBudget(
-      { budgetRepository, categoryRepository },
+      { budgetRepository, categoryRepository, familyRepository },
       { familyId: "family-1", categoryId: category.id, period: "2026-07", amountLimit: 200000 },
     );
 
@@ -28,10 +31,10 @@ describe("updateBudget", () => {
   });
 
   it("rejects a zero or negative amount limit", async () => {
-    const { budgetRepository, categoryRepository } = setup();
+    const { budgetRepository, categoryRepository, familyRepository } = setup();
     const category = await categoryRepository.create({ familyId: "family-1", parentId: null, name: "food" });
     const budget = await createBudget(
-      { budgetRepository, categoryRepository },
+      { budgetRepository, categoryRepository, familyRepository },
       { familyId: "family-1", categoryId: category.id, period: "2026-07", amountLimit: 200000 },
     );
 
@@ -41,10 +44,10 @@ describe("updateBudget", () => {
   });
 
   it("rejects updating a budget from another family", async () => {
-    const { budgetRepository, categoryRepository } = setup();
+    const { budgetRepository, categoryRepository, familyRepository } = setup();
     const category = await categoryRepository.create({ familyId: "family-1", parentId: null, name: "food" });
     const budget = await createBudget(
-      { budgetRepository, categoryRepository },
+      { budgetRepository, categoryRepository, familyRepository },
       { familyId: "family-1", categoryId: category.id, period: "2026-07", amountLimit: 200000 },
     );
 

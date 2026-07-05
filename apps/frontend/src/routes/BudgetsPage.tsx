@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -10,9 +10,50 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useBudgetStatus, useCreateBudget, useUpdateBudget } from "@/features/budgets/hooks";
 import { flattenCategories } from "@/features/categories/flatten";
 import { useCategoryTree } from "@/features/categories/hooks";
+import { useFamily, useUpdateFamilySettings } from "@/features/family/hooks";
 import { currentPeriod, formatMoney } from "@/lib/format";
 
 type DialogState = { mode: "create" } | { mode: "edit"; id: string; amountLimit: number };
+
+function CycleStartDaySetting() {
+  const { t } = useTranslation();
+  const { data: family } = useFamily();
+  const updateSettings = useUpdateFamilySettings();
+  const [value, setValue] = useState("");
+
+  useEffect(() => {
+    if (family) {
+      setValue(String(family.budgetCycleStartDay));
+    }
+  }, [family?.budgetCycleStartDay]);
+
+  function commit() {
+    const day = Number(value);
+    if (!family || !Number.isInteger(day) || day < 1 || day > 28 || day === family.budgetCycleStartDay) {
+      setValue(String(family?.budgetCycleStartDay ?? 1));
+      return;
+    }
+    updateSettings.mutate(day);
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Label htmlFor="cycle-start-day" className="text-sm text-muted-foreground">
+        {t("budgets.cycleStartDayLabel")}
+      </Label>
+      <Input
+        id="cycle-start-day"
+        type="number"
+        min="1"
+        max="28"
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        onBlur={commit}
+        className="w-16"
+      />
+    </div>
+  );
+}
 
 export function BudgetsPage() {
   const { t } = useTranslation();
@@ -69,7 +110,10 @@ export function BudgetsPage() {
         <Button onClick={openCreate}>{t("budgets.add")}</Button>
       </div>
 
-      <Input type="month" value={period} onChange={(event) => setPeriod(event.target.value)} className="w-fit" />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Input type="month" value={period} onChange={(event) => setPeriod(event.target.value)} className="w-fit" />
+        <CycleStartDaySetting />
+      </div>
 
       {isLoading && <p className="text-muted-foreground">{t("common.loading")}</p>}
       {!isLoading && status?.length === 0 && <p className="text-muted-foreground">{t("budgets.empty")}</p>}

@@ -1,4 +1,4 @@
-import { assertValidPeriod, toStoragePeriod } from "../domain/budget";
+import { assertValidPeriod } from "../domain/budget";
 import type { BudgetStatus } from "../domain/budget";
 import type { BudgetRepository } from "../domain/budget-repository";
 
@@ -17,5 +17,5 @@ export const getBudgetStatus = async (
   { familyId, period }: GetBudgetStatusInput,
 ): Promise<BudgetStatus[]> => {
   assertValidPeriod(period);
-  return budgetRepository.getStatusForPeriod(familyId, toStoragePeriod(period));
+  return budgetRepository.getStatusForPeriod(familyId, period);
 };

@@ -1,21 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { createFamilyForUser } from "../../../../src/modules/families/application/create-family-for-user";
-import type { Family } from "../../../../src/modules/families/domain/family";
-import type { FamilyRepository, NewFamily } from "../../../../src/modules/families/domain/family-repository";
 import { DEFAULT_CATEGORIES } from "../../../../src/modules/categories/domain/default-categories";
 import { InMemoryCategoryRepository } from "../../categories/in-memory-category-repository";
+import { InMemoryFamilyRepository } from "../in-memory-family-repository";
 import { InMemoryUserRepository } from "../../users/in-memory-user-repository";
-
-class InMemoryFamilyRepository implements FamilyRepository {
-  async create(input: NewFamily) {
-    const family: Family = {
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-      ...input,
-    };
-    return family;
-  }
-}
 
 describe("createFamilyForUser", () => {
   it("creates a family and assigns it to the user", async () => {

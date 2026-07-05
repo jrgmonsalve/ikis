@@ -98,9 +98,19 @@ Implementado y testeado (`test/modules/transfers/`): casos de uso con repo en me
 
 **Pendiente:** exponer `GET/POST/PATCH/DELETE /api/v1/transfers` (mismo paso que falta para `transactions`/`accounts`); decidir si el endpoint de listado de "actividad de una cuenta" combina `transactions` + `transfers` o se consultan por separado desde el frontend.
 
+## Ciclo de presupuesto configurable (`budgetCycleStartDay`)
+
+**No estaba en el planteamiento original** — surgió al usar la app: no todo el mundo recibe su sueldo el día 1. Se agregó `budgetCycleStartDay` (entero 1-28, default 1) a `families`, para que "julio 2026" pueda significar, por ejemplo, 27 jul → 26 ago en vez de 1-31 jul. Se limita a 1-28 a propósito para no lidiar con meses de 28/29/30/31 días — casi nadie cobra el día 29-31, y así `date(period, '+1 month')` en SQLite siempre es seguro.
+
+Decisiones clave (la primera es la que costó un bug real en el camino, vale la pena leerla):
+
+- **Los presupuestos ya creados son una foto fija de su rango de fechas — nunca se recalculan cuando cambia `budgetCycleStartDay`.** `budgets.period` sigue siendo `'YYYY-MM-DD'`, pero ahora ese día puede ser cualquiera entre 1-28, fijado al momento de crear el presupuesto según el ajuste de la familia en ese momento. **Bug encontrado probando manualmente:** si se recalcula el rango con el día *actual* de la familia en cada lectura, un presupuesto viejo (creado con día 1) se vuelve invisible en cuanto la familia cambia el día — el `WHERE period = :recalculado` deja de coincidir con lo guardado. La corrección: las lecturas (`GET /budgets`, chequeo de duplicados al crear) ya NO recalculan nada; matchean por **mes calendario del valor ya guardado** (`substr(period, 1, 7) = :publicPeriod`), y el rango de transacciones de cada presupuesto se calcula individualmente a partir de su propio `period` guardado (`date(b.period, '+1 month')` en SQL). Así, dos presupuestos de la misma familia para "julio" pueden convivir con días de inicio distintos (uno viejo en el día 1, uno nuevo en el día 27) sin pisarse ni desaparecer.
+- `createBudget` sigue siendo el único lugar que necesita saber el `budgetCycleStartDay` *actual* de la familia (para fijar el día del nuevo presupuesto). `getBudgetStatus` no necesita el dato de la familia en absoluto.
+- API pública: `PATCH /api/v1/families { budgetCycleStartDay }` y `GET /api/v1/families` (no existían — solo había `POST` para crear la familia). Frontend: un input numérico simple junto al selector de mes en `/budgets`, sin pantalla de "Configuración" dedicada.
+
 ## Consulta de presupuestos
 
-`getBudgetStatus(familyId, period)` en `src/modules/budgets/application/`: JOIN de `budgets` con SUM de `transactions` del mes:
+`getBudgetStatus(familyId, period)` en `src/modules/budgets/application/`: JOIN de `budgets` con SUM de `transactions`, agrupado por presupuesto, usando el propio `period` de cada fila (no uno recalculado desde la familia) para el rango:
 
 ```sql
 SELECT b.id, b.category_id, b.amount_limit,
@@ -109,10 +119,10 @@ FROM budgets b
 LEFT JOIN transactions t
   ON t.family_id = b.family_id
  AND t.category_id = b.category_id
- AND t.occurred_at >= :periodStart
- AND t.occurred_at < :periodEnd
+ AND t.occurred_at >= b.period
+ AND t.occurred_at < date(b.period, '+1 month')
  AND t.deleted_at IS NULL
-WHERE b.family_id = :familyId AND b.period = :periodStart
+WHERE b.family_id = :familyId AND substr(b.period, 1, 7) = :publicPeriod
 GROUP BY b.id;
 ```
 
