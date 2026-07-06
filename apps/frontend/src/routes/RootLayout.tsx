@@ -54,7 +54,7 @@ export function RootLayout() {
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
-      <header className="flex items-center justify-between px-4 py-3">
+      <header className="flex items-center justify-between px-4">
         <Link to="/" className="font-heading text-lg font-semibold text-primary">
           ikis
         </Link>

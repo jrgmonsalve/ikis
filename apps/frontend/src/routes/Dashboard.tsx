@@ -1,6 +1,7 @@
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useOutletContext } from "react-router";
+import { Progress } from "@/components/ui/progress";
 import { useAccounts } from "@/features/accounts/hooks";
 import type { CurrentUser } from "@/features/auth/api";
 import { useBudgetStatus } from "@/features/budgets/hooks";
@@ -11,7 +12,16 @@ import { useTransactions } from "@/features/transactions/hooks";
 import { currentCycleRange, currentPeriod, daysUntil, formatCycleRange, formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
+const CHART_COLORS = ["#e11d48", "#16a34a", "#eab308", "#2563eb", "#f97316", "#0d9488", "#9333ea"];
+const BUDGET_PROGRESS_COLORS = [
+  "[&_[data-slot=progress-indicator]]:bg-red-500",
+  "[&_[data-slot=progress-indicator]]:bg-green-500",
+  "[&_[data-slot=progress-indicator]]:bg-yellow-500",
+  "[&_[data-slot=progress-indicator]]:bg-blue-500",
+  "[&_[data-slot=progress-indicator]]:bg-orange-500",
+  "[&_[data-slot=progress-indicator]]:bg-teal-500",
+  "[&_[data-slot=progress-indicator]]:bg-purple-500",
+];
 
 export function Dashboard() {
   const { t, i18n } = useTranslation();
@@ -47,7 +57,7 @@ export function Dashboard() {
   return (
     <div className="-mx-4 flex flex-col">
       <div
-        className="px-4 pt-8 pb-8 text-primary-foreground"
+        className="px-4 pt-4 pb-8 text-primary-foreground"
         style={{ background: "linear-gradient(180deg, var(--primary) 0%, #241F6B 100%)" }}
       >
         <div className="mx-auto flex max-w-lg flex-col gap-1">
@@ -59,8 +69,7 @@ export function Dashboard() {
               </span>
             )}
           </div>
-          <p className="text-xs tracking-wide text-primary-foreground/60 uppercase">{t("dashboard.balanceLabel")}</p>
-          <p className="font-heading text-4xl font-semibold tabular-nums">{formatMoney(totalBalance, "COP")}</p>
+          
           {cycleRange && (
             <p className="text-xs text-primary-foreground/60">{formatCycleRange(cycleRange.start, cycleRange.end, i18n.language)}</p>
           )}
@@ -80,10 +89,10 @@ export function Dashboard() {
             {!accountsLoading && accounts?.length === 0 && <p className="text-sm text-muted-foreground">{t("accounts.empty")}</p>}
             {!accountsLoading && accounts && accounts.length > 0 && (
               <div className="flex flex-col items-center gap-4 rounded-2xl border border-border bg-card p-4">
-                <div className="relative size-24 rounded-full" style={{ background: `conic-gradient(${donutGradient})` }}>
-                  <div className="absolute inset-[13px] flex flex-col items-center justify-center rounded-full bg-card">
-                    <span className="text-[9px] tracking-wide text-muted-foreground uppercase">{t("dashboard.total")}</span>
-                    <span className="text-xs font-bold tabular-nums">{formatMoney(totalBalance, "COP")}</span>
+                <div className="relative size-40 rounded-full" style={{ background: `conic-gradient(${donutGradient})` }}>
+                  <div className="absolute inset-[22px] flex flex-col items-center justify-center rounded-full bg-card">
+                    <span className="text-[10px] tracking-wide text-muted-foreground uppercase">{t("dashboard.total")}</span>
+                    <span className="text-sm font-bold tabular-nums">{formatMoney(totalBalance, "COP")}</span>
                   </div>
                 </div>
                 <div className="flex w-full flex-col gap-2.5">
@@ -112,14 +121,25 @@ export function Dashboard() {
             {budgetsLoading && <p className="text-sm text-muted-foreground">{t("common.loading")}</p>}
             {!budgetsLoading && budgetStatus?.length === 0 && <p className="text-sm text-muted-foreground">{t("budgets.empty")}</p>}
             <ul className="flex flex-col gap-2">
-              {budgetStatus?.map((budget) => (
-                <li key={budget.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3">
-                  <span>{categoryName(budget.categoryId)}</span>
-                  <span className="font-medium tabular-nums">
-                    {formatMoney(budget.spent, "COP")} / {formatMoney(budget.amountLimit, "COP")}
-                  </span>
-                </li>
-              ))}
+              {budgetStatus?.map((budget, index) => {
+                const percent = Math.min(100, Math.round((budget.spent / budget.amountLimit) * 100));
+                const overBudget = budget.spent > budget.amountLimit;
+                const color = BUDGET_PROGRESS_COLORS[index % BUDGET_PROGRESS_COLORS.length];
+                return (
+                  <li key={budget.id} className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3">
+                    <div className="flex items-center justify-between">
+                      <span>{categoryName(budget.categoryId)}</span>
+                      <span className="font-medium tabular-nums">
+                        {formatMoney(budget.spent, "COP")} / {formatMoney(budget.amountLimit, "COP")}
+                      </span>
+                    </div>
+                    <Progress
+                      value={percent}
+                      className={overBudget ? "[&_[data-slot=progress-indicator]]:bg-destructive" : color}
+                    />
+                  </li>
+                );
+              })}
             </ul>
           </section>
 
