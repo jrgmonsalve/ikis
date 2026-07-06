@@ -34,6 +34,9 @@ export const createBudget = async (
   if (!category) {
     throw new Error("Category not found");
   }
+  if (category.parentId !== null) {
+    throw new Error("Budgets can only be created for parent categories");
+  }
 
   const existing = await budgetRepository.findByFamilyCategoryAndPeriod(
     input.familyId,

@@ -63,6 +63,19 @@ describe("createBudget", () => {
     ).rejects.toThrow("amountLimit must be greater than zero");
   });
 
+  it("rejects a subcategory — budgets can only be created for parent categories", async () => {
+    const { budgetRepository, categoryRepository, familyRepository } = setup();
+    const parent = await categoryRepository.create({ familyId: "family-1", parentId: null, name: "food" });
+    const child = await categoryRepository.create({ familyId: "family-1", parentId: parent.id, name: "fast food" });
+
+    await expect(
+      createBudget(
+        { budgetRepository, categoryRepository, familyRepository },
+        { familyId: "family-1", categoryId: child.id, period: "2026-07", amountLimit: 200000 },
+      ),
+    ).rejects.toThrow("Budgets can only be created for parent categories");
+  });
+
   it("rejects a category from another family", async () => {
     const { budgetRepository, categoryRepository, familyRepository } = setup();
     const category = await categoryRepository.create({ familyId: "family-2", parentId: null, name: "food" });

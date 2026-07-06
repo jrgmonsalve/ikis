@@ -1,5 +1,6 @@
-import { and, eq, gte, isNull, lt, sql } from "drizzle-orm";
+import { and, eq, gte, isNull, lt, or, sql } from "drizzle-orm";
 import type { Db } from "../../../../shared/db";
+import { categories } from "../../../categories/infrastructure/persistence/categories.schema";
 import { transactions } from "../../../transactions/infrastructure/persistence/transactions.schema";
 import type { Budget, BudgetStatus } from "../../domain/budget";
 import type { BudgetChanges, BudgetRepository, NewBudget } from "../../domain/budget-repository";
@@ -69,11 +70,12 @@ export class DrizzleBudgetRepository implements BudgetRepository {
         ),
       })
       .from(budgets)
+      .leftJoin(categories, or(eq(categories.id, budgets.categoryId), eq(categories.parentId, budgets.categoryId)))
       .leftJoin(
         transactions,
         and(
           eq(transactions.familyId, budgets.familyId),
-          eq(transactions.categoryId, budgets.categoryId),
+          eq(transactions.categoryId, categories.id),
           gte(transactions.occurredAt, budgets.period),
           lt(transactions.occurredAt, sql`date(${budgets.period}, '+1 month')`),
           isNull(transactions.deletedAt),

@@ -68,8 +68,9 @@ export function BudgetsPage() {
 
   const flatCategories = categories ? flattenCategories(categories) : [];
   const categoryName = (id: string) => flatCategories.find((c) => c.id === id)?.label ?? id;
+  const rootCategories = categories?.map((category) => ({ id: category.id, label: category.name })) ?? [];
   const budgetedCategoryIds = new Set(status?.map((b) => b.categoryId));
-  const availableCategories = flatCategories.filter((c) => !budgetedCategoryIds.has(c.id));
+  const availableCategories = rootCategories.filter((c) => !budgetedCategoryIds.has(c.id));
 
   function openCreate() {
     setDialog({ mode: "create" });
@@ -151,7 +152,7 @@ export function BudgetsPage() {
                 <Select value={categoryId} onValueChange={(value) => setCategoryId(value ?? "")}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder={t("movements.selectCategory")}>
-                      {(value: string) => flatCategories.find((category) => category.id === value)?.label}
+                      {(value: string) => rootCategories.find((category) => category.id === value)?.label}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>

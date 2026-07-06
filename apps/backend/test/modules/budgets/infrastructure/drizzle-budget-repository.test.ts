@@ -134,6 +134,52 @@ describe("DrizzleBudgetRepository", () => {
     expect(status).toEqual([{ id: budget.id, categoryId: category.id, amountLimit: 200000, spent: 0 }]);
   });
 
+  it("sums expenses from subcategories into the parent category's budget", async () => {
+    const { budgetRepository, categoryRepository, accountRepository, transactionRepository, userId } = await setup();
+    const familyId = crypto.randomUUID();
+    const parent = await categoryRepository.create({ familyId, parentId: null, name: "food" });
+    const child = await categoryRepository.create({ familyId, parentId: parent.id, name: "fast food" });
+    const otherParent = await categoryRepository.create({ familyId, parentId: null, name: "transport" });
+    const account = await accountRepository.create({ familyId, name: "Checking", type: "checking" });
+    const budget = await budgetRepository.create({
+      familyId,
+      categoryId: parent.id,
+      period: "2026-07-01",
+      amountLimit: 200000,
+    });
+
+    await transactionRepository.create({
+      familyId,
+      accountId: account.id,
+      categoryId: parent.id,
+      createdByUserId: userId,
+      amount: -15000,
+      description: "Groceries",
+      occurredAt: "2026-07-05",
+    });
+    await transactionRepository.create({
+      familyId,
+      accountId: account.id,
+      categoryId: child.id,
+      createdByUserId: userId,
+      amount: -8000,
+      description: "Burger",
+      occurredAt: "2026-07-10",
+    });
+    await transactionRepository.create({
+      familyId,
+      accountId: account.id,
+      categoryId: otherParent.id,
+      createdByUserId: userId,
+      amount: -3000,
+      description: "Taxi",
+      occurredAt: "2026-07-12",
+    });
+
+    const status = await budgetRepository.getStatusForPeriod(familyId, "2026-07");
+    expect(status).toEqual([{ id: budget.id, categoryId: parent.id, amountLimit: 200000, spent: 23000 }]);
+  });
+
   it("supports a cycle that doesn't start on the 1st (e.g. payday on the 27th)", async () => {
     const { budgetRepository, categoryRepository, accountRepository, transactionRepository, userId } = await setup();
     const familyId = crypto.randomUUID();

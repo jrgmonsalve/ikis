@@ -110,15 +110,19 @@ Decisiones clave (la primera es la que costó un bug real en el camino, vale la 
 
 ## Consulta de presupuestos
 
+**Los presupuestos solo se crean sobre categorías padre (raíz), nunca sobre subcategorías** — `createBudget` rechaza con `"Budgets can only be created for parent categories"` si `category.parentId !== null`. Un gasto registrado en cualquier subcategoría de esa padre (p. ej. `food › fast food`) también cuenta hacia el presupuesto de `food`; no hay presupuestos independientes por subcategoría. Como las categorías tienen máximo 2 niveles, esto no requiere recursión: basta con incluir en la suma las transacciones cuyo `category_id` sea la propia categoría del presupuesto **o** cualquier categoría cuyo `parent_id` sea esa categoría.
+
 `getBudgetStatus(familyId, period)` en `src/modules/budgets/application/`: JOIN de `budgets` con SUM de `transactions`, agrupado por presupuesto, usando el propio `period` de cada fila (no uno recalculado desde la familia) para el rango:
 
 ```sql
 SELECT b.id, b.category_id, b.amount_limit,
        COALESCE(SUM(CASE WHEN t.amount < 0 THEN -t.amount ELSE 0 END), 0) AS spent
 FROM budgets b
+LEFT JOIN categories c
+  ON c.id = b.category_id OR c.parent_id = b.category_id
 LEFT JOIN transactions t
   ON t.family_id = b.family_id
- AND t.category_id = b.category_id
+ AND t.category_id = c.id
  AND t.occurred_at >= b.period
  AND t.occurred_at < date(b.period, '+1 month')
  AND t.deleted_at IS NULL
