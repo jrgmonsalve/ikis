@@ -10,7 +10,7 @@ import type { Account, AccountType } from "@/features/accounts/api";
 import { useAccounts, useCreateAccount, useUpdateAccount } from "@/features/accounts/hooks";
 import { formatMoney } from "@/lib/format";
 
-const ACCOUNT_TYPES: AccountType[] = ["checking", "savings", "credit_card", "cash"];
+const ACCOUNT_TYPES: AccountType[] = ["checking", "savings", "credit_card", "cash", "digital_wallet"];
 
 type DialogState = { mode: "create" } | { mode: "edit"; account: Account };
 

@@ -9,7 +9,7 @@ import { listAccounts } from "../../application/list-accounts";
 import { updateAccount } from "../../application/update-account";
 import { DrizzleAccountRepository } from "../persistence/drizzle-account-repository";
 
-const ACCOUNT_TYPES = ["checking", "savings", "credit_card", "cash"] as const;
+const ACCOUNT_TYPES = ["checking", "savings", "credit_card", "cash", "digital_wallet"] as const;
 
 const isValidAccountType = (value: unknown): value is AccountType =>
   typeof value === "string" && (ACCOUNT_TYPES as readonly string[]).includes(value);
@@ -54,7 +54,7 @@ accountRoutes.patch("/:id", async (c) => {
   const id = c.req.param("id");
   const body = await c.req.json<{ name?: string; type?: string }>();
   if (body.type !== undefined && !isValidAccountType(body.type)) {
-    return c.json({ error: "type must be one of checking, savings, credit_card, cash" }, 400);
+    return c.json({ error: `type must be one of ${ACCOUNT_TYPES.join(", ")}` }, 400);
   }
   if (body.name === undefined && body.type === undefined) {
     return c.json({ error: "At least one field is required" }, 400);

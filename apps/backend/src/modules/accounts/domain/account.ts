@@ -1,4 +1,4 @@
-export type AccountType = "checking" | "savings" | "credit_card" | "cash";
+export type AccountType = "checking" | "savings" | "credit_card" | "cash" | "digital_wallet";
 
 export type Account = {
   id: string;
