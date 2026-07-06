@@ -132,7 +132,11 @@ export function BudgetsPage() {
                   {t("categories.rename")}
                 </Button>
               </div>
-              <Progress value={percent} className={overBudget ? "[&_[data-slot=progress-indicator]]:bg-destructive" : ""} />
+              <Progress value={percent} className={overBudget ? "[&_[data-slot=progress-indicator]]:bg-destructive" : ""}>
+                <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-white mix-blend-difference">
+                  {percent}%
+                </span>
+              </Progress>
               <p className={`text-sm ${overBudget ? "text-destructive" : "text-muted-foreground"}`}>
                 {formatMoney(budget.spent, "COP")} / {formatMoney(budget.amountLimit, "COP")}
               </p>

@@ -136,7 +136,11 @@ export function Dashboard() {
                     <Progress
                       value={percent}
                       className={overBudget ? "[&_[data-slot=progress-indicator]]:bg-destructive" : color}
-                    />
+                    >
+                      <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-white mix-blend-difference">
+                        {percent}%
+                      </span>
+                    </Progress>
                   </li>
                 );
               })}

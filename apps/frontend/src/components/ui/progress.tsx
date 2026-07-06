@@ -15,9 +15,9 @@ function Progress({
       className={cn("flex flex-wrap gap-3", className)}
       {...props}
     >
-      {children}
       <ProgressTrack>
         <ProgressIndicator />
+        {children}
       </ProgressTrack>
     </ProgressPrimitive.Root>
   )
@@ -27,7 +27,7 @@ function ProgressTrack({ className, ...props }: ProgressPrimitive.Track.Props) {
   return (
     <ProgressPrimitive.Track
       className={cn(
-        "relative flex h-2 w-full items-center overflow-x-hidden rounded-full bg-muted",
+        "relative isolate flex h-4 w-full items-center overflow-x-hidden rounded-full bg-muted",
         className
       )}
       data-slot="progress-track"
