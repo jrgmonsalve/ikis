@@ -1,25 +1,34 @@
 # ikis
 
-Aplicación de gestión financiera para familias. Monorepo con el backend (Hono + Cloudflare Workers + D1 + Drizzle) en `apps/backend`. El frontend se agrega más adelante.
+Aplicación de gestión financiera para familias. Monorepo con el backend (Hono + Cloudflare Workers + D1 + Drizzle) en `apps/backend` y el frontend (Vite + React PWA) en `apps/frontend`.
 
 ## Requisitos
 
 - Node.js >= 22
 - pnpm 11 (`corepack enable` lo resuelve automáticamente vía `packageManager` en `package.json`)
 
-## Levantar el backend en local
+## Levantar el entorno en local
 
 ```bash
 pnpm install         # instalar dependencias del monorepo
 cp apps/backend/.dev.vars.example apps/backend/.dev.vars   # variables de entorno locales (ver apps/backend/AUTH.md)
-pnpm dev             # levantar el backend (Wrangler + D1 local, sin Cloudflare remoto)
+pnpm dev             # backend (Wrangler + D1 local, sin Cloudflare remoto) y frontend (Vite) en paralelo
 ```
 
-Por defecto queda disponible en `http://localhost:8788`. Para verificar que responde:
+Por defecto: backend en `http://localhost:8787`, frontend en `http://localhost:5173`. Para verificar que el backend responde:
 
 ```bash
-curl http://localhost:8788/health
+curl http://localhost:8787/health
 # {"status":"ok"}
+```
+
+### En background (`scripts/dev-up.sh` / `scripts/dev-down.sh`)
+
+`pnpm dev` deja la terminal ocupada; si preferís correrlo en background, estos scripts lo manejan como un solo grupo de procesos (evita tener que buscar y matar a mano el `workerd` que `wrangler dev` desprende como proceso hijo):
+
+```bash
+./scripts/dev-up.sh    # levanta pnpm dev en background, logs en /tmp/ikis-dev.log
+./scripts/dev-down.sh  # apaga todo el árbol de procesos (backend + frontend + workerd)
 ```
 
 ## Otros comandos
@@ -93,7 +102,9 @@ gh secret set CLOUDFLARE_ACCOUNT_ID --repo jrgmonsalve/ikis --body "56f6e8590b11
 ```
 /
 ├─ apps/
-│  └─ backend/          # API Hono sobre Cloudflare Workers
+│  ├─ backend/           # API Hono sobre Cloudflare Workers
+│  └─ frontend/          # PWA Vite + React
+├─ scripts/              # helpers de desarrollo (dev-up.sh / dev-down.sh)
 ├─ pnpm-workspace.yaml
 └─ package.json
 ```

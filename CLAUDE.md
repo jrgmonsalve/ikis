@@ -188,6 +188,8 @@ Corren en todo el monorepo (`pnpm -r`) salvo que se indique lo contrario.
 ```bash
 pnpm install                              # instalar dependencias
 pnpm dev                                  # backend (Wrangler + D1 local, :8787) y frontend (Vite, :5173) en paralelo
+./scripts/dev-up.sh                       # igual que `pnpm dev`, pero en background (logs en /tmp/ikis-dev.log)
+./scripts/dev-down.sh                     # apaga TODO el árbol de procesos de dev-up.sh (incluye el workerd que Wrangler desprende)
 pnpm test                                 # Vitest en backend y frontend
 pnpm build                                # build de producción de ambos apps
 pnpm typecheck                            # tsc --noEmit en ambos apps
