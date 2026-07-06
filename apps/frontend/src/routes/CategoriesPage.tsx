@@ -74,9 +74,9 @@ export function CategoriesPage() {
       <ul className="flex flex-col gap-2">
         {categories?.map((category) => (
           <li key={category.id} className="rounded-xl border border-border bg-card p-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2">
               <span className="font-medium">{category.name}</span>
-              <div className="flex gap-1">
+              <div className="flex flex-wrap gap-1.5">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -99,9 +99,9 @@ export function CategoriesPage() {
             {category.children.length > 0 && (
               <ul className="mt-2 flex flex-col gap-2 border-l pl-4">
                 {category.children.map((child) => (
-                  <li key={child.id} className="flex items-center justify-between">
+                  <li key={child.id} className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2">
                     <span>{child.name}</span>
-                    <div className="flex gap-1">
+                    <div className="flex flex-wrap gap-1.5">
                       <Button
                         variant="ghost"
                         size="sm"
