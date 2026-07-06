@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NumberInput } from "@/components/ui/number-input";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useBudgetStatus, useCreateBudget, useUpdateBudget } from "@/features/budgets/hooks";
@@ -64,7 +65,7 @@ export function BudgetsPage() {
   const updateBudget = useUpdateBudget();
   const [dialog, setDialog] = useState<DialogState | null>(null);
   const [categoryId, setCategoryId] = useState("");
-  const [amountLimit, setAmountLimit] = useState("");
+  const [amountLimit, setAmountLimit] = useState<number | undefined>(undefined);
 
   const flatCategories = categories ? flattenCategories(categories) : [];
   const categoryName = (id: string) => flatCategories.find((c) => c.id === id)?.label ?? id;
@@ -75,12 +76,12 @@ export function BudgetsPage() {
   function openCreate() {
     setDialog({ mode: "create" });
     setCategoryId("");
-    setAmountLimit("");
+    setAmountLimit(undefined);
   }
 
   function openEdit(id: string, current: number) {
     setDialog({ mode: "edit", id, amountLimit: current });
-    setAmountLimit(String(current));
+    setAmountLimit(current);
   }
 
   function close() {
@@ -89,7 +90,7 @@ export function BudgetsPage() {
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const amount = Number(amountLimit);
+    const amount = amountLimit;
     if (!dialog || !amount || amount <= 0) {
       return;
     }
@@ -167,15 +168,7 @@ export function BudgetsPage() {
             )}
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="budget-amount">{t("budgets.amountLabel")}</Label>
-              <Input
-                id="budget-amount"
-                type="number"
-                step="1"
-                min="0"
-                value={amountLimit}
-                onChange={(event) => setAmountLimit(event.target.value)}
-                autoFocus
-              />
+              <NumberInput id="budget-amount" value={amountLimit} onChange={setAmountLimit} autoFocus />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={close}>

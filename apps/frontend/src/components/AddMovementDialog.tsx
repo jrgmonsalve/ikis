@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NumberInput } from "@/components/ui/number-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAccounts } from "@/features/accounts/hooks";
@@ -114,7 +115,11 @@ function ExpenseForm({ editing, onSuccess }: { editing?: Transaction | null; onS
       </div>
       <div className="flex flex-col gap-1.5">
         <Label>{t("movements.amount")}</Label>
-        <Input type="number" step="1" min="0" {...register("amount", { valueAsNumber: true })} />
+        <Controller
+          name="amount"
+          control={control}
+          render={({ field }) => <NumberInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} />}
+        />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label>{t("movements.date")}</Label>
@@ -199,7 +204,11 @@ function IncomeForm({ editing, onSuccess }: { editing?: Transaction | null; onSu
       </div>
       <div className="flex flex-col gap-1.5">
         <Label>{t("movements.amount")}</Label>
-        <Input type="number" step="1" min="0" {...register("amount", { valueAsNumber: true })} />
+        <Controller
+          name="amount"
+          control={control}
+          render={({ field }) => <NumberInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} />}
+        />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label>{t("movements.date")}</Label>
@@ -320,7 +329,11 @@ function TransferForm({ editing, onSuccess }: { editing?: Transfer | null; onSuc
       </div>
       <div className="flex flex-col gap-1.5">
         <Label>{t("movements.amount")}</Label>
-        <Input type="number" step="1" min="0" {...register("amount", { valueAsNumber: true })} />
+        <Controller
+          name="amount"
+          control={control}
+          render={({ field }) => <NumberInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} />}
+        />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label>{t("movements.date")}</Label>
