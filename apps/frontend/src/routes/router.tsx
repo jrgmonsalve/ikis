@@ -7,6 +7,7 @@ import { RequireAuth, RequireFamily, RequireNoFamily } from "./guards";
 import { Login } from "./Login";
 import { OnboardingFamily } from "./OnboardingFamily";
 import { RootLayout } from "./RootLayout";
+import { SettingsPage } from "./SettingsPage";
 import { TransactionsPage } from "./TransactionsPage";
 
 export const router = createBrowserRouter([
@@ -29,6 +30,7 @@ export const router = createBrowserRouter([
               { path: "/accounts", element: <AccountsPage /> },
               { path: "/transactions", element: <TransactionsPage /> },
               { path: "/budgets", element: <BudgetsPage /> },
+              { path: "/settings", element: <SettingsPage /> },
             ],
           },
         ],

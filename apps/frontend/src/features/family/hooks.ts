@@ -10,7 +10,7 @@ export function useFamily() {
 export function useUpdateFamilySettings() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (budgetCycleStartDay: number) => updateFamilySettings(budgetCycleStartDay),
+    mutationFn: (budgetCycleEndDay: number) => updateFamilySettings(budgetCycleEndDay),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: familyQueryKey }),
   });
 }

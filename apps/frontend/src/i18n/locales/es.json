@@ -92,10 +92,22 @@
     "empty": "Todavía no hay presupuestos para este mes.",
     "categoryLabel": "Categoría",
     "amountLabel": "Límite",
-    "cycleStartDayLabel": "Tu presupuesto empieza el día"
+    "currentCycle": "Ciclo actual: {{start}} – {{end}}"
   },
   "common": {
     "logout": "Cerrar sesión",
     "loading": "Cargando…"
+  },
+  "settings": {
+    "title": "Configuración",
+    "budgetSection": "Ciclo de presupuesto",
+    "cycleStartLabel": "Fecha de inicio del ciclo actual",
+    "cycleEndLabel": "Fecha de fin del ciclo actual",
+    "cycleHelp": "Los siguientes ciclos empiezan el día después del fin y cierran ese mismo día cada mes. Los ciclos ya cerrados no se modifican.",
+    "saveCycle": "Guardar ciclo",
+    "cycleSaved": "Ciclo actualizado.",
+    "cycleError": "No se pudo guardar el ciclo.",
+    "appSection": "Aplicación",
+    "language": "Idioma"
   }
 }

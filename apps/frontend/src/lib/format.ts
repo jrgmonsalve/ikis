@@ -6,14 +6,30 @@ export function formatMoney(amount: number, currency: string): string {
   }).format(amount);
 }
 
-export function currentPeriod(): string {
-  return new Date().toISOString().slice(0, 7);
+export function todayDate(): string {
+  return new Date().toISOString().slice(0, 10);
 }
 
-export function currentCycleRange(cycleStartDay: number, today = new Date()): { start: Date; end: Date } {
-  const anchor = new Date(today.getFullYear(), today.getMonth(), cycleStartDay);
-  const start = today.getDate() >= cycleStartDay ? anchor : new Date(today.getFullYear(), today.getMonth() - 1, cycleStartDay);
-  const end = new Date(start.getFullYear(), start.getMonth() + 1, start.getDate());
+function cycleEndOfMonth(cycleEndDay: number, year: number, month: number): Date {
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  return new Date(year, month, Math.min(cycleEndDay, lastDay));
+}
+
+export function cycleRangeFromDates(start: string, endInclusive: string): { start: Date; end: Date } {
+  const end = new Date(`${endInclusive}T00:00:00`);
+  end.setDate(end.getDate() + 1);
+  return { start: new Date(`${start}T00:00:00`), end };
+}
+
+export function currentCycleRange(cycleEndDay: number, today = new Date()): { start: Date; end: Date } {
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  let endInclusive = cycleEndOfMonth(cycleEndDay, startOfToday.getFullYear(), startOfToday.getMonth());
+  if (startOfToday > endInclusive) {
+    endInclusive = cycleEndOfMonth(cycleEndDay, startOfToday.getFullYear(), startOfToday.getMonth() + 1);
+  }
+  const previousEnd = cycleEndOfMonth(cycleEndDay, endInclusive.getFullYear(), endInclusive.getMonth() - 1);
+  const start = new Date(previousEnd.getFullYear(), previousEnd.getMonth(), previousEnd.getDate() + 1);
+  const end = new Date(endInclusive.getFullYear(), endInclusive.getMonth(), endInclusive.getDate() + 1);
   return { start, end };
 }
 

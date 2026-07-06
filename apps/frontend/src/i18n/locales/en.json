@@ -92,10 +92,22 @@
     "empty": "No budgets for this month yet.",
     "categoryLabel": "Category",
     "amountLabel": "Limit",
-    "cycleStartDayLabel": "Your budget starts on day"
+    "currentCycle": "Current cycle: {{start}} – {{end}}"
   },
   "common": {
     "logout": "Log out",
     "loading": "Loading…"
+  },
+  "settings": {
+    "title": "Settings",
+    "budgetSection": "Budget cycle",
+    "cycleStartLabel": "Current cycle start date",
+    "cycleEndLabel": "Current cycle end date",
+    "cycleHelp": "Following cycles start the day after the end and close on that same day each month. Already closed cycles are never modified.",
+    "saveCycle": "Save cycle",
+    "cycleSaved": "Cycle updated.",
+    "cycleError": "The cycle could not be saved.",
+    "appSection": "App",
+    "language": "Language"
   }
 }

@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Home, LogOut, PieChart, Plus, Tags, Wallet } from "lucide-react";
+import { Home, LogOut, PieChart, Plus, Settings, Tags, Wallet } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, Outlet, useNavigate, useOutletContext } from "react-router";
@@ -58,9 +58,14 @@ export function RootLayout() {
         <Link to="/" className="font-heading text-lg font-semibold text-primary">
           ikis
         </Link>
-        <Button variant="ghost" size="icon" onClick={handleLogout} aria-label={t("common.logout")}>
-          <LogOut className="size-4" />
-        </Button>
+        <div className="flex items-center">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/settings")} aria-label={t("settings.title")}>
+            <Settings className="size-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={handleLogout} aria-label={t("common.logout")}>
+            <LogOut className="size-4" />
+          </Button>
+        </div>
       </header>
 
       <main className="flex-1 px-4 pb-28">

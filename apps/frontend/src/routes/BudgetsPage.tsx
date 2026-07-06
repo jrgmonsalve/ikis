@@ -1,9 +1,8 @@
 import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
 import { Progress } from "@/components/ui/progress";
@@ -11,55 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useBudgetStatus, useCreateBudget, useUpdateBudget } from "@/features/budgets/hooks";
 import { flattenCategories } from "@/features/categories/flatten";
 import { useCategoryTree } from "@/features/categories/hooks";
-import { useFamily, useUpdateFamilySettings } from "@/features/family/hooks";
-import { currentPeriod, formatMoney } from "@/lib/format";
+import { formatMoney, todayDate } from "@/lib/format";
 
 type DialogState = { mode: "create" } | { mode: "edit"; id: string; amountLimit: number };
 
-function CycleStartDaySetting() {
-  const { t } = useTranslation();
-  const { data: family } = useFamily();
-  const updateSettings = useUpdateFamilySettings();
-  const [value, setValue] = useState("");
-
-  useEffect(() => {
-    if (family) {
-      setValue(String(family.budgetCycleStartDay));
-    }
-  }, [family?.budgetCycleStartDay]);
-
-  function commit() {
-    const day = Number(value);
-    if (!family || !Number.isInteger(day) || day < 1 || day > 28 || day === family.budgetCycleStartDay) {
-      setValue(String(family?.budgetCycleStartDay ?? 1));
-      return;
-    }
-    updateSettings.mutate(day);
-  }
-
-  return (
-    <div className="flex items-center gap-2">
-      <Label htmlFor="cycle-start-day" className="text-sm text-muted-foreground">
-        {t("budgets.cycleStartDayLabel")}
-      </Label>
-      <Input
-        id="cycle-start-day"
-        type="number"
-        min="1"
-        max="28"
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        onBlur={commit}
-        className="w-16"
-      />
-    </div>
-  );
-}
-
 export function BudgetsPage() {
   const { t } = useTranslation();
-  const [period, setPeriod] = useState(currentPeriod());
-  const { data: status, isLoading } = useBudgetStatus(period);
+  const { data: status, isLoading } = useBudgetStatus(todayDate());
   const { data: categories } = useCategoryTree();
   const createBudget = useCreateBudget();
   const updateBudget = useUpdateBudget();
@@ -99,7 +56,7 @@ export function BudgetsPage() {
       if (!categoryId) {
         return;
       }
-      createBudget.mutate({ categoryId, period, amountLimit: amount }, { onSuccess: close });
+      createBudget.mutate({ categoryId, amountLimit: amount }, { onSuccess: close });
     } else {
       updateBudget.mutate({ id: dialog.id, amountLimit: amount }, { onSuccess: close });
     }
@@ -108,13 +65,15 @@ export function BudgetsPage() {
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="font-heading text-2xl font-medium">{t("budgets.title")}</h1>
+        <div className="flex flex-col">
+          <h1 className="font-heading text-2xl font-medium">{t("budgets.title")}</h1>
+          {status?.[0] && (
+            <p className="text-sm text-muted-foreground">
+              {t("budgets.currentCycle", { start: status[0].period, end: status[0].periodEnd })}
+            </p>
+          )}
+        </div>
         <Button onClick={openCreate}>{t("budgets.add")}</Button>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Input type="month" value={period} onChange={(event) => setPeriod(event.target.value)} className="w-fit" />
-        <CycleStartDaySetting />
       </div>
 
       {isLoading && <p className="text-muted-foreground">{t("common.loading")}</p>}

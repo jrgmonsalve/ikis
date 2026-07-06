@@ -3,7 +3,7 @@ import { apiFetch } from "@/lib/api-client";
 export type Family = {
   id: string;
   name: string;
-  budgetCycleStartDay: number;
+  budgetCycleEndDay: number;
   createdAt: string;
 };
 
@@ -15,6 +15,6 @@ export function getFamily(): Promise<Family> {
   return apiFetch<Family>("/families");
 }
 
-export function updateFamilySettings(budgetCycleStartDay: number): Promise<Family> {
-  return apiFetch<Family>("/families", { method: "PATCH", body: { budgetCycleStartDay } });
+export function updateFamilySettings(budgetCycleEndDay: number): Promise<Family> {
+  return apiFetch<Family>("/families", { method: "PATCH", body: { budgetCycleEndDay } });
 }

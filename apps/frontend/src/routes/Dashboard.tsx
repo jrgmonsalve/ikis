@@ -9,7 +9,7 @@ import { flattenCategories } from "@/features/categories/flatten";
 import { useCategoryTree } from "@/features/categories/hooks";
 import { useFamily } from "@/features/family/hooks";
 import { useTransactions } from "@/features/transactions/hooks";
-import { currentCycleRange, currentPeriod, daysUntil, formatCycleRange, formatMoney } from "@/lib/format";
+import { currentCycleRange, cycleRangeFromDates, daysUntil, formatCycleRange, formatMoney, todayDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const CHART_COLORS = ["#e11d48", "#16a34a", "#eab308", "#2563eb", "#f97316", "#0d9488", "#9333ea"];
@@ -27,7 +27,7 @@ export function Dashboard() {
   const { t, i18n } = useTranslation();
   const user = useOutletContext<CurrentUser>();
   const { data: accounts, isLoading: accountsLoading } = useAccounts();
-  const { data: budgetStatus, isLoading: budgetsLoading } = useBudgetStatus(currentPeriod());
+  const { data: budgetStatus, isLoading: budgetsLoading } = useBudgetStatus(todayDate());
   const { data: categories } = useCategoryTree();
   const { data: family } = useFamily();
   const { data: transactions, isLoading: transactionsLoading } = useTransactions();
@@ -49,7 +49,12 @@ export function Dashboard() {
   const donutGradient =
     totalForChart > 0 ? slices.map((slice) => `${slice.color} ${slice.start}% ${slice.end}%`).join(", ") : "var(--muted) 0% 100%";
 
-  const cycleRange = family ? currentCycleRange(family.budgetCycleStartDay) : null;
+  const currentBudgetCycle = budgetStatus?.[0];
+  const cycleRange = currentBudgetCycle
+    ? cycleRangeFromDates(currentBudgetCycle.period, currentBudgetCycle.periodEnd)
+    : family
+      ? currentCycleRange(family.budgetCycleEndDay)
+      : null;
   const daysLeft = cycleRange ? daysUntil(cycleRange.end) : null;
 
   const recentTransactions = [...(transactions ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 3);
