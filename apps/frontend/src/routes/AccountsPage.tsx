@@ -64,7 +64,7 @@ export function AccountsPage() {
 
       <ul className="flex flex-col gap-2">
         {accounts?.map((account) => (
-          <li key={account.id} className="flex items-center justify-between rounded-lg border p-3">
+          <li key={account.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3">
             <div>
               <p className="font-medium">{account.name}</p>
               <p className="text-sm text-muted-foreground">{t(`accounts.types.${account.type}`)}</p>

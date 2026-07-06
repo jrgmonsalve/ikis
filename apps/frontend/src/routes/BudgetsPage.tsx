@@ -123,7 +123,7 @@ export function BudgetsPage() {
           const percent = Math.min(100, Math.round((budget.spent / budget.amountLimit) * 100));
           const overBudget = budget.spent > budget.amountLimit;
           return (
-            <li key={budget.id} className="flex flex-col gap-2 rounded-lg border p-3">
+            <li key={budget.id} className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3">
               <div className="flex items-center justify-between">
                 <span className="font-medium">{categoryName(budget.categoryId)}</span>
                 <Button variant="ghost" size="sm" onClick={() => openEdit(budget.id, budget.amountLimit)}>

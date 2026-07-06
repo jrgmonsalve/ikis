@@ -6,9 +6,8 @@ Define el recorrido pantalla por pantalla, basado en la API actual del backend (
 `GET|POST|PATCH|DELETE /api/v1/transactions`, `GET|POST|PATCH|DELETE /api/v1/transfers`,
 `GET|POST|PATCH /api/v1/budgets`.
 
-Las pantallas 1–6 (auth, onboarding, categorías) ya están construidas. Las de finanzas
-(cuentas, transacciones, transferencias, presupuestos — secciones 7 en adelante) están
-**diseñadas pero no implementadas todavía**.
+Las pantallas 1–10 (auth, onboarding, categorías, cuentas, transacciones, transferencias,
+presupuestos) ya están construidas.
 
 **Nota sobre el backend:** `GET /api/v1/transactions` no tiene los filtros que planteaba
 originalmente `SPEC-finanzas-familiares.md` (`?accountId=&categoryId=&from=&to=&page=`) —
@@ -49,6 +48,24 @@ de que el frontend sufra.
                      solo sobre raíces, renombrar, borrar)
 ```
 
+## Dirección visual (mobile-first)
+
+- **Paleta**: índigo (`--primary` #4E48B0, tono más oscuro `#241F6B` en el hero) + blanco cálido
+  (`--background` #FBFAF7) como base. El **dorado terroso** (`--gold` #C99A4F) se reserva
+  **solo para acentos puntuales** — nunca como color de fondo masivo: el badge de cierre de
+  ciclo en el dashboard, el ícono de un ingreso en la lista de transacciones, el punto del tab
+  activo en la barra inferior.
+- **Navegación**: tab bar fija abajo (Inicio / Cuentas / **+** / Presupuestos / Categorías) en
+  vez del nav de texto que había arriba. El **+** central es un FAB que abre el modal de
+  "Agregar movimiento" (solo creación) desde cualquier pantalla — reemplaza el botón que antes
+  vivía únicamente en el dashboard. `/transactions` conserva además su propio botón "Agregar" en
+  el header, que reutiliza el mismo modal para creación y para edición inline de un movimiento o
+  transferencia existente.
+- **Header superior**: minimal en todas las pantallas — solo el wordmark "ikis" y el botón de
+  logout (ícono), la navegación principal vive en la tab bar.
+- Tokens y componentes en `apps/frontend/src/index.css` (`:root`/`.dark`); `.dark` está definido
+  por consistencia pero **no hay toggle de tema todavía** — la app siempre corre en claro.
+
 ## Pantallas
 
 ### 1. `/login`
@@ -67,11 +84,20 @@ de que el frontend sufra.
 - Nota de diseño: el nombre de familia **no es único** — dos familias distintas pueden compartir nombre porque el scoping siempre es por `familyId`, nunca por nombre. Es solo una etiqueta de visualización.
 
 ### 4. `/` — Dashboard
-- Saludo + nombre de la familia.
-- **Resumen de cuentas**: lista compacta de `GET /api/v1/accounts` (nombre, tipo, saldo).
-- **Resumen de presupuesto del mes actual**: `GET /api/v1/budgets?period=<mes actual>`, unas pocas filas (categoría, límite, gastado, barra de progreso) con link a `/budgets` para ver todo.
-- Botón **"+"** (ver sección 8) siempre visible — es el punto de entrada para registrar gasto/ingreso/transferencia.
-- Nav hacia `/accounts`, `/transactions`, `/budgets`, `/categories`.
+- **Hero índigo**: saludo, badge dorado con los días que faltan para el cierre del ciclo actual
+  (calculado en cliente a partir de `family.budgetCycleStartDay` + fecha de hoy — no depende de
+  ningún presupuesto en particular), balance total (suma de `GET /api/v1/accounts`) y el rango
+  de fechas del ciclo actual (p. ej. "27 jun – 26 jul").
+- **Cuentas**: gráfico de torta (`conic-gradient`) con la proporción de cada cuenta sobre el
+  total (los saldos negativos no restan área del gráfico, se tratan como 0% para la proporción,
+  pero sí se muestran con su signo real en la leyenda) y el total en el centro. Leyenda apilada
+  debajo del gráfico, una cuenta por línea (nombre, monto, %). Link "Ver todo" → `/accounts`.
+- **Presupuesto del mes actual**: `GET /api/v1/budgets?period=<mes actual>`, igual que antes
+  (categoría, gastado / límite). Link "Ver todo" → `/budgets`.
+- **Transacciones recientes**: últimos 3 movimientos de `GET /api/v1/transactions` (ordenados
+  por `createdAt`), con ícono de entrada/salida. Link "Ver todas" → `/transactions`.
+- El punto de entrada para registrar un movimiento ya no vive aquí — es el **+** de la tab bar
+  (ver "Dirección visual" y sección 8).
 
 ### 5. `/categories`
 - Árbol de categorías (raíz → subcategorías), obtenido de `GET /api/v1/categories`.
@@ -82,7 +108,7 @@ de que el frontend sufra.
   - Borrar (`DELETE /api/v1/categories/:id`), con confirmación que advierte el borrado en cascada de subcategorías.
 
 ### 6. Logout
-- Botón en el layout autenticado (header). Limpia el JWT de `localStorage` y redirige a `/login`.
+- Botón ícono en el header del layout autenticado. Limpia el JWT de `localStorage` y redirige a `/login`.
 
 ### 7. `/accounts`
 - Lista de cuentas (`GET /api/v1/accounts`): nombre, tipo (`checking`/`savings`/`credit_card`/`cash`), saldo, moneda.
@@ -91,7 +117,10 @@ de que el frontend sufra.
 - **No hay borrado de cuentas** — el backend no expone `DELETE /accounts` (a propósito: una cuenta con historial de transacciones no debería poder desaparecer). No ofrecer ese botón en la UI.
 
 ### 8. Botón "+" — registrar Gasto / Ingreso / Transferencia
-Un solo punto de entrada (visible en el dashboard y en `/transactions`), un modal/dialog con 3 pestañas. Cada pestaña llama a un endpoint distinto — son entidades separadas en el backend, no una sola con un campo "tipo":
+Un modal/dialog con 3 pestañas, disponible desde el FAB de la tab bar (cualquier pantalla, solo
+creación) y desde el botón "Agregar" de `/transactions` (que además lo reutiliza para editar un
+movimiento o transferencia existente). Cada pestaña llama a un endpoint distinto — son entidades
+separadas en el backend, no una sola con un campo "tipo":
 
 - **Gasto**: cuenta (select), categoría (select, **requerida**), monto (el usuario escribe un positivo, el formulario lo manda como negativo), fecha, descripción → `POST /api/v1/transactions { accountId, categoryId, amount: -monto, occurredAt, description }`.
 - **Ingreso**: cuenta (select), monto (positivo), fecha, descripción — **sin categoría** (el backend rechaza `categoryId` en transacciones con `amount > 0`) → `POST /api/v1/transactions { accountId, categoryId: null, amount, occurredAt, description }`.

@@ -41,7 +41,7 @@ function TransactionsList({ onEdit }: { onEdit: (transaction: Transaction) => vo
       {transactions?.map((transaction) => {
         const account = accounts?.find((a) => a.id === transaction.accountId);
         return (
-          <li key={transaction.id} className="flex items-center justify-between rounded-lg border p-3">
+          <li key={transaction.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3">
             <div>
               <p className="font-medium">{transaction.description || categoryName(transaction.categoryId)}</p>
               <p className="text-sm text-muted-foreground">
@@ -95,7 +95,7 @@ function TransfersList({ onEdit }: { onEdit: (transfer: Transfer) => void }) {
       {transfers?.map((transfer) => {
         const account = accounts?.find((a) => a.id === transfer.fromAccountId);
         return (
-          <li key={transfer.id} className="flex items-center justify-between rounded-lg border p-3">
+          <li key={transfer.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3">
             <div>
               <p className="font-medium">
                 {accountName(transfer.fromAccountId)} → {accountName(transfer.toAccountId)}

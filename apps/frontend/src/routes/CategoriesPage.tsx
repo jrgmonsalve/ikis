@@ -73,7 +73,7 @@ export function CategoriesPage() {
 
       <ul className="flex flex-col gap-2">
         {categories?.map((category) => (
-          <li key={category.id} className="rounded-lg border p-3">
+          <li key={category.id} className="rounded-xl border border-border bg-card p-3">
             <div className="flex items-center justify-between">
               <span className="font-medium">{category.name}</span>
               <div className="flex gap-1">

@@ -16,10 +16,16 @@
     "familyLabel": "Family",
     "goToCategories": "View categories",
     "accounts": "Accounts",
+    "total": "Total",
+    "balanceLabel": "Available balance",
+    "closesIn_one": "Closes in {{count}} day",
+    "closesIn_other": "Closes in {{count}} days",
     "budgetThisMonth": "This month's budget",
+    "recentTransactions": "Recent transactions",
     "viewAll": "View all"
   },
   "nav": {
+    "home": "Home",
     "accounts": "Accounts",
     "transactions": "Transactions",
     "budgets": "Budgets",
