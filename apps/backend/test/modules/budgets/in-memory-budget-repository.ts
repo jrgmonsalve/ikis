@@ -1,5 +1,4 @@
 import type { Budget, BudgetStatus } from "../../../src/modules/budgets/domain/budget";
-import { nextCycleStart } from "../../../src/modules/budgets/domain/budget";
 import type { BudgetChanges, BudgetRepository, NewBudget } from "../../../src/modules/budgets/domain/budget-repository";
 
 type FakeTransaction = {
@@ -10,7 +9,7 @@ type FakeTransaction = {
   deletedAt: Date | null;
 };
 
-const startsInMonth = (period: string, publicPeriod: string) => period.slice(0, 7) === publicPeriod;
+const containsDate = (budget: Budget, date: string) => budget.period <= date && date <= budget.periodEnd;
 
 export class InMemoryBudgetRepository implements BudgetRepository {
   budgets: Budget[] = [];
@@ -21,15 +20,33 @@ export class InMemoryBudgetRepository implements BudgetRepository {
     return this.budgets.find((budget) => budget.familyId === familyId && budget.id === id) ?? null;
   }
 
-  async findByFamilyCategoryAndPeriod(familyId: string, categoryId: string, publicPeriod: string) {
-    return (
-      this.budgets.find(
-        (budget) =>
-          budget.familyId === familyId &&
-          budget.categoryId === categoryId &&
-          startsInMonth(budget.period, publicPeriod),
-      ) ?? null
-    );
+  async findActiveOn(familyId: string, date: string) {
+    return this.budgets.filter((budget) => budget.familyId === familyId && containsDate(budget, date));
+  }
+
+  async findLatestCycle(familyId: string) {
+    const familyBudgets = this.budgets.filter((budget) => budget.familyId === familyId);
+    if (familyBudgets.length === 0) {
+      return [];
+    }
+    const latestEnd = familyBudgets.reduce((max, budget) => (budget.periodEnd > max ? budget.periodEnd : max), "");
+    return familyBudgets.filter((budget) => budget.periodEnd === latestEnd);
+  }
+
+  async findPreviousCycleEnd(familyId: string, beforePeriod: string) {
+    const ends = this.budgets
+      .filter((budget) => budget.familyId === familyId && budget.periodEnd < beforePeriod)
+      .map((budget) => budget.periodEnd);
+    return ends.length === 0 ? null : ends.reduce((max, end) => (end > max ? end : max));
+  }
+
+  async redateCycle(familyId: string, fromPeriod: string, cycle: { start: string; end: string }) {
+    for (const budget of this.budgets) {
+      if (budget.familyId === familyId && budget.period === fromPeriod) {
+        budget.period = cycle.start;
+        budget.periodEnd = cycle.end;
+      }
+    }
   }
 
   async create(input: NewBudget) {
@@ -40,6 +57,12 @@ export class InMemoryBudgetRepository implements BudgetRepository {
     };
     this.budgets.push(budget);
     return budget;
+  }
+
+  async createMany(inputs: NewBudget[]) {
+    for (const input of inputs) {
+      await this.create(input);
+    }
   }
 
   async update(familyId: string, id: string, changes: BudgetChanges) {
@@ -53,24 +76,29 @@ export class InMemoryBudgetRepository implements BudgetRepository {
     return budget;
   }
 
-  async getStatusForPeriod(familyId: string, publicPeriod: string): Promise<BudgetStatus[]> {
-    return this.budgets
-      .filter((budget) => budget.familyId === familyId && startsInMonth(budget.period, publicPeriod))
-      .map((budget) => {
-        const periodEnd = nextCycleStart(budget.period);
-        const spent = this.transactions
-          .filter(
-            (transaction) =>
-              transaction.familyId === familyId &&
-              transaction.categoryId === budget.categoryId &&
-              transaction.occurredAt >= budget.period &&
-              transaction.occurredAt < periodEnd &&
-              transaction.deletedAt === null &&
-              transaction.amount < 0,
-          )
-          .reduce((sum, transaction) => sum - transaction.amount, 0);
+  async getStatusActiveOn(familyId: string, date: string): Promise<BudgetStatus[]> {
+    const active = await this.findActiveOn(familyId, date);
+    return active.map((budget) => {
+      const spent = this.transactions
+        .filter(
+          (transaction) =>
+            transaction.familyId === familyId &&
+            transaction.categoryId === budget.categoryId &&
+            transaction.occurredAt >= budget.period &&
+            transaction.occurredAt <= budget.periodEnd &&
+            transaction.deletedAt === null &&
+            transaction.amount < 0,
+        )
+        .reduce((sum, transaction) => sum - transaction.amount, 0);
 
-        return { id: budget.id, categoryId: budget.categoryId, amountLimit: budget.amountLimit, spent };
-      });
+      return {
+        id: budget.id,
+        categoryId: budget.categoryId,
+        period: budget.period,
+        periodEnd: budget.periodEnd,
+        amountLimit: budget.amountLimit,
+        spent,
+      };
+    });
   }
 }

@@ -2,8 +2,10 @@ export type Budget = {
   id: string;
   familyId: string;
   categoryId: string;
-  /** Storage format 'YYYY-MM-DD' — the day is the family's budgetCycleStartDay, not necessarily 01. */
+  /** First day of the cycle, inclusive ('YYYY-MM-DD'). */
   period: string;
+  /** Last day of the cycle, inclusive ('YYYY-MM-DD'). */
+  periodEnd: string;
   amountLimit: number;
   createdAt: Date;
 };
@@ -11,16 +13,22 @@ export type Budget = {
 export type BudgetStatus = {
   id: string;
   categoryId: string;
+  period: string;
+  periodEnd: string;
   amountLimit: number;
   spent: number;
 };
 
-const PUBLIC_PERIOD_PATTERN = /^\d{4}-\d{2}$/;
+export type CycleRange = {
+  start: string;
+  end: string;
+};
 
-/** The API surface uses 'YYYY-MM' (e.g. what an <input type="month"> produces). */
-export const assertValidPeriod = (period: string): void => {
-  if (!PUBLIC_PERIOD_PATTERN.test(period)) {
-    throw new Error("period must be in 'YYYY-MM' format");
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+export const assertValidDate = (date: string): void => {
+  if (!DATE_PATTERN.test(date)) {
+    throw new Error("date must be in 'YYYY-MM-DD' format");
   }
 };
 
@@ -30,17 +38,40 @@ export const assertValidAmountLimit = (amountLimit: number): void => {
   }
 };
 
-/**
- * A period cycle doesn't have to start on the 1st — a family can set its own
- * budgetCycleStartDay (e.g. payday). 'YYYY-MM' names the cycle that STARTS in
- * that calendar month.
- */
-export const toStoragePeriod = (period: string, cycleStartDay: number): string =>
-  `${period}-${String(cycleStartDay).padStart(2, "0")}`;
+const pad = (value: number): string => String(value).padStart(2, "0");
 
-export const nextCycleStart = (storagePeriod: string): string => {
-  const year = Number(storagePeriod.slice(0, 4));
-  const month = Number(storagePeriod.slice(5, 7));
-  const day = Number(storagePeriod.slice(8, 10));
-  return new Date(Date.UTC(year, month, day)).toISOString().slice(0, 10);
+const lastDayOfMonth = (year: number, month: number): number => new Date(Date.UTC(year, month, 0)).getUTCDate();
+
+/** cycleEndDay 29-31 clamps to the month's last day (e.g. 31 → Feb 28). */
+export const cycleEndForMonth = (cycleEndDay: number, year: number, month: number): string =>
+  `${year}-${pad(month)}-${pad(Math.min(cycleEndDay, lastDayOfMonth(year, month)))}`;
+
+const addDays = (date: string, days: number): string => {
+  const shifted = new Date(`${date}T00:00:00Z`);
+  shifted.setUTCDate(shifted.getUTCDate() + days);
+  return shifted.toISOString().slice(0, 10);
+};
+
+const cycleEndOnOrAfter = (cycleEndDay: number, date: string): string => {
+  const year = Number(date.slice(0, 4));
+  const month = Number(date.slice(5, 7));
+  const candidate = cycleEndForMonth(cycleEndDay, year, month);
+  if (candidate >= date) {
+    return candidate;
+  }
+  return month === 12 ? cycleEndForMonth(cycleEndDay, year + 1, 1) : cycleEndForMonth(cycleEndDay, year, month + 1);
+};
+
+export const cycleContaining = (cycleEndDay: number, date: string): CycleRange => {
+  const end = cycleEndOnOrAfter(cycleEndDay, date);
+  const endYear = Number(end.slice(0, 4));
+  const endMonth = Number(end.slice(5, 7));
+  const previousEnd =
+    endMonth === 1 ? cycleEndForMonth(cycleEndDay, endYear - 1, 12) : cycleEndForMonth(cycleEndDay, endYear, endMonth - 1);
+  return { start: addDays(previousEnd, 1), end };
+};
+
+export const nextCycleAfter = (cycleEndDay: number, previousEnd: string): CycleRange => {
+  const start = addDays(previousEnd, 1);
+  return { start, end: cycleEndOnOrAfter(cycleEndDay, start) };
 };

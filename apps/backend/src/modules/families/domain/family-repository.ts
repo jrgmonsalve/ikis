@@ -5,7 +5,7 @@ export type NewFamily = {
 };
 
 export type FamilyChanges = {
-  budgetCycleStartDay?: number;
+  budgetCycleEndDay?: number;
 };
 
 export interface FamilyRepository {

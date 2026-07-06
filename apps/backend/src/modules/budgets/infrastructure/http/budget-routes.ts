@@ -6,6 +6,7 @@ import { authMiddleware } from "../../../../shared/auth-middleware";
 import { createDb } from "../../../../shared/db";
 import type { Bindings } from "../../../../shared/env";
 import { createBudget } from "../../application/create-budget";
+import { defineCurrentBudgetCycle } from "../../application/define-current-budget-cycle";
 import { getBudgetStatus } from "../../application/get-budget-status";
 import { updateBudget } from "../../application/update-budget";
 import { DrizzleBudgetRepository } from "../persistence/drizzle-budget-repository";
@@ -23,15 +24,17 @@ budgetRoutes.use("*", async (c, next) => {
 
 budgetRoutes.get("/", async (c) => {
   const familyId = c.get("familyId") as string;
-  const period = c.req.query("period");
-  if (!period) {
-    return c.json({ error: "period is required, e.g. ?period=2026-07" }, 400);
+  const date = c.req.query("date");
+  if (!date) {
+    return c.json({ error: "date is required, e.g. ?date=2026-07-28" }, 400);
   }
 
-  const budgetRepository = new DrizzleBudgetRepository(createDb(c.env.DB));
+  const db = createDb(c.env.DB);
+  const budgetRepository = new DrizzleBudgetRepository(db);
+  const familyRepository = new DrizzleFamilyRepository(db);
 
   try {
-    const status = await getBudgetStatus({ budgetRepository }, { familyId, period });
+    const status = await getBudgetStatus({ budgetRepository, familyRepository }, { familyId, date });
     return c.json(status);
   } catch (err) {
     if (err instanceof Error) {
@@ -43,9 +46,9 @@ budgetRoutes.get("/", async (c) => {
 
 budgetRoutes.post("/", async (c) => {
   const familyId = c.get("familyId") as string;
-  const body = await c.req.json<{ categoryId?: string; period?: string; amountLimit?: number }>();
-  if (!body.categoryId || !body.period || typeof body.amountLimit !== "number") {
-    return c.json({ error: "categoryId, period and amountLimit are required" }, 400);
+  const body = await c.req.json<{ categoryId?: string; amountLimit?: number }>();
+  if (!body.categoryId || typeof body.amountLimit !== "number") {
+    return c.json({ error: "categoryId and amountLimit are required" }, 400);
   }
 
   const db = createDb(c.env.DB);
@@ -56,9 +59,34 @@ budgetRoutes.post("/", async (c) => {
   try {
     const budget = await createBudget(
       { budgetRepository, categoryRepository, familyRepository },
-      { familyId, categoryId: body.categoryId, period: body.period, amountLimit: body.amountLimit },
+      { familyId, categoryId: body.categoryId, amountLimit: body.amountLimit },
     );
     return c.json(budget, 201);
+  } catch (err) {
+    if (err instanceof Error) {
+      return c.json({ error: err.message }, 400);
+    }
+    throw err;
+  }
+});
+
+budgetRoutes.put("/cycle", async (c) => {
+  const familyId = c.get("familyId") as string;
+  const body = await c.req.json<{ start?: string; end?: string }>();
+  if (!body.start || !body.end) {
+    return c.json({ error: "start and end are required" }, 400);
+  }
+
+  const db = createDb(c.env.DB);
+  const budgetRepository = new DrizzleBudgetRepository(db);
+  const familyRepository = new DrizzleFamilyRepository(db);
+
+  try {
+    const cycle = await defineCurrentBudgetCycle(
+      { budgetRepository, familyRepository },
+      { familyId, start: body.start, end: body.end },
+    );
+    return c.json(cycle);
   } catch (err) {
     if (err instanceof Error) {
       return c.json({ error: err.message }, 400);

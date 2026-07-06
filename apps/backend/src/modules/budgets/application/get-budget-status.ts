@@ -1,21 +1,33 @@
-import { assertValidPeriod } from "../domain/budget";
+import type { FamilyRepository } from "../../families/domain/family-repository";
+import { assertValidDate } from "../domain/budget";
 import type { BudgetStatus } from "../domain/budget";
 import type { BudgetRepository } from "../domain/budget-repository";
+import { ensureCurrentCycleBudgets, todayIsoDate } from "./ensure-current-cycle-budgets";
 
 type Dependencies = {
   budgetRepository: BudgetRepository;
+  familyRepository: FamilyRepository;
 };
 
 type GetBudgetStatusInput = {
   familyId: string;
-  /** Public format: 'YYYY-MM'. */
-  period: string;
+  /** Any day inside the cycle to read ('YYYY-MM-DD'). */
+  date: string;
+  today?: string;
 };
 
 export const getBudgetStatus = async (
-  { budgetRepository }: Dependencies,
-  { familyId, period }: GetBudgetStatusInput,
+  { budgetRepository, familyRepository }: Dependencies,
+  { familyId, date, today = todayIsoDate() }: GetBudgetStatusInput,
 ): Promise<BudgetStatus[]> => {
-  assertValidPeriod(period);
-  return budgetRepository.getStatusForPeriod(familyId, period);
+  assertValidDate(date);
+
+  const family = await familyRepository.findById(familyId);
+  if (!family) {
+    throw new Error("Family not found");
+  }
+
+  await ensureCurrentCycleBudgets(budgetRepository, familyId, family.budgetCycleEndDay, today);
+
+  return budgetRepository.getStatusActiveOn(familyId, date);
 };

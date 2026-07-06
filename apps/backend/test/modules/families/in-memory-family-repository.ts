@@ -12,7 +12,7 @@ export class InMemoryFamilyRepository implements FamilyRepository {
     const family: Family = {
       id: crypto.randomUUID(),
       createdAt: new Date(),
-      budgetCycleStartDay: 1,
+      budgetCycleEndDay: 31,
       ...input,
     };
     this.families.push(family);
@@ -24,8 +24,8 @@ export class InMemoryFamilyRepository implements FamilyRepository {
     if (!family) {
       throw new Error("Family not found");
     }
-    if (changes.budgetCycleStartDay !== undefined) {
-      family.budgetCycleStartDay = changes.budgetCycleStartDay;
+    if (changes.budgetCycleEndDay !== undefined) {
+      family.budgetCycleEndDay = changes.budgetCycleEndDay;
     }
     return family;
   }

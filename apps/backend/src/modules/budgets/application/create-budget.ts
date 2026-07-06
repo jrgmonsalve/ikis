@@ -1,8 +1,9 @@
 import type { CategoryRepository } from "../../categories/domain/category-repository";
 import type { FamilyRepository } from "../../families/domain/family-repository";
-import { assertValidAmountLimit, assertValidPeriod, toStoragePeriod } from "../domain/budget";
+import { assertValidAmountLimit, assertValidDate } from "../domain/budget";
 import type { Budget } from "../domain/budget";
 import type { BudgetRepository } from "../domain/budget-repository";
+import { ensureCurrentCycleBudgets, todayIsoDate } from "./ensure-current-cycle-budgets";
 
 type Dependencies = {
   budgetRepository: BudgetRepository;
@@ -13,17 +14,17 @@ type Dependencies = {
 type CreateBudgetInput = {
   familyId: string;
   categoryId: string;
-  /** Public format: 'YYYY-MM'. */
-  period: string;
   amountLimit: number;
+  today?: string;
 };
 
 export const createBudget = async (
   { budgetRepository, categoryRepository, familyRepository }: Dependencies,
   input: CreateBudgetInput,
 ): Promise<Budget> => {
-  assertValidPeriod(input.period);
   assertValidAmountLimit(input.amountLimit);
+  const today = input.today ?? todayIsoDate();
+  assertValidDate(today);
 
   const family = await familyRepository.findById(input.familyId);
   if (!family) {
@@ -38,19 +39,22 @@ export const createBudget = async (
     throw new Error("Budgets can only be created for parent categories");
   }
 
-  const existing = await budgetRepository.findByFamilyCategoryAndPeriod(
+  const { cycle, budgets } = await ensureCurrentCycleBudgets(
+    budgetRepository,
     input.familyId,
-    input.categoryId,
-    input.period,
+    family.budgetCycleEndDay,
+    today,
   );
-  if (existing) {
-    throw new Error("A budget for this category and period already exists");
+
+  if (budgets.some((budget) => budget.categoryId === input.categoryId)) {
+    throw new Error("A budget for this category already exists in the current cycle");
   }
 
   return budgetRepository.create({
     familyId: input.familyId,
     categoryId: input.categoryId,
-    period: toStoragePeriod(input.period, family.budgetCycleStartDay),
+    period: cycle.start,
+    periodEnd: cycle.end,
     amountLimit: input.amountLimit,
   });
 };

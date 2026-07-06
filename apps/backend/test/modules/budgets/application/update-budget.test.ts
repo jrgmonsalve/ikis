@@ -9,7 +9,7 @@ const setup = () => {
   const budgetRepository = new InMemoryBudgetRepository();
   const categoryRepository = new InMemoryCategoryRepository();
   const familyRepository = new InMemoryFamilyRepository();
-  familyRepository.families.push({ id: "family-1", name: "F1", budgetCycleStartDay: 1, createdAt: new Date() });
+  familyRepository.families.push({ id: "family-1", name: "F1", budgetCycleEndDay: 31, createdAt: new Date() });
   return { budgetRepository, categoryRepository, familyRepository };
 };
 
@@ -19,7 +19,7 @@ describe("updateBudget", () => {
     const category = await categoryRepository.create({ familyId: "family-1", parentId: null, name: "food" });
     const budget = await createBudget(
       { budgetRepository, categoryRepository, familyRepository },
-      { familyId: "family-1", categoryId: category.id, period: "2026-07", amountLimit: 200000 },
+      { familyId: "family-1", categoryId: category.id, amountLimit: 200000, today: "2026-07-07" },
     );
 
     const updated = await updateBudget(
@@ -35,7 +35,7 @@ describe("updateBudget", () => {
     const category = await categoryRepository.create({ familyId: "family-1", parentId: null, name: "food" });
     const budget = await createBudget(
       { budgetRepository, categoryRepository, familyRepository },
-      { familyId: "family-1", categoryId: category.id, period: "2026-07", amountLimit: 200000 },
+      { familyId: "family-1", categoryId: category.id, amountLimit: 200000, today: "2026-07-07" },
     );
 
     await expect(
@@ -48,7 +48,7 @@ describe("updateBudget", () => {
     const category = await categoryRepository.create({ familyId: "family-1", parentId: null, name: "food" });
     const budget = await createBudget(
       { budgetRepository, categoryRepository, familyRepository },
-      { familyId: "family-1", categoryId: category.id, period: "2026-07", amountLimit: 200000 },
+      { familyId: "family-1", categoryId: category.id, amountLimit: 200000, today: "2026-07-07" },
     );
 
     await expect(

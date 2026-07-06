@@ -1,4 +1,4 @@
-import { and, eq, gte, isNull, lt, or, sql } from "drizzle-orm";
+import { and, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
 import type { Db } from "../../../../shared/db";
 import { categories } from "../../../categories/infrastructure/persistence/categories.schema";
 import { transactions } from "../../../transactions/infrastructure/persistence/transactions.schema";
@@ -6,7 +6,7 @@ import type { Budget, BudgetStatus } from "../../domain/budget";
 import type { BudgetChanges, BudgetRepository, NewBudget } from "../../domain/budget-repository";
 import { budgets } from "./budgets.schema";
 
-const startsInMonth = (publicPeriod: string) => sql`substr(${budgets.period}, 1, 7) = ${publicPeriod}`;
+const activeOn = (date: string) => and(lte(budgets.period, date), gte(budgets.periodEnd, date));
 
 export class DrizzleBudgetRepository implements BudgetRepository {
   constructor(private readonly db: Db) {}
@@ -20,17 +20,41 @@ export class DrizzleBudgetRepository implements BudgetRepository {
     return row ?? null;
   }
 
-  async findByFamilyCategoryAndPeriod(
-    familyId: string,
-    categoryId: string,
-    publicPeriod: string,
-  ): Promise<Budget | null> {
-    const [row] = await this.db
+  async findActiveOn(familyId: string, date: string): Promise<Budget[]> {
+    return this.db
       .select()
       .from(budgets)
-      .where(and(eq(budgets.familyId, familyId), eq(budgets.categoryId, categoryId), startsInMonth(publicPeriod)))
-      .limit(1);
-    return row ?? null;
+      .where(and(eq(budgets.familyId, familyId), activeOn(date)));
+  }
+
+  async findLatestCycle(familyId: string): Promise<Budget[]> {
+    const [latest] = await this.db
+      .select({ periodEnd: sql<string | null>`MAX(${budgets.periodEnd})` })
+      .from(budgets)
+      .where(eq(budgets.familyId, familyId));
+    if (!latest?.periodEnd) {
+      return [];
+    }
+
+    return this.db
+      .select()
+      .from(budgets)
+      .where(and(eq(budgets.familyId, familyId), eq(budgets.periodEnd, latest.periodEnd)));
+  }
+
+  async findPreviousCycleEnd(familyId: string, beforePeriod: string): Promise<string | null> {
+    const [row] = await this.db
+      .select({ periodEnd: sql<string | null>`MAX(${budgets.periodEnd})` })
+      .from(budgets)
+      .where(and(eq(budgets.familyId, familyId), sql`${budgets.periodEnd} < ${beforePeriod}`));
+    return row?.periodEnd ?? null;
+  }
+
+  async redateCycle(familyId: string, fromPeriod: string, cycle: { start: string; end: string }): Promise<void> {
+    await this.db
+      .update(budgets)
+      .set({ period: cycle.start, periodEnd: cycle.end })
+      .where(and(eq(budgets.familyId, familyId), eq(budgets.period, fromPeriod)));
   }
 
   async create(input: NewBudget): Promise<Budget> {
@@ -43,6 +67,20 @@ export class DrizzleBudgetRepository implements BudgetRepository {
     await this.db.insert(budgets).values(row);
 
     return row;
+  }
+
+  async createMany(inputs: NewBudget[]): Promise<void> {
+    if (inputs.length === 0) {
+      return;
+    }
+
+    await this.db.insert(budgets).values(
+      inputs.map((input) => ({
+        id: crypto.randomUUID(),
+        createdAt: new Date(),
+        ...input,
+      })),
+    );
   }
 
   async update(familyId: string, id: string, changes: BudgetChanges): Promise<Budget> {
@@ -59,11 +97,13 @@ export class DrizzleBudgetRepository implements BudgetRepository {
     return updated;
   }
 
-  async getStatusForPeriod(familyId: string, publicPeriod: string): Promise<BudgetStatus[]> {
+  async getStatusActiveOn(familyId: string, date: string): Promise<BudgetStatus[]> {
     return this.db
       .select({
         id: budgets.id,
         categoryId: budgets.categoryId,
+        period: budgets.period,
+        periodEnd: budgets.periodEnd,
         amountLimit: budgets.amountLimit,
         spent: sql<number>`COALESCE(SUM(CASE WHEN ${transactions.amount} < 0 THEN -${transactions.amount} ELSE 0 END), 0)`.mapWith(
           Number,
@@ -77,11 +117,11 @@ export class DrizzleBudgetRepository implements BudgetRepository {
           eq(transactions.familyId, budgets.familyId),
           eq(transactions.categoryId, categories.id),
           gte(transactions.occurredAt, budgets.period),
-          lt(transactions.occurredAt, sql`date(${budgets.period}, '+1 month')`),
+          lte(transactions.occurredAt, budgets.periodEnd),
           isNull(transactions.deletedAt),
         ),
       )
-      .where(and(eq(budgets.familyId, familyId), startsInMonth(publicPeriod)))
+      .where(and(eq(budgets.familyId, familyId), activeOn(date)))
       .groupBy(budgets.id);
   }
 }

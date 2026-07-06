@@ -1,4 +1,4 @@
-import { assertValidBudgetCycleStartDay } from "../domain/family";
+import { assertValidBudgetCycleEndDay } from "../domain/family";
 import type { Family } from "../domain/family";
 import type { FamilyChanges, FamilyRepository } from "../domain/family-repository";
 
@@ -15,8 +15,8 @@ export const updateFamilySettings = async (
   { familyRepository }: Dependencies,
   { familyId, changes }: UpdateFamilySettingsInput,
 ): Promise<Family> => {
-  if (changes.budgetCycleStartDay !== undefined) {
-    assertValidBudgetCycleStartDay(changes.budgetCycleStartDay);
+  if (changes.budgetCycleEndDay !== undefined) {
+    assertValidBudgetCycleEndDay(changes.budgetCycleEndDay);
   }
 
   const existing = await familyRepository.findById(familyId);

@@ -7,6 +7,8 @@ import { DrizzleUserRepository } from "../../../../src/modules/users/infrastruct
 import { createDb } from "../../../../src/shared/db";
 import { signAppJwt } from "../../../../src/shared/jwt";
 
+const todayIsoDate = () => new Date().toISOString().slice(0, 10);
+
 const setup = async () => {
   const db = createDb(env.DB);
   const userRepository = new DrizzleUserRepository(db);
@@ -27,7 +29,7 @@ const setup = async () => {
 };
 
 describe("budget routes", () => {
-  it("creates a budget and reads its status back", async () => {
+  it("creates a budget in the current cycle and reads its status back", async () => {
     const app = createApp();
     const { authHeader, categoryId } = await setup();
 
@@ -36,21 +38,22 @@ describe("budget routes", () => {
       {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: authHeader },
-        body: JSON.stringify({ categoryId, period: "2026-07", amountLimit: 200000 }),
+        body: JSON.stringify({ categoryId, amountLimit: 200000 }),
       },
       env,
     );
     expect(createResponse.status).toBe(201);
-    const created = await createResponse.json<{ id: string; period: string }>();
-    expect(created.period).toBe("2026-07-01");
+    const created = await createResponse.json<{ id: string; period: string; periodEnd: string }>();
+    expect(created.period <= todayIsoDate()).toBe(true);
+    expect(created.periodEnd >= todayIsoDate()).toBe(true);
 
     const statusResponse = await app.request(
-      "/api/v1/budgets?period=2026-07",
+      `/api/v1/budgets?date=${todayIsoDate()}`,
       { headers: { Authorization: authHeader } },
       env,
     );
     expect(statusResponse.status).toBe(200);
-    const status = await statusResponse.json<Array<{ id: string; spent: number }>>();
+    const status = await statusResponse.json<Array<{ id: string; spent: number; periodEnd: string }>>();
     expect(status.find((b) => b.id === created.id)?.spent).toBe(0);
 
     const updateResponse = await app.request(
@@ -67,7 +70,7 @@ describe("budget routes", () => {
     expect(updated.amountLimit).toBe(300000);
   });
 
-  it("requires a period query param", async () => {
+  it("requires a date query param", async () => {
     const app = createApp();
     const { authHeader } = await setup();
 
@@ -76,7 +79,7 @@ describe("budget routes", () => {
     expect(response.status).toBe(400);
   });
 
-  it("rejects a duplicate budget for the same category and period", async () => {
+  it("rejects a duplicate budget for the same category in the current cycle", async () => {
     const app = createApp();
     const { authHeader, categoryId } = await setup();
 
@@ -85,7 +88,7 @@ describe("budget routes", () => {
       {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: authHeader },
-        body: JSON.stringify({ categoryId, period: "2026-07", amountLimit: 200000 }),
+        body: JSON.stringify({ categoryId, amountLimit: 200000 }),
       },
       env,
     );
@@ -94,7 +97,7 @@ describe("budget routes", () => {
       {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: authHeader },
-        body: JSON.stringify({ categoryId, period: "2026-07", amountLimit: 100000 }),
+        body: JSON.stringify({ categoryId, amountLimit: 100000 }),
       },
       env,
     );

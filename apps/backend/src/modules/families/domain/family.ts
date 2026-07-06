@@ -1,13 +1,13 @@
 export type Family = {
   id: string;
   name: string;
-  /** Day of the month (1-28) a new budget cycle starts — e.g. payday. */
-  budgetCycleStartDay: number;
+  /** Day of the month (1-31) the budget cycle closes; 29-31 clamp to each month's last day. */
+  budgetCycleEndDay: number;
   createdAt: Date;
 };
 
-export const assertValidBudgetCycleStartDay = (day: number): void => {
-  if (!Number.isInteger(day) || day < 1 || day > 28) {
-    throw new Error("budgetCycleStartDay must be an integer between 1 and 28");
+export const assertValidBudgetCycleEndDay = (day: number): void => {
+  if (!Number.isInteger(day) || day < 1 || day > 31) {
+    throw new Error("budgetCycleEndDay must be an integer between 1 and 31");
   }
 };

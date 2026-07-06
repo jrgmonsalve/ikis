@@ -18,7 +18,7 @@ export const createApp = () => {
     cors({
       origin: (origin, c) => (origin === c.env.ALLOWED_ORIGIN ? origin : undefined),
       allowHeaders: ["Content-Type", "Authorization"],
-      allowMethods: ["GET", "POST", "PATCH", "DELETE"],
+      allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     }),
   );
 

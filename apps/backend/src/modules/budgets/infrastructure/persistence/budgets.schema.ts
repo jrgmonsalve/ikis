@@ -10,6 +10,7 @@ export const budgets = sqliteTable(
       .notNull()
       .references(() => categories.id, { onDelete: "cascade" }),
     period: text("period").notNull(),
+    periodEnd: text("period_end").notNull(),
     amountLimit: integer("amount_limit").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },

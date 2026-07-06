@@ -34,7 +34,7 @@ familyRoutes.patch("/", async (c) => {
     return c.json({ error: "User does not belong to a family yet" }, 400);
   }
 
-  const body = await c.req.json<{ budgetCycleStartDay?: number }>();
+  const body = await c.req.json<{ budgetCycleEndDay?: number }>();
   const familyRepository = new DrizzleFamilyRepository(createDb(c.env.DB));
 
   try {

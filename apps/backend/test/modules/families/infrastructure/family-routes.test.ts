@@ -80,7 +80,7 @@ describe("family routes", () => {
     expect(response.status).toBe(401);
   });
 
-  it("gets and updates the family's budgetCycleStartDay", async () => {
+  it("gets and updates the family's budgetCycleEndDay", async () => {
     const app = createApp();
     const userRepository = new DrizzleUserRepository(createDb(env.DB));
     const user = await userRepository.create({
@@ -101,24 +101,24 @@ describe("family routes", () => {
 
     const getResponse = await app.request("/api/v1/families", { headers: { Authorization: header } }, env);
     expect(getResponse.status).toBe(200);
-    const family = await getResponse.json<{ budgetCycleStartDay: number }>();
-    expect(family.budgetCycleStartDay).toBe(1);
+    const family = await getResponse.json<{ budgetCycleEndDay: number }>();
+    expect(family.budgetCycleEndDay).toBe(31);
 
     const patchResponse = await app.request(
       "/api/v1/families",
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: header },
-        body: JSON.stringify({ budgetCycleStartDay: 27 }),
+        body: JSON.stringify({ budgetCycleEndDay: 27 }),
       },
       env,
     );
     expect(patchResponse.status).toBe(200);
-    const updated = await patchResponse.json<{ budgetCycleStartDay: number }>();
-    expect(updated.budgetCycleStartDay).toBe(27);
+    const updated = await patchResponse.json<{ budgetCycleEndDay: number }>();
+    expect(updated.budgetCycleEndDay).toBe(27);
   });
 
-  it("rejects an out-of-range budgetCycleStartDay", async () => {
+  it("rejects an out-of-range budgetCycleEndDay", async () => {
     const app = createApp();
     const userRepository = new DrizzleUserRepository(createDb(env.DB));
     const user = await userRepository.create({
@@ -142,7 +142,7 @@ describe("family routes", () => {
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: header },
-        body: JSON.stringify({ budgetCycleStartDay: 31 }),
+        body: JSON.stringify({ budgetCycleEndDay: 32 }),
       },
       env,
     );
