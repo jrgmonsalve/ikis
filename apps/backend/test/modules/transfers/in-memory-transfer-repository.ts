@@ -111,7 +111,19 @@ export class InMemoryTransferRepository implements TransferRepository {
     return this.transfers.some(
       (transfer) =>
         transfer.familyId === familyId &&
-        (transfer.fromAccountId === accountId || transfer.toAccountId === accountId),
+        (transfer.fromAccountId === accountId || transfer.toAccountId === accountId) &&
+        transfer.deletedAt === null,
+    );
+  }
+
+  async purgeDeletedForAccount(familyId: string, accountId: string) {
+    this.transfers = this.transfers.filter(
+      (transfer) =>
+        !(
+          transfer.familyId === familyId &&
+          (transfer.fromAccountId === accountId || transfer.toAccountId === accountId) &&
+          transfer.deletedAt !== null
+        ),
     );
   }
 }

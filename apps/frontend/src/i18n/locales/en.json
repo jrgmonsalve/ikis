@@ -22,7 +22,9 @@
     "closesIn_other": "Closes in {{count}} days",
     "budgetThisMonth": "This month's budget",
     "recentTransactions": "Recent transactions",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "capital": "Capital",
+    "budgetVsCapital": "Budget vs capital difference"
   },
   "nav": {
     "home": "Home",

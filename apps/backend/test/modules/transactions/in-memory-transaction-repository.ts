@@ -106,7 +106,15 @@ export class InMemoryTransactionRepository implements TransactionRepository {
 
   async existsForAccount(familyId: string, accountId: string) {
     return this.transactions.some(
-      (transaction) => transaction.familyId === familyId && transaction.accountId === accountId,
+      (transaction) =>
+        transaction.familyId === familyId && transaction.accountId === accountId && transaction.deletedAt === null,
+    );
+  }
+
+  async purgeDeletedForAccount(familyId: string, accountId: string) {
+    this.transactions = this.transactions.filter(
+      (transaction) =>
+        !(transaction.familyId === familyId && transaction.accountId === accountId && transaction.deletedAt !== null),
     );
   }
 }

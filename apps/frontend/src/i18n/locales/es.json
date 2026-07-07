@@ -22,7 +22,9 @@
     "closesIn_other": "Cierra en {{count}} días",
     "budgetThisMonth": "Presupuesto de este mes",
     "recentTransactions": "Transacciones recientes",
-    "viewAll": "Ver todo"
+    "viewAll": "Ver todo",
+    "capital": "Capital",
+    "budgetVsCapital": "Diferencia presupuesto vs capital"
   },
   "nav": {
     "home": "Inicio",

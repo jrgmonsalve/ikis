@@ -1,4 +1,4 @@
-import { and, eq, isNull, or, sql } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, or, sql } from "drizzle-orm";
 import type { Account } from "../../../accounts/domain/account";
 import { accounts } from "../../../accounts/infrastructure/persistence/accounts.schema";
 import type { Db } from "../../../../shared/db";
@@ -162,9 +162,22 @@ export class DrizzleTransferRepository implements TransferRepository {
         and(
           eq(transfers.familyId, familyId),
           or(eq(transfers.fromAccountId, accountId), eq(transfers.toAccountId, accountId)),
+          isNull(transfers.deletedAt),
         ),
       )
       .limit(1);
     return row !== undefined;
+  }
+
+  async purgeDeletedForAccount(familyId: string, accountId: string): Promise<void> {
+    await this.db
+      .delete(transfers)
+      .where(
+        and(
+          eq(transfers.familyId, familyId),
+          or(eq(transfers.fromAccountId, accountId), eq(transfers.toAccountId, accountId)),
+          isNotNull(transfers.deletedAt),
+        ),
+      );
   }
 }

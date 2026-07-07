@@ -29,5 +29,7 @@ export const deleteAccount = async (
     throw new Error("Account has movements; archive it instead");
   }
 
+  await transactionRepository.purgeDeletedForAccount(familyId, id);
+  await transferRepository.purgeDeletedForAccount(familyId, id);
   await accountRepository.delete(familyId, id);
 };

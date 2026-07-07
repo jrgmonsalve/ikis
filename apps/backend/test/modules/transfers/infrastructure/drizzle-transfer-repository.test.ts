@@ -109,6 +109,51 @@ describe("DrizzleTransferRepository", () => {
     expect(await transferRepository.findAllByFamily(familyId)).toHaveLength(0);
   });
 
+  it("existsForAccount ignores soft-deleted transfers", async () => {
+    const { accountRepository, transferRepository, userId } = await setup();
+    const familyId = crypto.randomUUID();
+    const checking = await accountRepository.create({ familyId, name: "Checking", type: "checking" });
+    const savings = await accountRepository.create({ familyId, name: "Savings", type: "savings" });
+    const { transfer } = await transferRepository.create({
+      familyId,
+      fromAccountId: checking.id,
+      toAccountId: savings.id,
+      createdByUserId: userId,
+      amount: 10000,
+      description: null,
+      occurredAt: "2026-07-05",
+    });
+
+    expect(await transferRepository.existsForAccount(familyId, checking.id)).toBe(true);
+    expect(await transferRepository.existsForAccount(familyId, savings.id)).toBe(true);
+
+    await transferRepository.delete(familyId, transfer.id, transfer);
+
+    expect(await transferRepository.existsForAccount(familyId, checking.id)).toBe(false);
+    expect(await transferRepository.existsForAccount(familyId, savings.id)).toBe(false);
+  });
+
+  it("purgeDeletedForAccount removes soft-deleted rows so the account can be hard-deleted", async () => {
+    const { accountRepository, transferRepository, userId } = await setup();
+    const familyId = crypto.randomUUID();
+    const checking = await accountRepository.create({ familyId, name: "Checking", type: "checking" });
+    const savings = await accountRepository.create({ familyId, name: "Savings", type: "savings" });
+    const { transfer } = await transferRepository.create({
+      familyId,
+      fromAccountId: checking.id,
+      toAccountId: savings.id,
+      createdByUserId: userId,
+      amount: 10000,
+      description: null,
+      occurredAt: "2026-07-05",
+    });
+    await transferRepository.delete(familyId, transfer.id, transfer);
+
+    await transferRepository.purgeDeletedForAccount(familyId, checking.id);
+
+    await expect(accountRepository.delete(familyId, checking.id)).resolves.not.toThrow();
+  });
+
   it("isolates transfers between families", async () => {
     const { accountRepository, transferRepository, userId } = await setup();
     const familyId = crypto.randomUUID();

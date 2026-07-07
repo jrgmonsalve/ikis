@@ -44,7 +44,7 @@ describe("deleteAccount", () => {
     );
   });
 
-  it("still rejects when the account's only transaction was soft-deleted", async () => {
+  it("deletes an account whose transactions were all soft-deleted, purging them", async () => {
     const deps = setup();
     const account = await deps.accountRepository.create({ familyId: "family-1", name: "Used", type: "checking" });
     const { transaction } = await createTransaction(deps, {
@@ -58,9 +58,10 @@ describe("deleteAccount", () => {
     });
     await deleteTransaction(deps, { familyId: "family-1", id: transaction.id });
 
-    await expect(deleteAccount(deps, { familyId: "family-1", id: account.id })).rejects.toThrow(
-      "Account has movements; archive it instead",
-    );
+    await deleteAccount(deps, { familyId: "family-1", id: account.id });
+
+    expect(await deps.accountRepository.findById("family-1", account.id)).toBeNull();
+    expect(deps.transactionRepository.transactions).toHaveLength(0);
   });
 
   it("rejects deleting an account involved in a transfer on either side", async () => {

@@ -30,6 +30,6 @@ export interface TransactionRepository {
     changes: TransactionChanges,
   ): Promise<{ transaction: Transaction; accounts: Account[] }>;
   delete(familyId: string, id: string, previous: Transaction): Promise<{ account: Account }>;
-  /** True when any transaction row (even soft-deleted) references the account. */
   existsForAccount(familyId: string, accountId: string): Promise<boolean>;
+  purgeDeletedForAccount(familyId: string, accountId: string): Promise<void>;
 }

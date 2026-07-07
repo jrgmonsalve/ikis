@@ -104,6 +104,47 @@ describe("DrizzleTransactionRepository", () => {
     expect(await transactionRepository.findAllByFamily(familyId)).toHaveLength(0);
   });
 
+  it("existsForAccount ignores soft-deleted transactions", async () => {
+    const { accountRepository, transactionRepository, userId } = await setup();
+    const familyId = crypto.randomUUID();
+    const account = await accountRepository.create({ familyId, name: "Checking", type: "checking" });
+    const { transaction } = await transactionRepository.create({
+      familyId,
+      accountId: account.id,
+      categoryId: null,
+      createdByUserId: userId,
+      amount: -1000,
+      description: null,
+      occurredAt: "2026-07-05",
+    });
+
+    expect(await transactionRepository.existsForAccount(familyId, account.id)).toBe(true);
+
+    await transactionRepository.delete(familyId, transaction.id, transaction);
+
+    expect(await transactionRepository.existsForAccount(familyId, account.id)).toBe(false);
+  });
+
+  it("purgeDeletedForAccount removes soft-deleted rows so the account can be hard-deleted", async () => {
+    const { accountRepository, transactionRepository, userId } = await setup();
+    const familyId = crypto.randomUUID();
+    const account = await accountRepository.create({ familyId, name: "Checking", type: "checking" });
+    const { transaction } = await transactionRepository.create({
+      familyId,
+      accountId: account.id,
+      categoryId: null,
+      createdByUserId: userId,
+      amount: -1000,
+      description: null,
+      occurredAt: "2026-07-05",
+    });
+    await transactionRepository.delete(familyId, transaction.id, transaction);
+
+    await transactionRepository.purgeDeletedForAccount(familyId, account.id);
+
+    await expect(accountRepository.delete(familyId, account.id)).resolves.not.toThrow();
+  });
+
   it("isolates transactions between families", async () => {
     const { accountRepository, transactionRepository, userId } = await setup();
     const familyId = crypto.randomUUID();
