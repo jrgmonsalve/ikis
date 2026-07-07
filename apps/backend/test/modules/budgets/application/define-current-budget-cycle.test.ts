@@ -6,7 +6,7 @@ import { InMemoryBudgetRepository } from "../in-memory-budget-repository";
 const setup = (budgetCycleEndDay = 31) => {
   const budgetRepository = new InMemoryBudgetRepository();
   const familyRepository = new InMemoryFamilyRepository();
-  familyRepository.families.push({ id: "family-1", name: "F1", budgetCycleEndDay, createdAt: new Date() });
+  familyRepository.families.push({ id: "family-1", name: "F1", budgetCycleEndDay, definedCycleStart: null, definedCycleEnd: null, createdAt: new Date() });
   return { budgetRepository, familyRepository };
 };
 
@@ -58,7 +58,7 @@ describe("defineCurrentBudgetCycle", () => {
     expect(next[0]?.periodEnd).toBe("2026-08-28");
   });
 
-  it("only stores the closing day when the family has no budgets yet", async () => {
+  it("persists the defined range on the family even without budgets", async () => {
     const deps = setup();
 
     const cycle = await defineCurrentBudgetCycle(deps, {
@@ -69,8 +69,54 @@ describe("defineCurrentBudgetCycle", () => {
     });
 
     expect(cycle).toEqual({ start: "2026-07-07", end: "2026-07-28" });
-    expect((await deps.familyRepository.findById("family-1"))?.budgetCycleEndDay).toBe(28);
+    const family = await deps.familyRepository.findById("family-1");
+    expect(family?.budgetCycleEndDay).toBe(28);
+    expect(family?.definedCycleStart).toBe("2026-07-07");
+    expect(family?.definedCycleEnd).toBe("2026-07-28");
     expect(deps.budgetRepository.budgets).toHaveLength(0);
+  });
+
+  it("anchors the first budget to the range defined before any budget existed", async () => {
+    const deps = setup();
+    await defineCurrentBudgetCycle(deps, {
+      familyId: "family-1",
+      start: "2026-07-07",
+      end: "2026-07-28",
+      today: "2026-07-07",
+    });
+
+    const { createBudget } = await import("../../../../src/modules/budgets/application/create-budget");
+    const { InMemoryCategoryRepository } = await import("../../categories/in-memory-category-repository");
+    const categoryRepository = new InMemoryCategoryRepository();
+    const category = await categoryRepository.create({ familyId: "family-1", parentId: null, name: "food" });
+
+    const budget = await createBudget(
+      { ...deps, categoryRepository },
+      { familyId: "family-1", categoryId: category.id, amountLimit: 100000, today: "2026-07-10" },
+    );
+
+    expect(budget.period).toBe("2026-07-07");
+    expect(budget.periodEnd).toBe("2026-07-28");
+  });
+
+  it("resolves the current cycle from the defined range when no budgets exist", async () => {
+    const deps = setup();
+    await defineCurrentBudgetCycle(deps, {
+      familyId: "family-1",
+      start: "2026-07-07",
+      end: "2026-07-28",
+      today: "2026-07-07",
+    });
+
+    const { getCurrentCycle } = await import("../../../../src/modules/budgets/application/get-current-cycle");
+    expect(await getCurrentCycle(deps, { familyId: "family-1", today: "2026-07-10" })).toEqual({
+      start: "2026-07-07",
+      end: "2026-07-28",
+    });
+    expect(await getCurrentCycle(deps, { familyId: "family-1", today: "2026-08-05" })).toEqual({
+      start: "2026-07-29",
+      end: "2026-08-28",
+    });
   });
 
   it("never touches already closed cycles", async () => {

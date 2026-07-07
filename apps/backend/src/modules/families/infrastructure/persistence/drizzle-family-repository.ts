@@ -17,6 +17,8 @@ export class DrizzleFamilyRepository implements FamilyRepository {
       id: crypto.randomUUID(),
       createdAt: new Date(),
       budgetCycleEndDay: 31,
+      definedCycleStart: null,
+      definedCycleEnd: null,
       ...input,
     };
 

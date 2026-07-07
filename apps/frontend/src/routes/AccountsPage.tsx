@@ -168,7 +168,9 @@ export function AccountsPage() {
               <Button type="button" variant="outline" onClick={close}>
                 {t("categories.cancel")}
               </Button>
-              <Button type="submit">{t("categories.save")}</Button>
+              <Button type="submit" disabled={createAccount.isPending || updateAccount.isPending}>
+                {t("categories.save")}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

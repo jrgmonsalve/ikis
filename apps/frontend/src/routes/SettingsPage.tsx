@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useBudgetStatus, useDefineBudgetCycle } from "@/features/budgets/hooks";
-import { todayDate } from "@/lib/format";
+import { useCurrentCycle, useDefineBudgetCycle } from "@/features/budgets/hooks";
 
 const LANGUAGES = [
   { code: "es", label: "Español" },
@@ -15,20 +14,18 @@ const LANGUAGES = [
 
 function BudgetCycleSetting() {
   const { t } = useTranslation();
-  const { data: budgets } = useBudgetStatus(todayDate());
+  const { data: currentCycle } = useCurrentCycle();
   const defineCycle = useDefineBudgetCycle();
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const currentCycle = budgets?.[0];
-
   useEffect(() => {
     if (currentCycle) {
-      setStart(currentCycle.period);
-      setEnd(currentCycle.periodEnd);
+      setStart(currentCycle.start);
+      setEnd(currentCycle.end);
     }
-  }, [currentCycle?.period, currentCycle?.periodEnd]);
+  }, [currentCycle?.start, currentCycle?.end]);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();

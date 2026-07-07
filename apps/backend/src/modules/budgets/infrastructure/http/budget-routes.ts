@@ -8,6 +8,7 @@ import type { Bindings } from "../../../../shared/env";
 import { createBudget } from "../../application/create-budget";
 import { defineCurrentBudgetCycle } from "../../application/define-current-budget-cycle";
 import { getBudgetStatus } from "../../application/get-budget-status";
+import { getCurrentCycle } from "../../application/get-current-cycle";
 import { updateBudget } from "../../application/update-budget";
 import { DrizzleBudgetRepository } from "../persistence/drizzle-budget-repository";
 
@@ -62,6 +63,24 @@ budgetRoutes.post("/", async (c) => {
       { familyId, categoryId: body.categoryId, amountLimit: body.amountLimit },
     );
     return c.json(budget, 201);
+  } catch (err) {
+    if (err instanceof Error) {
+      return c.json({ error: err.message }, 400);
+    }
+    throw err;
+  }
+});
+
+budgetRoutes.get("/cycle", async (c) => {
+  const familyId = c.get("familyId") as string;
+
+  const db = createDb(c.env.DB);
+  const budgetRepository = new DrizzleBudgetRepository(db);
+  const familyRepository = new DrizzleFamilyRepository(db);
+
+  try {
+    const cycle = await getCurrentCycle({ budgetRepository, familyRepository }, { familyId });
+    return c.json(cycle);
   } catch (err) {
     if (err instanceof Error) {
       return c.json({ error: err.message }, 400);

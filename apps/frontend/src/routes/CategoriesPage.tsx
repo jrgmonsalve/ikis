@@ -91,7 +91,7 @@ export function CategoriesPage() {
                 >
                   {t("categories.rename")}
                 </Button>
-                <Button variant="destructive" size="sm" onClick={() => handleDelete(category)}>
+                <Button variant="destructive" size="sm" disabled={deleteCategory.isPending} onClick={() => handleDelete(category)}>
                   {t("categories.delete")}
                 </Button>
               </div>
@@ -109,7 +109,7 @@ export function CategoriesPage() {
                       >
                         {t("categories.rename")}
                       </Button>
-                      <Button variant="destructive" size="sm" onClick={() => handleDelete(child)}>
+                      <Button variant="destructive" size="sm" disabled={deleteCategory.isPending} onClick={() => handleDelete(child)}>
                         {t("categories.delete")}
                       </Button>
                     </div>
@@ -140,7 +140,9 @@ export function CategoriesPage() {
               <Button type="button" variant="outline" onClick={closeDialog}>
                 {t("categories.cancel")}
               </Button>
-              <Button type="submit">{t("categories.save")}</Button>
+              <Button type="submit" disabled={createCategory.isPending || renameCategory.isPending}>
+                {t("categories.save")}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

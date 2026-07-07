@@ -6,6 +6,8 @@ export type NewFamily = {
 
 export type FamilyChanges = {
   budgetCycleEndDay?: number;
+  definedCycleStart?: string | null;
+  definedCycleEnd?: string | null;
 };
 
 export interface FamilyRepository {

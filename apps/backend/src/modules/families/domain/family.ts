@@ -3,6 +3,9 @@ export type Family = {
   name: string;
   /** Day of the month (1-31) the budget cycle closes; 29-31 clamp to each month's last day. */
   budgetCycleEndDay: number;
+  /** Range last defined via settings ('YYYY-MM-DD', inclusive); anchors cycles when no budgets exist yet. */
+  definedCycleStart: string | null;
+  definedCycleEnd: string | null;
   createdAt: Date;
 };
 

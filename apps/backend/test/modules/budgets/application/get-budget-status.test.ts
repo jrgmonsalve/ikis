@@ -6,7 +6,7 @@ import { InMemoryBudgetRepository } from "../in-memory-budget-repository";
 const setup = (budgetCycleEndDay = 28) => {
   const budgetRepository = new InMemoryBudgetRepository();
   const familyRepository = new InMemoryFamilyRepository();
-  familyRepository.families.push({ id: "family-1", name: "F1", budgetCycleEndDay, createdAt: new Date() });
+  familyRepository.families.push({ id: "family-1", name: "F1", budgetCycleEndDay, definedCycleStart: null, definedCycleEnd: null, createdAt: new Date() });
   return { budgetRepository, familyRepository };
 };
 

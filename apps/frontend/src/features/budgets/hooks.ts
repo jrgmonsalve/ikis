@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { familyQueryKey } from "@/features/family/hooks";
 import type { CycleRange, NewBudget } from "./api";
-import { createBudget, defineBudgetCycle, getBudgetStatus, updateBudget } from "./api";
+import { createBudget, defineBudgetCycle, getBudgetStatus, getCurrentCycle, updateBudget } from "./api";
 
 export const budgetsQueryKey = ["budgets"] as const;
 
@@ -25,6 +25,13 @@ export function useUpdateBudget() {
   return useMutation({
     mutationFn: ({ id, amountLimit }: { id: string; amountLimit: number }) => updateBudget(id, amountLimit),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: budgetsQueryKey }),
+  });
+}
+
+export function useCurrentCycle() {
+  return useQuery({
+    queryKey: [...budgetsQueryKey, "cycle"],
+    queryFn: getCurrentCycle,
   });
 }
 

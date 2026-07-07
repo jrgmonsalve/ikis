@@ -8,8 +8,8 @@ const setup = (budgetCycleEndDay = 31) => {
   const budgetRepository = new InMemoryBudgetRepository();
   const categoryRepository = new InMemoryCategoryRepository();
   const familyRepository = new InMemoryFamilyRepository();
-  familyRepository.families.push({ id: "family-1", name: "F1", budgetCycleEndDay, createdAt: new Date() });
-  familyRepository.families.push({ id: "family-2", name: "F2", budgetCycleEndDay: 31, createdAt: new Date() });
+  familyRepository.families.push({ id: "family-1", name: "F1", budgetCycleEndDay, definedCycleStart: null, definedCycleEnd: null, createdAt: new Date() });
+  familyRepository.families.push({ id: "family-2", name: "F2", budgetCycleEndDay: 31, definedCycleStart: null, definedCycleEnd: null, createdAt: new Date() });
   return { budgetRepository, categoryRepository, familyRepository };
 };
 

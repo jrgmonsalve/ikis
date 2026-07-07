@@ -9,7 +9,7 @@ const setup = () => {
   const budgetRepository = new InMemoryBudgetRepository();
   const categoryRepository = new InMemoryCategoryRepository();
   const familyRepository = new InMemoryFamilyRepository();
-  familyRepository.families.push({ id: "family-1", name: "F1", budgetCycleEndDay: 31, createdAt: new Date() });
+  familyRepository.families.push({ id: "family-1", name: "F1", budgetCycleEndDay: 31, definedCycleStart: null, definedCycleEnd: null, createdAt: new Date() });
   return { budgetRepository, categoryRepository, familyRepository };
 };
 

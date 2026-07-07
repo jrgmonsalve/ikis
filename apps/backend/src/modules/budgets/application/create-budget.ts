@@ -39,12 +39,7 @@ export const createBudget = async (
     throw new Error("Budgets can only be created for parent categories");
   }
 
-  const { cycle, budgets } = await ensureCurrentCycleBudgets(
-    budgetRepository,
-    input.familyId,
-    family.budgetCycleEndDay,
-    today,
-  );
+  const { cycle, budgets } = await ensureCurrentCycleBudgets(budgetRepository, input.familyId, family, today);
 
   if (budgets.some((budget) => budget.categoryId === input.categoryId)) {
     throw new Error("A budget for this category already exists in the current cycle");

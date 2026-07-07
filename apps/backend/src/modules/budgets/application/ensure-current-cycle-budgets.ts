@@ -1,19 +1,23 @@
+import type { Family } from "../../families/domain/family";
 import { cycleContaining, nextCycleAfter } from "../domain/budget";
 import type { Budget, CycleRange } from "../domain/budget";
 import type { BudgetRepository } from "../domain/budget-repository";
 
 export const todayIsoDate = (): string => new Date().toISOString().slice(0, 10);
 
+type CycleSettings = Pick<Family, "budgetCycleEndDay" | "definedCycleStart" | "definedCycleEnd">;
+
 /**
  * Resolves the cycle that contains `today` and rolls the latest stored budgets
  * forward into it when it has none yet. Stored cycles are never rewritten: a
  * cycle materialized before a settings change keeps its dates, and the new
- * cycleEndDay only shapes cycles created after the last stored one.
+ * cycleEndDay only shapes cycles created after the last stored one. With no
+ * budgets yet, the range defined via settings anchors the chain.
  */
 export const ensureCurrentCycleBudgets = async (
   budgetRepository: BudgetRepository,
   familyId: string,
-  cycleEndDay: number,
+  { budgetCycleEndDay: cycleEndDay, definedCycleStart, definedCycleEnd }: CycleSettings,
   today: string,
 ): Promise<{ cycle: CycleRange; budgets: Budget[] }> => {
   const active = await budgetRepository.findActiveOn(familyId, today);
@@ -25,7 +29,14 @@ export const ensureCurrentCycleBudgets = async (
   const latestCycle = await budgetRepository.findLatestCycle(familyId);
   const [latestHead] = latestCycle;
 
-  let cycle = latestHead ? nextCycleAfter(cycleEndDay, latestHead.periodEnd) : cycleContaining(cycleEndDay, today);
+  let cycle: CycleRange;
+  if (latestHead) {
+    cycle = nextCycleAfter(cycleEndDay, latestHead.periodEnd);
+  } else if (definedCycleStart && definedCycleEnd && today >= definedCycleStart) {
+    cycle = { start: definedCycleStart, end: definedCycleEnd };
+  } else {
+    cycle = cycleContaining(cycleEndDay, today);
+  }
   while (cycle.end < today) {
     cycle = nextCycleAfter(cycleEndDay, cycle.end);
   }

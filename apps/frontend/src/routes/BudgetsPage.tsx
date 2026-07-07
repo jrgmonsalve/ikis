@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useBudgetStatus, useCreateBudget, useUpdateBudget } from "@/features/budgets/hooks";
+import { useBudgetStatus, useCreateBudget, useCurrentCycle, useUpdateBudget } from "@/features/budgets/hooks";
 import { flattenCategories } from "@/features/categories/flatten";
 import { useCategoryTree } from "@/features/categories/hooks";
 import { formatMoney, todayDate } from "@/lib/format";
@@ -17,6 +17,7 @@ type DialogState = { mode: "create" } | { mode: "edit"; id: string; amountLimit:
 export function BudgetsPage() {
   const { t } = useTranslation();
   const { data: status, isLoading } = useBudgetStatus(todayDate());
+  const { data: currentCycle } = useCurrentCycle();
   const { data: categories } = useCategoryTree();
   const createBudget = useCreateBudget();
   const updateBudget = useUpdateBudget();
@@ -67,9 +68,9 @@ export function BudgetsPage() {
       <div className="flex items-center justify-between">
         <div className="flex flex-col">
           <h1 className="font-heading text-2xl font-medium">{t("budgets.title")}</h1>
-          {status?.[0] && (
+          {currentCycle && (
             <p className="text-sm text-muted-foreground">
-              {t("budgets.currentCycle", { start: status[0].period, end: status[0].periodEnd })}
+              {t("budgets.currentCycle", { start: currentCycle.start, end: currentCycle.end })}
             </p>
           )}
         </div>
@@ -137,7 +138,9 @@ export function BudgetsPage() {
               <Button type="button" variant="outline" onClick={close}>
                 {t("categories.cancel")}
               </Button>
-              <Button type="submit">{t("categories.save")}</Button>
+              <Button type="submit" disabled={createBudget.isPending || updateBudget.isPending}>
+                {t("categories.save")}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

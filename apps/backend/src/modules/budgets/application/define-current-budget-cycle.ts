@@ -42,7 +42,11 @@ export const defineCurrentBudgetCycle = async (
     throw new Error("The cycle would overlap an already closed cycle");
   }
 
-  await familyRepository.update(familyId, { budgetCycleEndDay: Number(end.slice(8, 10)) });
+  await familyRepository.update(familyId, {
+    budgetCycleEndDay: Number(end.slice(8, 10)),
+    definedCycleStart: start,
+    definedCycleEnd: end,
+  });
 
   if (activeHead) {
     await budgetRepository.redateCycle(familyId, activeHead.period, { start, end });

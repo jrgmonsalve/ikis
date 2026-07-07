@@ -44,3 +44,7 @@ export type CycleRange = {
 export function defineBudgetCycle(cycle: CycleRange): Promise<CycleRange> {
   return apiFetch<CycleRange>("/budgets/cycle", { method: "PUT", body: cycle });
 }
+
+export function getCurrentCycle(): Promise<CycleRange> {
+  return apiFetch<CycleRange>("/budgets/cycle");
+}

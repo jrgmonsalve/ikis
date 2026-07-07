@@ -13,6 +13,8 @@ export class InMemoryFamilyRepository implements FamilyRepository {
       id: crypto.randomUUID(),
       createdAt: new Date(),
       budgetCycleEndDay: 31,
+      definedCycleStart: null,
+      definedCycleEnd: null,
       ...input,
     };
     this.families.push(family);
@@ -26,6 +28,12 @@ export class InMemoryFamilyRepository implements FamilyRepository {
     }
     if (changes.budgetCycleEndDay !== undefined) {
       family.budgetCycleEndDay = changes.budgetCycleEndDay;
+    }
+    if (changes.definedCycleStart !== undefined) {
+      family.definedCycleStart = changes.definedCycleStart;
+    }
+    if (changes.definedCycleEnd !== undefined) {
+      family.definedCycleEnd = changes.definedCycleEnd;
     }
     return family;
   }
