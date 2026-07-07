@@ -57,7 +57,14 @@
       "credit_card": "Credit card",
       "cash": "Cash",
       "digital_wallet": "Digital wallet"
-    }
+    },
+    "archivedBadge": "Deactivated",
+    "deactivate": "Deactivate",
+    "activate": "Activate",
+    "delete": "Delete",
+    "deleteConfirm": "Sure? Tap again",
+    "deleteHasMovements": "It has movements: it can only be deactivated.",
+    "deleteError": "The account could not be deleted."
   },
   "movements": {
     "title": "Transactions",

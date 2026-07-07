@@ -1,4 +1,4 @@
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, isNull, or, sql } from "drizzle-orm";
 import type { Account } from "../../../accounts/domain/account";
 import { accounts } from "../../../accounts/infrastructure/persistence/accounts.schema";
 import type { Db } from "../../../../shared/db";
@@ -152,5 +152,19 @@ export class DrizzleTransferRepository implements TransferRepository {
     }
 
     return { fromAccount, toAccount };
+  }
+
+  async existsForAccount(familyId: string, accountId: string): Promise<boolean> {
+    const [row] = await this.db
+      .select({ id: transfers.id })
+      .from(transfers)
+      .where(
+        and(
+          eq(transfers.familyId, familyId),
+          or(eq(transfers.fromAccountId, accountId), eq(transfers.toAccountId, accountId)),
+        ),
+      )
+      .limit(1);
+    return row !== undefined;
   }
 }

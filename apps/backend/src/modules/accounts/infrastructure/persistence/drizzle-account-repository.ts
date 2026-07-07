@@ -26,6 +26,7 @@ export class DrizzleAccountRepository implements AccountRepository {
       createdAt: new Date(),
       balance: 0,
       currency: input.currency ?? "COP",
+      archivedAt: null,
       familyId: input.familyId,
       name: input.name,
       type: input.type,
@@ -48,5 +49,9 @@ export class DrizzleAccountRepository implements AccountRepository {
     }
 
     return updated;
+  }
+
+  async delete(familyId: string, id: string): Promise<void> {
+    await this.db.delete(accounts).where(and(eq(accounts.familyId, familyId), eq(accounts.id, id)));
   }
 }

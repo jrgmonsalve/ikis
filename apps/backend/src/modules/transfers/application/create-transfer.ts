@@ -26,5 +26,9 @@ export const createTransfer = async (
     throw new Error("Account not found");
   }
 
+  if (fromAccount.archivedAt !== null || toAccount.archivedAt !== null) {
+    throw new Error("Account is archived");
+  }
+
   return transferRepository.create(input);
 };

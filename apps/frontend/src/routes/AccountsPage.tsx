@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Account, AccountType } from "@/features/accounts/api";
-import { useAccounts, useCreateAccount, useUpdateAccount } from "@/features/accounts/hooks";
+import { useAccounts, useCreateAccount, useDeleteAccount, useUpdateAccount } from "@/features/accounts/hooks";
 import { formatMoney } from "@/lib/format";
 
 const ACCOUNT_TYPES: AccountType[] = ["checking", "savings", "credit_card", "cash", "digital_wallet"];
@@ -19,24 +19,51 @@ export function AccountsPage() {
   const { data: accounts, isLoading } = useAccounts();
   const createAccount = useCreateAccount();
   const updateAccount = useUpdateAccount();
+  const deleteAccount = useDeleteAccount();
   const [dialog, setDialog] = useState<DialogState | null>(null);
   const [name, setName] = useState("");
   const [type, setType] = useState<AccountType | "">("");
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   function openCreate() {
     setDialog({ mode: "create" });
     setName("");
     setType("");
+    setConfirmingDelete(false);
+    setActionError(null);
   }
 
   function openEdit(account: Account) {
     setDialog({ mode: "edit", account });
     setName(account.name);
     setType(account.type);
+    setConfirmingDelete(false);
+    setActionError(null);
   }
 
   function close() {
     setDialog(null);
+  }
+
+  function toggleArchived(account: Account) {
+    updateAccount.mutate({ id: account.id, changes: { archived: account.archivedAt === null } }, { onSuccess: close });
+  }
+
+  function handleDelete(account: Account) {
+    if (!confirmingDelete) {
+      setConfirmingDelete(true);
+      return;
+    }
+    deleteAccount.mutate(account.id, {
+      onSuccess: close,
+      onError: (err) => {
+        setConfirmingDelete(false);
+        setActionError(
+          err instanceof Error && err.message.includes("movements") ? t("accounts.deleteHasMovements") : t("accounts.deleteError"),
+        );
+      },
+    });
   }
 
   function handleSubmit(event: FormEvent) {
@@ -64,9 +91,19 @@ export function AccountsPage() {
 
       <ul className="flex flex-col gap-2">
         {accounts?.map((account) => (
-          <li key={account.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3">
+          <li
+            key={account.id}
+            className={`flex items-center justify-between rounded-xl border border-border bg-card p-3 ${account.archivedAt ? "opacity-60" : ""}`}
+          >
             <div>
-              <p className="font-medium">{account.name}</p>
+              <p className="font-medium">
+                {account.name}
+                {account.archivedAt && (
+                  <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">
+                    {t("accounts.archivedBadge")}
+                  </span>
+                )}
+              </p>
               <p className="text-sm text-muted-foreground">{t(`accounts.types.${account.type}`)}</p>
             </div>
             <div className="flex items-center gap-3">
@@ -106,6 +143,27 @@ export function AccountsPage() {
                 </SelectContent>
               </Select>
             </div>
+            {dialog?.mode === "edit" && (
+              <div className="flex flex-col gap-2 border-t border-border pt-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => toggleArchived(dialog.account)}
+                  disabled={updateAccount.isPending}
+                >
+                  {dialog.account.archivedAt ? t("accounts.activate") : t("accounts.deactivate")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => handleDelete(dialog.account)}
+                  disabled={deleteAccount.isPending}
+                >
+                  {confirmingDelete ? t("accounts.deleteConfirm") : t("accounts.delete")}
+                </Button>
+                {actionError && <p className="text-sm text-destructive">{actionError}</p>}
+              </div>
+            )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={close}>
                 {t("categories.cancel")}

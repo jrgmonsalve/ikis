@@ -103,4 +103,10 @@ export class InMemoryTransactionRepository implements TransactionRepository {
 
     return { account };
   }
+
+  async existsForAccount(familyId: string, accountId: string) {
+    return this.transactions.some(
+      (transaction) => transaction.familyId === familyId && transaction.accountId === accountId,
+    );
+  }
 }

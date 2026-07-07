@@ -7,5 +7,7 @@ export type Account = {
   type: AccountType;
   currency: string;
   balance: number;
+  /** An archived account keeps its history but can't receive new movements. */
+  archivedAt: Date | null;
   createdAt: Date;
 };

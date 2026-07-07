@@ -10,6 +10,7 @@ export type NewAccount = {
 export type AccountChanges = {
   name?: string;
   type?: AccountType;
+  archivedAt?: Date | null;
 };
 
 export interface AccountRepository {
@@ -17,4 +18,5 @@ export interface AccountRepository {
   findAllByFamily(familyId: string): Promise<Account[]>;
   create(account: NewAccount): Promise<Account>;
   update(familyId: string, id: string, changes: AccountChanges): Promise<Account>;
+  delete(familyId: string, id: string): Promise<void>;
 }

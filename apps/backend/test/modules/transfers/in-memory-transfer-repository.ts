@@ -106,4 +106,12 @@ export class InMemoryTransferRepository implements TransferRepository {
 
     return { fromAccount, toAccount };
   }
+
+  async existsForAccount(familyId: string, accountId: string) {
+    return this.transfers.some(
+      (transfer) =>
+        transfer.familyId === familyId &&
+        (transfer.fromAccountId === accountId || transfer.toAccountId === accountId),
+    );
+  }
 }

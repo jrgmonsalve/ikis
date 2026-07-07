@@ -30,4 +30,6 @@ export interface TransferRepository {
     changes: TransferChanges,
   ): Promise<{ transfer: Transfer; accounts: Account[] }>;
   delete(familyId: string, id: string, previous: Transfer): Promise<{ fromAccount: Account; toAccount: Account }>;
+  /** True when any transfer row involves the account on either side. */
+  existsForAccount(familyId: string, accountId: string): Promise<boolean>;
 }

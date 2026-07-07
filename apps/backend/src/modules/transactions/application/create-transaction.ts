@@ -22,6 +22,9 @@ export const createTransaction = async (
   if (!account) {
     throw new Error("Account not found");
   }
+  if (account.archivedAt !== null) {
+    throw new Error("Account is archived");
+  }
 
   if (input.categoryId) {
     const category = await categoryRepository.findById(input.familyId, input.categoryId);

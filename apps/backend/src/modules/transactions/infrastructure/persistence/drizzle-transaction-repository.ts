@@ -134,4 +134,13 @@ export class DrizzleTransactionRepository implements TransactionRepository {
 
     return { account };
   }
+
+  async existsForAccount(familyId: string, accountId: string): Promise<boolean> {
+    const [row] = await this.db
+      .select({ id: transactions.id })
+      .from(transactions)
+      .where(and(eq(transactions.familyId, familyId), eq(transactions.accountId, accountId)))
+      .limit(1);
+    return row !== undefined;
+  }
 }

@@ -5,8 +5,11 @@ import { createDb } from "../../../../shared/db";
 import type { Bindings } from "../../../../shared/env";
 import type { AccountType } from "../../domain/account";
 import { createAccount } from "../../application/create-account";
+import { deleteAccount } from "../../application/delete-account";
 import { listAccounts } from "../../application/list-accounts";
 import { updateAccount } from "../../application/update-account";
+import { DrizzleTransactionRepository } from "../../../transactions/infrastructure/persistence/drizzle-transaction-repository";
+import { DrizzleTransferRepository } from "../../../transfers/infrastructure/persistence/drizzle-transfer-repository";
 import { DrizzleAccountRepository } from "../persistence/drizzle-account-repository";
 
 const ACCOUNT_TYPES = ["checking", "savings", "credit_card", "cash", "digital_wallet"] as const;
@@ -52,11 +55,11 @@ accountRoutes.post("/", async (c) => {
 accountRoutes.patch("/:id", async (c) => {
   const familyId = c.get("familyId") as string;
   const id = c.req.param("id");
-  const body = await c.req.json<{ name?: string; type?: string }>();
+  const body = await c.req.json<{ name?: string; type?: string; archived?: boolean }>();
   if (body.type !== undefined && !isValidAccountType(body.type)) {
     return c.json({ error: `type must be one of ${ACCOUNT_TYPES.join(", ")}` }, 400);
   }
-  if (body.name === undefined && body.type === undefined) {
+  if (body.name === undefined && body.type === undefined && body.archived === undefined) {
     return c.json({ error: "At least one field is required" }, 400);
   }
 
@@ -65,12 +68,43 @@ accountRoutes.patch("/:id", async (c) => {
   try {
     const account = await updateAccount(
       { accountRepository },
-      { familyId, id, changes: { name: body.name, type: body.type } },
+      {
+        familyId,
+        id,
+        changes: {
+          name: body.name,
+          type: body.type,
+          archivedAt: body.archived === undefined ? undefined : body.archived ? new Date() : null,
+        },
+      },
     );
     return c.json(account);
   } catch (err) {
     if (err instanceof Error && err.message === "Account not found") {
       return c.json({ error: err.message }, 404);
+    }
+    throw err;
+  }
+});
+
+accountRoutes.delete("/:id", async (c) => {
+  const familyId = c.get("familyId") as string;
+  const id = c.req.param("id");
+
+  const db = createDb(c.env.DB);
+  const accountRepository = new DrizzleAccountRepository(db);
+  const transactionRepository = new DrizzleTransactionRepository(db);
+  const transferRepository = new DrizzleTransferRepository(db);
+
+  try {
+    await deleteAccount({ accountRepository, transactionRepository, transferRepository }, { familyId, id });
+    return c.body(null, 204);
+  } catch (err) {
+    if (err instanceof Error && err.message === "Account not found") {
+      return c.json({ error: err.message }, 404);
+    }
+    if (err instanceof Error) {
+      return c.json({ error: err.message }, 400);
     }
     throw err;
   }

@@ -18,6 +18,7 @@ export class InMemoryAccountRepository implements AccountRepository {
       createdAt: new Date(),
       balance: 0,
       currency: input.currency ?? "COP",
+      archivedAt: null,
       familyId: input.familyId,
       name: input.name,
       type: input.type,
@@ -37,6 +38,13 @@ export class InMemoryAccountRepository implements AccountRepository {
     if (changes.type !== undefined) {
       account.type = changes.type;
     }
+    if (changes.archivedAt !== undefined) {
+      account.archivedAt = changes.archivedAt;
+    }
     return account;
+  }
+
+  async delete(familyId: string, id: string) {
+    this.accounts = this.accounts.filter((account) => !(account.familyId === familyId && account.id === id));
   }
 }

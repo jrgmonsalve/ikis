@@ -32,6 +32,7 @@ type ExpenseFormValues = z.infer<typeof expenseSchema>;
 function ExpenseForm({ editing, onSuccess }: { editing?: Transaction | null; onSuccess: () => void }) {
   const { t } = useTranslation();
   const { data: accounts } = useAccounts();
+  const activeAccounts = accounts?.filter((account) => account.archivedAt === null);
   const { data: categories } = useCategoryTree();
   const createTransaction = useCreateTransaction();
   const updateTransaction = useUpdateTransaction();
@@ -80,7 +81,7 @@ function ExpenseForm({ editing, onSuccess }: { editing?: Transaction | null; onS
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {accounts?.map((account) => (
+                {activeAccounts?.map((account) => (
                   <SelectItem key={account.id} value={account.id}>
                     {account.name}
                   </SelectItem>
@@ -147,6 +148,7 @@ type IncomeFormValues = z.infer<typeof incomeSchema>;
 function IncomeForm({ editing, onSuccess }: { editing?: Transaction | null; onSuccess: () => void }) {
   const { t } = useTranslation();
   const { data: accounts } = useAccounts();
+  const activeAccounts = accounts?.filter((account) => account.archivedAt === null);
   const createTransaction = useCreateTransaction();
   const updateTransaction = useUpdateTransaction();
 
@@ -192,7 +194,7 @@ function IncomeForm({ editing, onSuccess }: { editing?: Transaction | null; onSu
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {accounts?.map((account) => (
+                {activeAccounts?.map((account) => (
                   <SelectItem key={account.id} value={account.id}>
                     {account.name}
                   </SelectItem>
@@ -242,6 +244,7 @@ type TransferFormValues = z.infer<typeof transferSchema>;
 function TransferForm({ editing, onSuccess }: { editing?: Transfer | null; onSuccess: () => void }) {
   const { t } = useTranslation();
   const { data: accounts } = useAccounts();
+  const activeAccounts = accounts?.filter((account) => account.archivedAt === null);
   const createTransfer = useCreateTransfer();
   const updateTransfer = useUpdateTransfer();
 
@@ -293,7 +296,7 @@ function TransferForm({ editing, onSuccess }: { editing?: Transfer | null; onSuc
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {accounts?.map((account) => (
+                {activeAccounts?.map((account) => (
                   <SelectItem key={account.id} value={account.id}>
                     {account.name}
                   </SelectItem>
@@ -316,7 +319,7 @@ function TransferForm({ editing, onSuccess }: { editing?: Transfer | null; onSuc
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {accounts?.map((account) => (
+                {activeAccounts?.map((account) => (
                   <SelectItem key={account.id} value={account.id}>
                     {account.name}
                   </SelectItem>
