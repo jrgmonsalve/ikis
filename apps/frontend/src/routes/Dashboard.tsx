@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { useAccounts } from "@/features/accounts/hooks";
 import type { CurrentUser } from "@/features/auth/api";
 import { useBudgetStatus, useCurrentCycle } from "@/features/budgets/hooks";
+import { calculateUnassignedFunds } from "@/features/budgets/summary";
 import { flattenCategories } from "@/features/categories/flatten";
 import { useCategoryTree } from "@/features/categories/hooks";
 import { useTransactions } from "@/features/transactions/hooks";
@@ -51,12 +52,11 @@ export function Dashboard() {
   const cycleRange = currentCycle ? cycleRangeFromDates(currentCycle.start, currentCycle.end) : null;
   const daysLeft = cycleRange ? daysUntil(cycleRange.end) : null;
 
-  const totalBudgeted = budgetStatus?.reduce((sum, budget) => sum + budget.amountLimit, 0) ?? 0;
   const assignableFunds =
     accounts
       ?.filter((account) => account.type !== "credit_card" && account.archivedAt === null)
       .reduce((sum, account) => sum + account.balance, 0) ?? 0;
-  const unassigned = assignableFunds - totalBudgeted;
+  const unassigned = calculateUnassignedFunds(assignableFunds, budgetStatus ?? []);
   const showBudgetSummary = accounts !== undefined && budgetStatus !== undefined;
 
   const recentTransactions = [...(transactions ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 3);

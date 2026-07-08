@@ -88,6 +88,17 @@ de que el frontend sufra.
   (calculado en cliente a partir de `family.budgetCycleStartDay` + fecha de hoy — no depende de
   ningún presupuesto en particular), balance total (suma de `GET /api/v1/accounts`) y el rango
   de fechas del ciclo actual (p. ej. "27 jun – 26 jul").
+- **Resumen de presupuesto** (dentro del hero, debajo del rango de fechas; solo se pinta cuando
+  `GET /api/v1/accounts` y `GET /api/v1/budgets` ya resolvieron):
+  - **Capital**: suma de `balance` de las cuentas activas (`archivedAt === null`) que no son
+    `credit_card` — las tarjetas de crédito representan deuda, no fondos propios asignables.
+  - **Diferencia presupuesto vs capital**: `capital − disponible en presupuestos`, donde
+    "disponible en presupuestos" es la suma de `amountLimit − spent` de cada presupuesto del
+    ciclo (no la suma de los `amountLimit` originales). Usar el límite original en vez del
+    disponible cuenta el gasto dos veces, porque el capital ya baja en tiempo real con cada
+    transacción — ver `features/budgets/summary.ts` (`calculateUnassignedFunds`). Este número
+    se mantiene estable mientras el gasto no exceda lo presupuestado, y solo cambia cuando se
+    crea/edita un presupuesto o entra dinero nuevo sin asignar.
 - **Cuentas**: gráfico de torta (`conic-gradient`) con la proporción de cada cuenta sobre el
   total (los saldos negativos no restan área del gráfico, se tratan como 0% para la proporción,
   pero sí se muestran con su signo real en la leyenda) y el total en el centro. Leyenda apilada
