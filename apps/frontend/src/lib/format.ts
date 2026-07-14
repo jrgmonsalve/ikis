@@ -7,7 +7,10 @@ export function formatMoney(amount: number, currency: string): string {
 }
 
 export function todayDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
 }
 
 export function cycleRangeFromDates(start: string, endInclusive: string): { start: Date; end: Date } {

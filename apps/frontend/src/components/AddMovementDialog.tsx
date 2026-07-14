@@ -17,8 +17,7 @@ import type { Transaction } from "@/features/transactions/api";
 import { useCreateTransaction, useUpdateTransaction } from "@/features/transactions/hooks";
 import type { Transfer } from "@/features/transfers/api";
 import { useCreateTransfer, useUpdateTransfer } from "@/features/transfers/hooks";
-
-const today = () => new Date().toISOString().slice(0, 10);
+import { todayDate as today } from "@/lib/format";
 
 const expenseSchema = z.object({
   accountId: z.string().min(1),
