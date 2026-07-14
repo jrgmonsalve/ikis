@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCurrentCycle, useDefineBudgetCycle } from "@/features/budgets/hooks";
+import { isThemePreference, useTheme } from "@/lib/theme";
 
 const LANGUAGES = [
   { code: "es", label: "Español" },
@@ -84,6 +85,27 @@ function LanguageSetting() {
   );
 }
 
+function ThemeSetting() {
+  const { t } = useTranslation();
+  const { preference, setPreference } = useTheme();
+
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <Label htmlFor="theme-preference">{t("settings.theme")}</Label>
+      <Select value={preference} onValueChange={(value) => isThemePreference(value) && setPreference(value)}>
+        <SelectTrigger id="theme-preference" className="w-36">
+          <SelectValue>{(value: string) => t(`settings.themeOptions.${value}`)}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="system">{t("settings.themeOptions.system")}</SelectItem>
+          <SelectItem value="light">{t("settings.themeOptions.light")}</SelectItem>
+          <SelectItem value="dark">{t("settings.themeOptions.dark")}</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 export function SettingsPage() {
   const { t } = useTranslation();
 
@@ -99,6 +121,7 @@ export function SettingsPage() {
       <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t("settings.appSection")}</h2>
         <LanguageSetting />
+        <ThemeSetting />
       </section>
     </div>
   );

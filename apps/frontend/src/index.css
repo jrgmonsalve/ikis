@@ -30,6 +30,8 @@
     --color-gold: var(--gold);
     --color-gold-foreground: var(--gold-foreground);
     --color-gold-soft: var(--gold-soft);
+    --color-success: var(--success);
+    --color-hero-foreground: var(--hero-foreground);
     --color-muted-foreground: var(--muted-foreground);
     --color-muted: var(--muted);
     --color-secondary-foreground: var(--secondary-foreground);
@@ -73,6 +75,9 @@
     --gold: #C99A4F;
     --gold-foreground: #2A1B04;
     --gold-soft: #F3E6CC;
+    --success: #15803D;
+    --hero-foreground: #FFFFFF;
+    --hero-gradient-end: #241F6B;
     --chart-1: #4E48B0;
     --chart-2: #8F8AD6;
     --chart-3: #B9B6E8;
@@ -111,6 +116,9 @@
     --gold: #E0A85E;
     --gold-foreground: #2A1B04;
     --gold-soft: #3A3120;
+    --success: #4ADE80;
+    --hero-foreground: #FFFFFF;
+    --hero-gradient-end: #302B73;
     --chart-1: #8B86D1;
     --chart-2: #6560A0;
     --chart-3: #4A4680;

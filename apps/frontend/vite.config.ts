@@ -14,8 +14,8 @@ export default defineConfig({
         name: "ikis",
         short_name: "ikis",
         description: "Gestión financiera para familias",
-        theme_color: "#ffffff",
-        background_color: "#ffffff",
+        theme_color: "#FBFAF7",
+        background_color: "#FBFAF7",
         display: "standalone",
         icons: [
           { src: "pwa-192x192.png", sizes: "192x192", type: "image/png" },

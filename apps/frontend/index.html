@@ -4,6 +4,22 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#FBFAF7" />
+    <script>
+      (() => {
+        let preference = null;
+        try {
+          preference = localStorage.getItem("ikis.theme");
+        } catch {
+          // Continue with the system preference when storage is unavailable.
+        }
+        const validPreference = ["system", "light", "dark"].includes(preference) ? preference : "system";
+        const isDark = validPreference === "dark" || (validPreference === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", isDark);
+        document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+        document.querySelector('meta[name="theme-color"]').setAttribute("content", isDark ? "#131226" : "#FBFAF7");
+      })();
+    </script>
     <title>Ikis</title>
   </head>
   <body>

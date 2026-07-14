@@ -118,6 +118,12 @@
     "cycleSaved": "Ciclo actualizado.",
     "cycleError": "No se pudo guardar el ciclo.",
     "appSection": "Aplicación",
-    "language": "Idioma"
+    "language": "Idioma",
+    "theme": "Apariencia",
+    "themeOptions": {
+      "system": "Sistema",
+      "light": "Claro",
+      "dark": "Oscuro"
+    }
   }
 }

@@ -51,7 +51,7 @@ function TransactionsList({ onEdit }: { onEdit: (transaction: Transaction) => vo
             </div>
             <div className="flex items-center gap-3">
               <span
-                className={`font-medium tabular-nums ${transaction.amount < 0 ? "text-destructive" : "text-emerald-600"}`}
+                className={`font-medium tabular-nums ${transaction.amount < 0 ? "text-destructive" : "text-success"}`}
               >
                 {formatMoney(transaction.amount, account?.currency ?? "COP")}
               </span>

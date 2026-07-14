@@ -65,11 +65,11 @@ export function Dashboard() {
     <div className="-mx-4 flex flex-col">
       <div
         className="px-4 pt-4 pb-8 text-primary-foreground"
-        style={{ background: "linear-gradient(180deg, var(--primary) 0%, #241F6B 100%)" }}
+        style={{ background: "linear-gradient(180deg, var(--primary) 0%, var(--hero-gradient-end) 100%)" }}
       >
         <div className="mx-auto flex max-w-lg flex-col gap-1">
           <div className="flex items-start justify-between gap-3">
-            <p className="text-sm text-primary-foreground/70">{t("dashboard.greeting", { name: user.name })}</p>
+            <p className="text-sm text-hero-foreground/70">{t("dashboard.greeting", { name: user.name })}</p>
             {daysLeft !== null && (
               <span className="whitespace-nowrap rounded-full bg-gold px-2.5 py-1 text-xs font-semibold text-gold-foreground">
                 {t("dashboard.closesIn", { count: daysLeft })}
@@ -78,10 +78,10 @@ export function Dashboard() {
           </div>
           
           {cycleRange && (
-            <p className="text-xs text-primary-foreground/60">{formatCycleRange(cycleRange.start, cycleRange.end, i18n.language)}</p>
+            <p className="text-xs text-hero-foreground/60">{formatCycleRange(cycleRange.start, cycleRange.end, i18n.language)}</p>
           )}
           {showBudgetSummary && (
-            <div className="mt-3 flex flex-col gap-1 text-base font-bold text-white">
+            <div className="mt-3 flex flex-col gap-1 text-base font-bold text-hero-foreground">
               <div className="flex items-center justify-between gap-3">
                 <span>{t("dashboard.capital")}</span>
                 <span className="tabular-nums">{formatMoney(assignableFunds, "COP")}</span>

@@ -118,6 +118,12 @@
     "cycleSaved": "Cycle updated.",
     "cycleError": "The cycle could not be saved.",
     "appSection": "App",
-    "language": "Language"
+    "language": "Language",
+    "theme": "Appearance",
+    "themeOptions": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    }
   }
 }
