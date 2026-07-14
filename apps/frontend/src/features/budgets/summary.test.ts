@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { BudgetStatus } from "./api";
-import { calculateUnassignedFunds, sumBudgetAvailable } from "./summary";
+import { calculateUnassignedFunds, sortBudgetStatusByExecution, sumBudgetAvailable } from "./summary";
 
 function budget(amountLimit: number, spent: number): BudgetStatus {
   return { id: "b1", categoryId: "c1", period: "2026-07", periodEnd: "2026-07-31", amountLimit, spent };
@@ -13,6 +13,41 @@ describe("sumBudgetAvailable", () => {
 
   it("returns 0 for an empty list", () => {
     expect(sumBudgetAvailable([])).toBe(0);
+  });
+});
+
+describe("sortBudgetStatusByExecution", () => {
+  it("orders budgets by execution from lowest to highest", () => {
+    const budgets = [
+      { ...budget(100, 75), id: "three-quarters" },
+      { ...budget(100, 25), id: "one-quarter" },
+      { ...budget(100, 50), id: "half" },
+    ];
+
+    expect(sortBudgetStatusByExecution(budgets).map((item) => item.id)).toEqual(["one-quarter", "half", "three-quarters"]);
+  });
+
+  it("uses the largest limit first when execution is tied", () => {
+    const budgets = [
+      { ...budget(100, 50), id: "small-limit" },
+      { ...budget(800, 400), id: "large-limit" },
+      { ...budget(400, 200), id: "medium-limit" },
+    ];
+
+    expect(sortBudgetStatusByExecution(budgets).map((item) => item.id)).toEqual([
+      "large-limit",
+      "medium-limit",
+      "small-limit",
+    ]);
+  });
+
+  it("keeps the received order when execution and limit are tied", () => {
+    const budgets = [
+      { ...budget(200, 100), id: "first" },
+      { ...budget(200, 100), id: "second" },
+    ];
+
+    expect(sortBudgetStatusByExecution(budgets).map((item) => item.id)).toEqual(["first", "second"]);
   });
 });
 

@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { useAccounts } from "@/features/accounts/hooks";
 import type { CurrentUser } from "@/features/auth/api";
 import { useBudgetStatus, useCurrentCycle } from "@/features/budgets/hooks";
-import { calculateUnassignedFunds } from "@/features/budgets/summary";
+import { calculateUnassignedFunds, sortBudgetStatusByExecution } from "@/features/budgets/summary";
 import { flattenCategories } from "@/features/categories/flatten";
 import { useCategoryTree } from "@/features/categories/hooks";
 import { useTransactions } from "@/features/transactions/hooks";
@@ -13,15 +13,6 @@ import { cycleRangeFromDates, daysUntil, formatCycleRange, formatMoney, todayDat
 import { cn } from "@/lib/utils";
 
 const CHART_COLORS = ["#e11d48", "#16a34a", "#eab308", "#2563eb", "#f97316", "#0d9488", "#9333ea"];
-const BUDGET_PROGRESS_COLORS = [
-  "[&_[data-slot=progress-indicator]]:bg-red-500",
-  "[&_[data-slot=progress-indicator]]:bg-green-500",
-  "[&_[data-slot=progress-indicator]]:bg-yellow-500",
-  "[&_[data-slot=progress-indicator]]:bg-blue-500",
-  "[&_[data-slot=progress-indicator]]:bg-orange-500",
-  "[&_[data-slot=progress-indicator]]:bg-teal-500",
-  "[&_[data-slot=progress-indicator]]:bg-purple-500",
-];
 
 export function Dashboard() {
   const { t, i18n } = useTranslation();
@@ -58,6 +49,7 @@ export function Dashboard() {
       .reduce((sum, account) => sum + account.balance, 0) ?? 0;
   const unassigned = calculateUnassignedFunds(assignableFunds, budgetStatus ?? []);
   const showBudgetSummary = accounts !== undefined && budgetStatus !== undefined;
+  const orderedBudgetStatus = budgetStatus ? sortBudgetStatusByExecution(budgetStatus) : [];
 
   const recentTransactions = [...(transactions ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 3);
 
@@ -140,10 +132,8 @@ export function Dashboard() {
             {budgetsLoading && <p className="text-sm text-muted-foreground">{t("common.loading")}</p>}
             {!budgetsLoading && budgetStatus?.length === 0 && <p className="text-sm text-muted-foreground">{t("budgets.empty")}</p>}
             <ul className="flex flex-col gap-2">
-              {budgetStatus?.map((budget, index) => {
+              {orderedBudgetStatus.map((budget) => {
                 const percent = Math.min(100, Math.round((budget.spent / budget.amountLimit) * 100));
-                const overBudget = budget.spent > budget.amountLimit;
-                const color = BUDGET_PROGRESS_COLORS[index % BUDGET_PROGRESS_COLORS.length];
                 return (
                   <li key={budget.id} className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3">
                     <div className="flex items-center justify-between">
@@ -152,11 +142,13 @@ export function Dashboard() {
                         {formatMoney(budget.spent, "COP")} / {formatMoney(budget.amountLimit, "COP")}
                       </span>
                     </div>
-                    <Progress
-                      value={percent}
-                      className={overBudget ? "[&_[data-slot=progress-indicator]]:bg-destructive" : color}
-                    >
-                      <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-white mix-blend-difference">
+                    <Progress value={percent} className="[&_[data-slot=progress-track]]:h-5">
+                      <span
+                        className="pointer-events-none absolute inset-0 flex items-center justify-center bg-clip-text text-base leading-none font-bold text-transparent"
+                        style={{
+                          backgroundImage: `linear-gradient(to right, #fff 0%, #fff ${percent}%, var(--foreground) ${percent}%, var(--foreground) 100%)`,
+                        }}
+                      >
                         {percent}%
                       </span>
                     </Progress>
