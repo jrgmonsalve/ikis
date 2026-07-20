@@ -5,7 +5,7 @@ import { useAccounts } from "@/features/accounts/hooks";
 import type { CurrentUser } from "@/features/auth/api";
 import { BudgetStatusList } from "@/features/budgets/components/BudgetStatusList";
 import { useBudgetStatus, useCurrentCycle } from "@/features/budgets/hooks";
-import { calculateUnassignedFunds } from "@/features/budgets/summary";
+import { calculateUnassignedFunds, sumBudgetLimit } from "@/features/budgets/summary";
 import { flattenCategories } from "@/features/categories/flatten";
 import { useCategoryTree } from "@/features/categories/hooks";
 import { RecentTransactionsList } from "@/features/transactions/components/RecentTransactionsList";
@@ -31,6 +31,7 @@ export function Dashboard() {
     accounts
       ?.filter((account) => account.type !== "credit_card" && account.archivedAt === null)
       .reduce((sum, account) => sum + account.balance, 0) ?? 0;
+  const totalBudget = sumBudgetLimit(budgetStatus ?? []);
   const unassigned = calculateUnassignedFunds(assignableFunds, budgetStatus ?? []);
   const showBudgetSummary = accounts !== undefined && budgetStatus !== undefined;
 
@@ -58,6 +59,10 @@ export function Dashboard() {
               <div className="flex items-center justify-between gap-3">
                 <span>{t("dashboard.capital")}</span>
                 <span className="tabular-nums">{formatMoney(assignableFunds, "COP")}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span>{t("dashboard.totalBudget")}</span>
+                <span className="tabular-nums">{formatMoney(totalBudget, "COP")}</span>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <span>{t("dashboard.budgetVsCapital")}</span>

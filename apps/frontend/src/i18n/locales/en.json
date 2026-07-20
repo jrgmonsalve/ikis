@@ -24,6 +24,7 @@
     "recentTransactions": "Recent transactions",
     "viewAll": "View all",
     "capital": "Capital",
+    "totalBudget": "Budget",
     "budgetVsCapital": "Budget vs capital difference"
   },
   "nav": {

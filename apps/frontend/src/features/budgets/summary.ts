@@ -19,6 +19,10 @@ export function sumBudgetAvailable(budgetStatus: BudgetStatus[]): number {
   return budgetStatus.reduce((sum, budget) => sum + (budget.amountLimit - budget.spent), 0);
 }
 
+export function sumBudgetLimit(budgetStatus: BudgetStatus[]): number {
+  return budgetStatus.reduce((sum, budget) => sum + budget.amountLimit, 0);
+}
+
 export function calculateUnassignedFunds(assignableFunds: number, budgetStatus: BudgetStatus[]): number {
   return assignableFunds - sumBudgetAvailable(budgetStatus);
 }
