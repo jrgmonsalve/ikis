@@ -3,6 +3,7 @@ import { MemoryRouter } from "react-router";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import i18n from "@/i18n";
 import type { BudgetStatus } from "@/features/budgets/api";
+import { formatMoney } from "@/lib/format";
 import { BudgetStatusList } from "./BudgetStatusList";
 
 beforeAll(() => i18n.changeLanguage("es"));
@@ -47,5 +48,19 @@ describe("BudgetStatusList", () => {
   it("caps the displayed percentage at 100 when spending exceeds the limit", () => {
     renderList({ budgetStatus: [budget("over", "c1", 100, 250)], isLoading: false, categoryName: (id) => id });
     expect(screen.getByText("100%")).toBeInTheDocument();
+  });
+
+  it("shows the remaining amount available to spend, not the amount already spent", () => {
+    const { container } = renderList({ budgetStatus: [budget("b1", "c1", 1000, 800)], isLoading: false, categoryName: (id) => id });
+    expect(container.querySelector(".font-medium.tabular-nums")?.textContent).toBe(
+      `${formatMoney(200, "COP")} / ${formatMoney(1000, "COP")}`,
+    );
+  });
+
+  it("shows a negative remaining amount once spending exceeds the limit", () => {
+    const { container } = renderList({ budgetStatus: [budget("over", "c1", 100, 250)], isLoading: false, categoryName: (id) => id });
+    expect(container.querySelector(".font-medium.tabular-nums")?.textContent).toBe(
+      `${formatMoney(-150, "COP")} / ${formatMoney(100, "COP")}`,
+    );
   });
 });

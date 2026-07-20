@@ -33,7 +33,7 @@ export function BudgetStatusList({ budgetStatus, isLoading, categoryName }: Budg
               <div className="flex items-center justify-between">
                 <span>{categoryName(budget.categoryId)}</span>
                 <span className="font-medium tabular-nums">
-                  {formatMoney(budget.spent, "COP")} / {formatMoney(budget.amountLimit, "COP")}
+                  {formatMoney(budget.amountLimit - budget.spent, "COP")} / {formatMoney(budget.amountLimit, "COP")}
                 </span>
               </div>
               <Progress value={percent} className="[&_[data-slot=progress-track]]:h-5">
