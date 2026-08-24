@@ -92,6 +92,7 @@
     "description": "Description",
     "save": "Save",
     "sameAccountError": "The destination account must be different from the source",
+    "budgetExceeded": "This expense exceeds the remaining budget for this category. Available: {{remaining}}",
     "deleteConfirm": "Delete this movement?",
     "emptyTransactions": "No transactions yet.",
     "emptyTransfers": "No transfers yet."

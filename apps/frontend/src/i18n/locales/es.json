@@ -92,6 +92,7 @@
     "description": "Descripción",
     "save": "Guardar",
     "sameAccountError": "La cuenta destino debe ser distinta de la de origen",
+    "budgetExceeded": "Este gasto supera el presupuesto restante de la categoría. Disponible: {{remaining}}",
     "deleteConfirm": "¿Borrar este movimiento?",
     "emptyTransactions": "Todavía no hay transacciones.",
     "emptyTransfers": "Todavía no hay transferencias."

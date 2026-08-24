@@ -3,22 +3,26 @@ import { createTransaction } from "../../../../src/modules/transactions/applicat
 import { deleteTransaction } from "../../../../src/modules/transactions/application/delete-transaction";
 import { listTransactions } from "../../../../src/modules/transactions/application/list-transactions";
 import { InMemoryAccountRepository } from "../../accounts/in-memory-account-repository";
+import { InMemoryBudgetRepository } from "../../budgets/in-memory-budget-repository";
 import { InMemoryCategoryRepository } from "../../categories/in-memory-category-repository";
+import { InMemoryFamilyRepository } from "../../families/in-memory-family-repository";
 import { InMemoryTransactionRepository } from "../in-memory-transaction-repository";
 
 const setup = () => {
   const accountRepository = new InMemoryAccountRepository();
   const categoryRepository = new InMemoryCategoryRepository();
   const transactionRepository = new InMemoryTransactionRepository(accountRepository);
-  return { accountRepository, categoryRepository, transactionRepository };
+  const budgetRepository = new InMemoryBudgetRepository();
+  const familyRepository = new InMemoryFamilyRepository();
+  return { accountRepository, categoryRepository, transactionRepository, budgetRepository, familyRepository };
 };
 
 describe("deleteTransaction", () => {
   it("reverts the account balance and removes the transaction from listings", async () => {
-    const { accountRepository, categoryRepository, transactionRepository } = setup();
+    const { accountRepository, categoryRepository, transactionRepository, budgetRepository, familyRepository } = setup();
     const account = await accountRepository.create({ familyId: "family-1", name: "Checking", type: "checking" });
     const { transaction } = await createTransaction(
-      { transactionRepository, accountRepository, categoryRepository },
+      { transactionRepository, accountRepository, categoryRepository, budgetRepository, familyRepository },
       {
         familyId: "family-1",
         accountId: account.id,
@@ -40,10 +44,10 @@ describe("deleteTransaction", () => {
   });
 
   it("rejects deleting a transaction from another family", async () => {
-    const { accountRepository, categoryRepository, transactionRepository } = setup();
+    const { accountRepository, categoryRepository, transactionRepository, budgetRepository, familyRepository } = setup();
     const account = await accountRepository.create({ familyId: "family-1", name: "Checking", type: "checking" });
     const { transaction } = await createTransaction(
-      { transactionRepository, accountRepository, categoryRepository },
+      { transactionRepository, accountRepository, categoryRepository, budgetRepository, familyRepository },
       {
         familyId: "family-1",
         accountId: account.id,

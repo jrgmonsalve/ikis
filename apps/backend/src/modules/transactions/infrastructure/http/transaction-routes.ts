@@ -1,10 +1,13 @@
 import { Hono } from "hono";
 import { DrizzleAccountRepository } from "../../../accounts/infrastructure/persistence/drizzle-account-repository";
+import { DrizzleBudgetRepository } from "../../../budgets/infrastructure/persistence/drizzle-budget-repository";
 import { DrizzleCategoryRepository } from "../../../categories/infrastructure/persistence/drizzle-category-repository";
+import { DrizzleFamilyRepository } from "../../../families/infrastructure/persistence/drizzle-family-repository";
 import type { AuthVariables } from "../../../../shared/auth-middleware";
 import { authMiddleware } from "../../../../shared/auth-middleware";
 import { createDb } from "../../../../shared/db";
 import type { Bindings } from "../../../../shared/env";
+import { BudgetExceededError } from "../../application/assert-within-budget";
 import { createTransaction } from "../../application/create-transaction";
 import { deleteTransaction } from "../../application/delete-transaction";
 import { listTransactions } from "../../application/list-transactions";
@@ -50,10 +53,12 @@ transactionRoutes.post("/", async (c) => {
   const transactionRepository = new DrizzleTransactionRepository(db);
   const accountRepository = new DrizzleAccountRepository(db);
   const categoryRepository = new DrizzleCategoryRepository(db);
+  const budgetRepository = new DrizzleBudgetRepository(db);
+  const familyRepository = new DrizzleFamilyRepository(db);
 
   try {
     const result = await createTransaction(
-      { transactionRepository, accountRepository, categoryRepository },
+      { transactionRepository, accountRepository, categoryRepository, budgetRepository, familyRepository },
       {
         familyId,
         accountId: body.accountId,
@@ -66,6 +71,9 @@ transactionRoutes.post("/", async (c) => {
     );
     return c.json(result, 201);
   } catch (err) {
+    if (err instanceof BudgetExceededError) {
+      return c.json({ error: err.message, remaining: err.remaining, categoryId: err.categoryId }, 400);
+    }
     if (err instanceof Error) {
       return c.json({ error: err.message }, 400);
     }
@@ -85,16 +93,21 @@ transactionRoutes.patch("/:id", async (c) => {
   const transactionRepository = new DrizzleTransactionRepository(db);
   const accountRepository = new DrizzleAccountRepository(db);
   const categoryRepository = new DrizzleCategoryRepository(db);
+  const budgetRepository = new DrizzleBudgetRepository(db);
+  const familyRepository = new DrizzleFamilyRepository(db);
 
   try {
     const result = await updateTransaction(
-      { transactionRepository, accountRepository, categoryRepository },
+      { transactionRepository, accountRepository, categoryRepository, budgetRepository, familyRepository },
       { familyId, id, changes: body },
     );
     return c.json(result);
   } catch (err) {
     if (err instanceof Error && err.message === "Transaction not found") {
       return c.json({ error: err.message }, 404);
+    }
+    if (err instanceof BudgetExceededError) {
+      return c.json({ error: err.message, remaining: err.remaining, categoryId: err.categoryId }, 400);
     }
     if (err instanceof Error) {
       return c.json({ error: err.message }, 400);

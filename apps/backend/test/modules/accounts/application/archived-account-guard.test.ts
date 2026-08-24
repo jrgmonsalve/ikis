@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { updateAccount } from "../../../../src/modules/accounts/application/update-account";
 import { createTransaction } from "../../../../src/modules/transactions/application/create-transaction";
 import { createTransfer } from "../../../../src/modules/transfers/application/create-transfer";
+import { InMemoryBudgetRepository } from "../../budgets/in-memory-budget-repository";
 import { InMemoryCategoryRepository } from "../../categories/in-memory-category-repository";
+import { InMemoryFamilyRepository } from "../../families/in-memory-family-repository";
 import { InMemoryTransactionRepository } from "../../transactions/in-memory-transaction-repository";
 import { InMemoryTransferRepository } from "../../transfers/in-memory-transfer-repository";
 import { InMemoryAccountRepository } from "../in-memory-account-repository";
@@ -12,7 +14,9 @@ const setup = () => {
   const categoryRepository = new InMemoryCategoryRepository();
   const transactionRepository = new InMemoryTransactionRepository(accountRepository);
   const transferRepository = new InMemoryTransferRepository(accountRepository);
-  return { accountRepository, categoryRepository, transactionRepository, transferRepository };
+  const budgetRepository = new InMemoryBudgetRepository();
+  const familyRepository = new InMemoryFamilyRepository();
+  return { accountRepository, categoryRepository, transactionRepository, transferRepository, budgetRepository, familyRepository };
 };
 
 describe("archived account guard", () => {

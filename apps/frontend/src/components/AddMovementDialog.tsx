@@ -17,7 +17,8 @@ import type { Transaction } from "@/features/transactions/api";
 import { useCreateTransaction, useUpdateTransaction } from "@/features/transactions/hooks";
 import type { Transfer } from "@/features/transfers/api";
 import { useCreateTransfer, useUpdateTransfer } from "@/features/transfers/hooks";
-import { todayDate as today } from "@/lib/format";
+import { ApiError } from "@/lib/api-client";
+import { formatMoney, todayDate as today } from "@/lib/format";
 
 const expenseSchema = z.object({
   accountId: z.string().min(1),
@@ -36,6 +37,7 @@ function ExpenseForm({ editing, onSuccess }: { editing?: Transaction | null; onS
   const createTransaction = useCreateTransaction();
   const updateTransaction = useUpdateTransaction();
   const flatCategories = categories ? flattenCategories(categories) : [];
+  const [budgetError, setBudgetError] = useState<number | null>(null);
 
   const { control, register, handleSubmit } = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseSchema),
@@ -51,6 +53,7 @@ function ExpenseForm({ editing, onSuccess }: { editing?: Transaction | null; onS
   });
 
   function onSubmit(values: ExpenseFormValues) {
+    setBudgetError(null);
     const payload = {
       accountId: values.accountId,
       categoryId: values.categoryId,
@@ -58,10 +61,15 @@ function ExpenseForm({ editing, onSuccess }: { editing?: Transaction | null; onS
       description: values.description || null,
       occurredAt: values.occurredAt,
     };
+    function onError(err: unknown) {
+      if (err instanceof ApiError && typeof err.body.remaining === "number") {
+        setBudgetError(err.body.remaining as number);
+      }
+    }
     if (editing) {
-      updateTransaction.mutate({ id: editing.id, changes: payload }, { onSuccess });
+      updateTransaction.mutate({ id: editing.id, changes: payload }, { onSuccess, onError });
     } else {
-      createTransaction.mutate(payload, { onSuccess });
+      createTransaction.mutate(payload, { onSuccess, onError });
     }
   }
 
@@ -129,6 +137,9 @@ function ExpenseForm({ editing, onSuccess }: { editing?: Transaction | null; onS
         <Label>{t("movements.description")}</Label>
         <Input {...register("description")} />
       </div>
+      {budgetError !== null && (
+        <p className="text-sm text-destructive">{t("movements.budgetExceeded", { remaining: formatMoney(budgetError, "COP") })}</p>
+      )}
       <Button type="submit" disabled={createTransaction.isPending || updateTransaction.isPending}>
         {t("movements.save")}
       </Button>

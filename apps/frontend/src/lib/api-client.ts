@@ -5,10 +5,12 @@ const API_PREFIX = "/api/v1";
 
 export class ApiError extends Error {
   status: number;
+  body: Record<string, unknown>;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, body: Record<string, unknown> = {}) {
     super(message);
     this.status = status;
+    this.body = body;
   }
 }
 
@@ -32,7 +34,7 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}) as { error?: string });
-    throw new ApiError(response.status, body.error ?? "Request failed");
+    throw new ApiError(response.status, body.error ?? "Request failed", body);
   }
 
   if (response.status === 204) {
