@@ -106,6 +106,26 @@
     "amountLabel": "Límite",
     "currentCycle": "Ciclo actual: {{start}} – {{end}}"
   },
+  "commitments": {
+    "title": "Compromisos de pago",
+    "add": "Agregar compromiso",
+    "edit": "Editar compromiso",
+    "empty": "Todavía no hay compromisos de pago.",
+    "nameLabel": "Nombre",
+    "amountLabel": "Monto",
+    "dueDayFieldLabel": "Día de vencimiento (1-31)",
+    "dueDayLabel": "Vence el día {{day}}",
+    "archivedBadge": "Desactivado",
+    "deactivate": "Desactivar",
+    "activate": "Activar",
+    "upcomingTitle": "Próximos vencimientos",
+    "markPaid": "Marcar pagado",
+    "dueToday": "Vence hoy",
+    "dueInDays_one": "Vence en {{count}} día",
+    "dueInDays_other": "Vence en {{count}} días",
+    "overdue_one": "Vencido hace {{count}} día",
+    "overdue_other": "Vencido hace {{count}} días"
+  },
   "common": {
     "logout": "Cerrar sesión",
     "loading": "Cargando…"
@@ -119,6 +139,8 @@
     "saveCycle": "Guardar ciclo",
     "cycleSaved": "Ciclo actualizado.",
     "cycleError": "No se pudo guardar el ciclo.",
+    "commitmentsSection": "Compromisos de pago",
+    "manageCommitments": "Gestionar compromisos de pago",
     "appSection": "Aplicación",
     "language": "Idioma",
     "theme": "Apariencia",

@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router";
 import { AccountsPage } from "./AccountsPage";
 import { BudgetsPage } from "./BudgetsPage";
 import { CategoriesPage } from "./CategoriesPage";
+import { CommitmentsPage } from "./CommitmentsPage";
 import { Dashboard } from "./Dashboard";
 import { RequireAuth, RequireFamily, RequireNoFamily } from "./guards";
 import { Login } from "./Login";
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
               { path: "/accounts", element: <AccountsPage /> },
               { path: "/transactions", element: <TransactionsPage /> },
               { path: "/budgets", element: <BudgetsPage /> },
+              { path: "/commitments", element: <CommitmentsPage /> },
               { path: "/settings", element: <SettingsPage /> },
             ],
           },

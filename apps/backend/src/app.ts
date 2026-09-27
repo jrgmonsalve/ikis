@@ -4,6 +4,7 @@ import { accountRoutes } from "./modules/accounts/infrastructure/http/account-ro
 import { authRoutes } from "./modules/auth/infrastructure/http/auth-routes";
 import { budgetRoutes } from "./modules/budgets/infrastructure/http/budget-routes";
 import { categoryRoutes } from "./modules/categories/infrastructure/http/category-routes";
+import { commitmentRoutes } from "./modules/commitments/infrastructure/http/commitment-routes";
 import { familyRoutes } from "./modules/families/infrastructure/http/family-routes";
 import { transactionRoutes } from "./modules/transactions/infrastructure/http/transaction-routes";
 import { transferRoutes } from "./modules/transfers/infrastructure/http/transfer-routes";
@@ -33,6 +34,7 @@ export const createApp = () => {
   v1.route("/transactions", transactionRoutes);
   v1.route("/transfers", transferRoutes);
   v1.route("/budgets", budgetRoutes);
+  v1.route("/commitments", commitmentRoutes);
   app.route("/api/v1", v1);
 
   return app;

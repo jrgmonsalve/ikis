@@ -106,6 +106,26 @@
     "amountLabel": "Limit",
     "currentCycle": "Current cycle: {{start}} – {{end}}"
   },
+  "commitments": {
+    "title": "Payment commitments",
+    "add": "Add commitment",
+    "edit": "Edit commitment",
+    "empty": "No payment commitments yet.",
+    "nameLabel": "Name",
+    "amountLabel": "Amount",
+    "dueDayFieldLabel": "Due day (1-31)",
+    "dueDayLabel": "Due on day {{day}}",
+    "archivedBadge": "Deactivated",
+    "deactivate": "Deactivate",
+    "activate": "Activate",
+    "upcomingTitle": "Upcoming due dates",
+    "markPaid": "Mark paid",
+    "dueToday": "Due today",
+    "dueInDays_one": "Due in {{count}} day",
+    "dueInDays_other": "Due in {{count}} days",
+    "overdue_one": "Overdue by {{count}} day",
+    "overdue_other": "Overdue by {{count}} days"
+  },
   "common": {
     "logout": "Log out",
     "loading": "Loading…"
@@ -119,6 +139,8 @@
     "saveCycle": "Save cycle",
     "cycleSaved": "Cycle updated.",
     "cycleError": "The cycle could not be saved.",
+    "commitmentsSection": "Payment commitments",
+    "manageCommitments": "Manage payment commitments",
     "appSection": "App",
     "language": "Language",
     "theme": "Appearance",

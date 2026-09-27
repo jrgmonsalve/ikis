@@ -8,6 +8,8 @@ import { useBudgetStatus, useCurrentCycle } from "@/features/budgets/hooks";
 import { calculateUnassignedFunds, sumBudgetLimit } from "@/features/budgets/summary";
 import { flattenCategories } from "@/features/categories/flatten";
 import { useCategoryTree } from "@/features/categories/hooks";
+import { UpcomingCommitmentsCard } from "@/features/commitments/components/UpcomingCommitmentsCard";
+import { useUpcomingCommitments } from "@/features/commitments/hooks";
 import { RecentTransactionsList } from "@/features/transactions/components/RecentTransactionsList";
 import { useTransactions } from "@/features/transactions/hooks";
 import { cycleRangeFromDates, daysUntil, formatCycleRange, formatMoney, todayDate } from "@/lib/format";
@@ -20,6 +22,7 @@ export function Dashboard() {
   const { data: currentCycle } = useCurrentCycle();
   const { data: categories } = useCategoryTree();
   const { data: transactions, isLoading: transactionsLoading } = useTransactions();
+  const { data: upcomingCommitments, isLoading: upcomingCommitmentsLoading } = useUpcomingCommitments();
 
   const flatCategories = categories ? flattenCategories(categories) : [];
   const categoryName = (id: string) => flatCategories.find((c) => c.id === id)?.label ?? id;
@@ -76,6 +79,7 @@ export function Dashboard() {
       <div className="-mt-4 rounded-t-3xl bg-background px-4 pt-5">
         <div className="mx-auto flex max-w-lg flex-col gap-6">
           <AccountsSummaryCard accounts={accounts} isLoading={accountsLoading} />
+          <UpcomingCommitmentsCard commitments={upcomingCommitments} isLoading={upcomingCommitmentsLoading} />
           <BudgetStatusList budgetStatus={budgetStatus} isLoading={budgetsLoading} categoryName={categoryName} />
           <RecentTransactionsList transactions={transactions} isLoading={transactionsLoading} categoryName={categoryName} />
         </div>

@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -116,6 +117,15 @@ export function SettingsPage() {
       <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t("settings.budgetSection")}</h2>
         <BudgetCycleSetting />
+      </section>
+
+      <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t("settings.commitmentsSection")}</h2>
+        <Link to="/commitments">
+          <Button type="button" variant="outline" className="w-full">
+            {t("settings.manageCommitments")}
+          </Button>
+        </Link>
       </section>
 
       <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4">
