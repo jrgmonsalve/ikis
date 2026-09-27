@@ -123,6 +123,7 @@
     "activate": "Activar",
     "upcomingTitle": "Próximos vencimientos",
     "markPaid": "Marcar pagado",
+    "undoPaid": "Deshacer pago",
     "dueToday": "Vence hoy",
     "dueInDays_one": "Vence en {{count}} día",
     "dueInDays_other": "Vence en {{count}} días",

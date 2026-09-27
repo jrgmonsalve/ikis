@@ -42,6 +42,7 @@ export function useUpdateCommitment() {
 }
 
 function invalidatePaymentEffects(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: commitmentsQueryKey });
   queryClient.invalidateQueries({ queryKey: upcomingCommitmentsQueryKey });
   queryClient.invalidateQueries({ queryKey: accountsQueryKey });
   queryClient.invalidateQueries({ queryKey: budgetsQueryKey });

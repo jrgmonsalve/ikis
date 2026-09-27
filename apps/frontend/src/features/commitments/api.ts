@@ -11,6 +11,8 @@ export type Commitment = {
   notifyDaysBefore: number;
   archivedAt: string | null;
   createdAt: string;
+  currentPeriod: string;
+  paidThisPeriod: boolean;
 };
 
 export type UpcomingCommitment = {

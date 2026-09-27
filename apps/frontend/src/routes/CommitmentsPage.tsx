@@ -11,7 +11,8 @@ import { useAccounts } from "@/features/accounts/hooks";
 import { flattenCategories } from "@/features/categories/flatten";
 import { useCategoryTree } from "@/features/categories/hooks";
 import type { Commitment } from "@/features/commitments/api";
-import { useCommitments, useCreateCommitment, useUpdateCommitment } from "@/features/commitments/hooks";
+import { useCommitments, useCreateCommitment, useMarkCommitmentPaid, useUnmarkCommitmentPaid, useUpdateCommitment } from "@/features/commitments/hooks";
+import { ApiError } from "@/lib/api-client";
 import { formatMoney } from "@/lib/format";
 
 const NO_CATEGORY = "none";
@@ -25,12 +26,15 @@ export function CommitmentsPage() {
   const { data: categories } = useCategoryTree();
   const createCommitment = useCreateCommitment();
   const updateCommitment = useUpdateCommitment();
+  const markPaid = useMarkCommitmentPaid();
+  const unmarkPaid = useUnmarkCommitmentPaid();
   const [dialog, setDialog] = useState<DialogState | null>(null);
   const [name, setName] = useState("");
   const [amountLimit, setAmountLimit] = useState<number | undefined>(undefined);
   const [dueDay, setDueDay] = useState("");
   const [accountId, setAccountId] = useState("");
   const [categoryId, setCategoryId] = useState(NO_CATEGORY);
+  const [budgetError, setBudgetError] = useState<{ id: string; remaining: number } | null>(null);
 
   const activeAccounts = accounts?.filter((account) => account.archivedAt === null) ?? [];
   const flatCategories = categories ? flattenCategories(categories) : [];
@@ -61,6 +65,24 @@ export function CommitmentsPage() {
 
   function toggleArchived(commitment: Commitment) {
     updateCommitment.mutate({ id: commitment.id, changes: { archived: commitment.archivedAt === null } }, { onSuccess: close });
+  }
+
+  function togglePaid(commitment: Commitment) {
+    setBudgetError(null);
+    if (commitment.paidThisPeriod) {
+      unmarkPaid.mutate({ id: commitment.id, period: commitment.currentPeriod });
+      return;
+    }
+    markPaid.mutate(
+      { id: commitment.id, period: commitment.currentPeriod },
+      {
+        onError: (err) => {
+          if (err instanceof ApiError && typeof err.body.remaining === "number") {
+            setBudgetError({ id: commitment.id, remaining: err.body.remaining as number });
+          }
+        },
+      },
+    );
   }
 
   function handleSubmit(event: FormEvent) {
@@ -99,20 +121,35 @@ export function CommitmentsPage() {
 
       <ul className="flex flex-col gap-2">
         {activeCommitments.map((commitment) => (
-          <li key={commitment.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3">
-            <div>
-              <p className="font-medium">{commitment.name}</p>
-              <p className="text-sm text-muted-foreground">
-                {t("commitments.dueDayLabel", { day: commitment.dueDay })} · {accountName(commitment.accountId)}
-                {commitment.categoryId && ` · ${categoryName(commitment.categoryId)}`}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
+          <li key={commitment.id} className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="font-medium">{commitment.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("commitments.dueDayLabel", { day: commitment.dueDay })} · {accountName(commitment.accountId)}
+                  {commitment.categoryId && ` · ${categoryName(commitment.categoryId)}`}
+                </p>
+              </div>
               <span className="font-medium tabular-nums">{formatMoney(commitment.amountLimit, "COP")}</span>
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <Button
+                variant={commitment.paidThisPeriod ? "outline" : "default"}
+                size="sm"
+                disabled={markPaid.isPending || unmarkPaid.isPending}
+                onClick={() => togglePaid(commitment)}
+              >
+                {commitment.paidThisPeriod ? t("commitments.undoPaid") : t("commitments.markPaid")}
+              </Button>
               <Button variant="ghost" size="sm" onClick={() => openEdit(commitment)}>
                 {t("commitments.edit")}
               </Button>
             </div>
+            {budgetError?.id === commitment.id && (
+              <p className="text-sm text-destructive">
+                {t("movements.budgetExceeded", { remaining: formatMoney(budgetError.remaining, "COP") })}
+              </p>
+            )}
           </li>
         ))}
       </ul>

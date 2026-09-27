@@ -24,6 +24,12 @@ export type UpcomingCommitment = {
   daysUntil: number;
 };
 
+export type CommitmentWithPaymentStatus = Commitment & {
+  /** Calendar month ('YYYY-MM') this status refers to. */
+  currentPeriod: string;
+  paidThisPeriod: boolean;
+};
+
 export const assertValidAmountLimit = (amountLimit: number): void => {
   if (amountLimit <= 0) {
     throw new Error("amountLimit must be greater than zero");

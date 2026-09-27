@@ -123,6 +123,7 @@
     "activate": "Activate",
     "upcomingTitle": "Upcoming due dates",
     "markPaid": "Mark paid",
+    "undoPaid": "Undo payment",
     "dueToday": "Due today",
     "dueInDays_one": "Due in {{count}} day",
     "dueInDays_other": "Due in {{count}} days",
