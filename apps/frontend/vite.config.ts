@@ -1,10 +1,22 @@
+import { execSync } from "node:child_process";
 import path from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 import { VitePWA } from "vite-plugin-pwa";
 
+const commitSha = (() => {
+  try {
+    return execSync("git rev-parse --short HEAD").toString().trim();
+  } catch {
+    return "dev";
+  }
+})();
+
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(commitSha),
+  },
   plugins: [
     react(),
     tailwindcss(),

@@ -70,6 +70,7 @@ export function RootLayout() {
 
       <main className="flex-1 px-4 pb-28">
         <Outlet context={user} />
+        <p className="pt-6 text-center text-[10px] text-muted-foreground/50">v{__APP_VERSION__}</p>
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card">
