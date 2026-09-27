@@ -5,7 +5,7 @@ import { InMemoryCommitmentRepository } from "../in-memory-commitment-repository
 describe("listUpcomingCommitments", () => {
   it("includes a commitment due within the window", async () => {
     const commitmentRepository = new InMemoryCommitmentRepository();
-    await commitmentRepository.create({ familyId: "family-1", name: "Arriendo", amountLimit: 800000, dueDay: 28 });
+    await commitmentRepository.create({ familyId: "family-1", name: "Arriendo", amountLimit: 800000, dueDay: 28, accountId: "acc-1" });
 
     const upcoming = await listUpcomingCommitments(
       { commitmentRepository },
@@ -19,7 +19,7 @@ describe("listUpcomingCommitments", () => {
 
   it("excludes a commitment due far outside the window", async () => {
     const commitmentRepository = new InMemoryCommitmentRepository();
-    await commitmentRepository.create({ familyId: "family-1", name: "Arriendo", amountLimit: 800000, dueDay: 28 });
+    await commitmentRepository.create({ familyId: "family-1", name: "Arriendo", amountLimit: 800000, dueDay: 28, accountId: "acc-1" });
 
     const upcoming = await listUpcomingCommitments(
       { commitmentRepository },
@@ -31,7 +31,7 @@ describe("listUpcomingCommitments", () => {
 
   it("keeps showing an unpaid commitment as overdue past its due date", async () => {
     const commitmentRepository = new InMemoryCommitmentRepository();
-    await commitmentRepository.create({ familyId: "family-1", name: "Arriendo", amountLimit: 800000, dueDay: 5 });
+    await commitmentRepository.create({ familyId: "family-1", name: "Arriendo", amountLimit: 800000, dueDay: 5, accountId: "acc-1" });
 
     const upcoming = await listUpcomingCommitments(
       { commitmentRepository },
@@ -44,8 +44,8 @@ describe("listUpcomingCommitments", () => {
 
   it("rolls forward to next month once the current period is marked paid", async () => {
     const commitmentRepository = new InMemoryCommitmentRepository();
-    const commitment = await commitmentRepository.create({ familyId: "family-1", name: "Arriendo", amountLimit: 800000, dueDay: 28 });
-    await commitmentRepository.markPaid("family-1", commitment.id, "2026-09");
+    const commitment = await commitmentRepository.create({ familyId: "family-1", name: "Arriendo", amountLimit: 800000, dueDay: 28, accountId: "acc-1" });
+    await commitmentRepository.markPaid("family-1", commitment.id, "2026-09", "tx-1");
 
     const upcoming = await listUpcomingCommitments(
       { commitmentRepository },
@@ -65,7 +65,7 @@ describe("listUpcomingCommitments", () => {
 
   it("excludes archived commitments", async () => {
     const commitmentRepository = new InMemoryCommitmentRepository();
-    const commitment = await commitmentRepository.create({ familyId: "family-1", name: "Gimnasio", amountLimit: 60000, dueDay: 28 });
+    const commitment = await commitmentRepository.create({ familyId: "family-1", name: "Gimnasio", amountLimit: 60000, dueDay: 28, accountId: "acc-1" });
     await commitmentRepository.update("family-1", commitment.id, { archivedAt: new Date() });
 
     const upcoming = await listUpcomingCommitments(
@@ -78,8 +78,8 @@ describe("listUpcomingCommitments", () => {
 
   it("sorts by proximity, most urgent first", async () => {
     const commitmentRepository = new InMemoryCommitmentRepository();
-    await commitmentRepository.create({ familyId: "family-1", name: "Luz", amountLimit: 100000, dueDay: 30 });
-    await commitmentRepository.create({ familyId: "family-1", name: "Agua", amountLimit: 50000, dueDay: 27 });
+    await commitmentRepository.create({ familyId: "family-1", name: "Luz", amountLimit: 100000, dueDay: 30, accountId: "acc-1" });
+    await commitmentRepository.create({ familyId: "family-1", name: "Agua", amountLimit: 50000, dueDay: 27, accountId: "acc-1" });
 
     const upcoming = await listUpcomingCommitments(
       { commitmentRepository },

@@ -5,6 +5,8 @@ export type NewCommitment = {
   name: string;
   amountLimit: number;
   dueDay: number;
+  accountId: string;
+  categoryId?: string | null;
   notifyDaysBefore?: number;
 };
 
@@ -12,6 +14,8 @@ export type CommitmentChanges = {
   name?: string;
   amountLimit?: number;
   dueDay?: number;
+  accountId?: string;
+  categoryId?: string | null;
   notifyDaysBefore?: number;
   archivedAt?: Date | null;
 };
@@ -21,6 +25,7 @@ export type CommitmentPayment = {
   familyId: string;
   commitmentId: string;
   period: string;
+  transactionId: string;
   paidAt: Date;
 };
 
@@ -30,6 +35,6 @@ export interface CommitmentRepository {
   create(input: NewCommitment): Promise<Commitment>;
   update(familyId: string, id: string, changes: CommitmentChanges): Promise<Commitment>;
   findPayment(familyId: string, commitmentId: string, period: string): Promise<CommitmentPayment | null>;
-  markPaid(familyId: string, commitmentId: string, period: string): Promise<CommitmentPayment>;
+  markPaid(familyId: string, commitmentId: string, period: string, transactionId: string): Promise<CommitmentPayment>;
   unmarkPaid(familyId: string, commitmentId: string, period: string): Promise<void>;
 }

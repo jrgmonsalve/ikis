@@ -6,6 +6,8 @@ export type Commitment = {
   name: string;
   amountLimit: number;
   dueDay: number;
+  accountId: string;
+  categoryId: string | null;
   notifyDaysBefore: number;
   archivedAt: string | null;
   createdAt: string;
@@ -24,6 +26,8 @@ export type NewCommitment = {
   name: string;
   amountLimit: number;
   dueDay: number;
+  accountId: string;
+  categoryId?: string | null;
   notifyDaysBefore?: number;
 };
 
@@ -31,6 +35,8 @@ export type CommitmentChanges = Partial<{
   name: string;
   amountLimit: number;
   dueDay: number;
+  accountId: string;
+  categoryId: string | null;
   notifyDaysBefore: number;
   archived: boolean;
 }>;

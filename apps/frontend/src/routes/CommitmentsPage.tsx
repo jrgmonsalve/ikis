@@ -6,27 +6,44 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAccounts } from "@/features/accounts/hooks";
+import { flattenCategories } from "@/features/categories/flatten";
+import { useCategoryTree } from "@/features/categories/hooks";
 import type { Commitment } from "@/features/commitments/api";
 import { useCommitments, useCreateCommitment, useUpdateCommitment } from "@/features/commitments/hooks";
 import { formatMoney } from "@/lib/format";
+
+const NO_CATEGORY = "none";
 
 type DialogState = { mode: "create" } | { mode: "edit"; commitment: Commitment };
 
 export function CommitmentsPage() {
   const { t } = useTranslation();
   const { data: commitments, isLoading } = useCommitments();
+  const { data: accounts } = useAccounts();
+  const { data: categories } = useCategoryTree();
   const createCommitment = useCreateCommitment();
   const updateCommitment = useUpdateCommitment();
   const [dialog, setDialog] = useState<DialogState | null>(null);
   const [name, setName] = useState("");
   const [amountLimit, setAmountLimit] = useState<number | undefined>(undefined);
   const [dueDay, setDueDay] = useState("");
+  const [accountId, setAccountId] = useState("");
+  const [categoryId, setCategoryId] = useState(NO_CATEGORY);
+
+  const activeAccounts = accounts?.filter((account) => account.archivedAt === null) ?? [];
+  const flatCategories = categories ? flattenCategories(categories) : [];
+  const accountName = (id: string) => accounts?.find((account) => account.id === id)?.name ?? id;
+  const categoryName = (id: string) => flatCategories.find((category) => category.id === id)?.label ?? id;
 
   function openCreate() {
     setDialog({ mode: "create" });
     setName("");
     setAmountLimit(undefined);
     setDueDay("");
+    setAccountId("");
+    setCategoryId(NO_CATEGORY);
   }
 
   function openEdit(commitment: Commitment) {
@@ -34,6 +51,8 @@ export function CommitmentsPage() {
     setName(commitment.name);
     setAmountLimit(commitment.amountLimit);
     setDueDay(String(commitment.dueDay));
+    setAccountId(commitment.accountId);
+    setCategoryId(commitment.categoryId ?? NO_CATEGORY);
   }
 
   function close() {
@@ -47,14 +66,21 @@ export function CommitmentsPage() {
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const day = Number(dueDay);
-    if (!name.trim() || !amountLimit || amountLimit <= 0 || !dueDay || day < 1 || day > 31) {
+    if (!name.trim() || !amountLimit || amountLimit <= 0 || !dueDay || day < 1 || day > 31 || !accountId) {
       return;
     }
+    const resolvedCategoryId = categoryId === NO_CATEGORY ? null : categoryId;
 
     if (dialog?.mode === "create") {
-      createCommitment.mutate({ name: name.trim(), amountLimit, dueDay: day }, { onSuccess: close });
+      createCommitment.mutate(
+        { name: name.trim(), amountLimit, dueDay: day, accountId, categoryId: resolvedCategoryId },
+        { onSuccess: close },
+      );
     } else if (dialog?.mode === "edit") {
-      updateCommitment.mutate({ id: dialog.commitment.id, changes: { name: name.trim(), amountLimit, dueDay: day } }, { onSuccess: close });
+      updateCommitment.mutate(
+        { id: dialog.commitment.id, changes: { name: name.trim(), amountLimit, dueDay: day, accountId, categoryId: resolvedCategoryId } },
+        { onSuccess: close },
+      );
     }
   }
 
@@ -76,7 +102,10 @@ export function CommitmentsPage() {
           <li key={commitment.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3">
             <div>
               <p className="font-medium">{commitment.name}</p>
-              <p className="text-sm text-muted-foreground">{t("commitments.dueDayLabel", { day: commitment.dueDay })}</p>
+              <p className="text-sm text-muted-foreground">
+                {t("commitments.dueDayLabel", { day: commitment.dueDay })} · {accountName(commitment.accountId)}
+                {commitment.categoryId && ` · ${categoryName(commitment.categoryId)}`}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <span className="font-medium tabular-nums">{formatMoney(commitment.amountLimit, "COP")}</span>
@@ -133,6 +162,41 @@ export function CommitmentsPage() {
                 value={dueDay}
                 onChange={(event) => setDueDay(event.target.value)}
               />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>{t("commitments.accountLabel")}</Label>
+              <Select value={accountId} onValueChange={(value) => setAccountId(value ?? "")}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={t("movements.selectAccount")}>
+                    {(value: string) => activeAccounts.find((account) => account.id === value)?.name}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {activeAccounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      {account.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>{t("commitments.categoryLabel")}</Label>
+              <Select value={categoryId} onValueChange={(value) => setCategoryId(value ?? NO_CATEGORY)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue>
+                    {(value: string) => (value === NO_CATEGORY ? t("commitments.noCategory") : categoryName(value))}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_CATEGORY}>{t("commitments.noCategory")}</SelectItem>
+                  {flatCategories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             {dialog?.mode === "edit" && (
               <div className="flex flex-col gap-2 border-t border-border pt-3">

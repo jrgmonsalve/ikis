@@ -28,6 +28,8 @@ export class InMemoryCommitmentRepository implements CommitmentRepository {
       name: input.name,
       amountLimit: input.amountLimit,
       dueDay: input.dueDay,
+      accountId: input.accountId,
+      categoryId: input.categoryId ?? null,
     };
     this.commitments.push(commitment);
     return commitment;
@@ -50,8 +52,8 @@ export class InMemoryCommitmentRepository implements CommitmentRepository {
     );
   }
 
-  async markPaid(familyId: string, commitmentId: string, period: string) {
-    const payment: CommitmentPayment = { id: crypto.randomUUID(), familyId, commitmentId, period, paidAt: new Date() };
+  async markPaid(familyId: string, commitmentId: string, period: string, transactionId: string) {
+    const payment: CommitmentPayment = { id: crypto.randomUUID(), familyId, commitmentId, period, transactionId, paidAt: new Date() };
     this.payments.push(payment);
     return payment;
   }

@@ -1,14 +1,16 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { createApp } from "../../../../src/app";
+import { DrizzleAccountRepository } from "../../../../src/modules/accounts/infrastructure/persistence/drizzle-account-repository";
 import { DrizzleFamilyRepository } from "../../../../src/modules/families/infrastructure/persistence/drizzle-family-repository";
 import { DrizzleUserRepository } from "../../../../src/modules/users/infrastructure/persistence/drizzle-user-repository";
 import { createDb } from "../../../../src/shared/db";
 import { signAppJwt } from "../../../../src/shared/jwt";
 
-const createAuthenticatedUserWithFamily = async () => {
+const createAuthenticatedUserWithFamilyAndAccount = async () => {
   const userRepository = new DrizzleUserRepository(createDb(env.DB));
   const familyRepository = new DrizzleFamilyRepository(createDb(env.DB));
+  const accountRepository = new DrizzleAccountRepository(createDb(env.DB));
   const user = await userRepository.create({
     googleId: crypto.randomUUID(),
     email: `${crypto.randomUUID()}@example.com`,
@@ -16,9 +18,10 @@ const createAuthenticatedUserWithFamily = async () => {
   });
   const family = await familyRepository.create({ name: "Test Family" });
   await userRepository.assignFamily(user.id, family.id);
+  const account = await accountRepository.create({ familyId: family.id, name: "Checking", type: "checking" });
   const token = await signAppJwt(env.JWT_SECRET, { sub: user.id });
 
-  return { authHeader: `Bearer ${token}` };
+  return { authHeader: `Bearer ${token}`, accountId: account.id };
 };
 
 describe("commitment routes", () => {
@@ -35,20 +38,21 @@ describe("commitment routes", () => {
 
   it("creates, lists, updates and archives a commitment end to end", async () => {
     const app = createApp();
-    const { authHeader } = await createAuthenticatedUserWithFamily();
+    const { authHeader, accountId } = await createAuthenticatedUserWithFamilyAndAccount();
 
     const createResponse = await app.request(
       "/api/v1/commitments",
       {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: authHeader },
-        body: JSON.stringify({ name: "Arriendo", amountLimit: 800000, dueDay: 5 }),
+        body: JSON.stringify({ name: "Arriendo", amountLimit: 800000, dueDay: 5, accountId }),
       },
       env,
     );
     expect(createResponse.status).toBe(201);
-    const created = await createResponse.json<{ id: string; notifyDaysBefore: number }>();
+    const created = await createResponse.json<{ id: string; notifyDaysBefore: number; accountId: string }>();
     expect(created.notifyDaysBefore).toBe(3);
+    expect(created.accountId).toBe(accountId);
 
     const listResponse = await app.request("/api/v1/commitments", { headers: { Authorization: authHeader } }, env);
     expect(listResponse.status).toBe(200);
@@ -80,16 +84,33 @@ describe("commitment routes", () => {
     expect((await archiveResponse.json<{ archivedAt: string | null }>()).archivedAt).not.toBeNull();
   });
 
-  it("rejects creating a commitment with an invalid dueDay", async () => {
+  it("rejects creating a commitment without an accountId", async () => {
     const app = createApp();
-    const { authHeader } = await createAuthenticatedUserWithFamily();
+    const { authHeader } = await createAuthenticatedUserWithFamilyAndAccount();
 
     const response = await app.request(
       "/api/v1/commitments",
       {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: authHeader },
-        body: JSON.stringify({ name: "Arriendo", amountLimit: 800000, dueDay: 40 }),
+        body: JSON.stringify({ name: "Arriendo", amountLimit: 800000, dueDay: 5 }),
+      },
+      env,
+    );
+
+    expect(response.status).toBe(400);
+  });
+
+  it("rejects creating a commitment with an invalid dueDay", async () => {
+    const app = createApp();
+    const { authHeader, accountId } = await createAuthenticatedUserWithFamilyAndAccount();
+
+    const response = await app.request(
+      "/api/v1/commitments",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: authHeader },
+        body: JSON.stringify({ name: "Arriendo", amountLimit: 800000, dueDay: 40, accountId }),
       },
       env,
     );
@@ -99,7 +120,7 @@ describe("commitment routes", () => {
 
   it("returns 404 when updating a commitment that doesn't exist", async () => {
     const app = createApp();
-    const { authHeader } = await createAuthenticatedUserWithFamily();
+    const { authHeader } = await createAuthenticatedUserWithFamilyAndAccount();
 
     const response = await app.request(
       `/api/v1/commitments/${crypto.randomUUID()}`,
@@ -116,14 +137,14 @@ describe("commitment routes", () => {
 
   it("returns the upcoming commitments within the window", async () => {
     const app = createApp();
-    const { authHeader } = await createAuthenticatedUserWithFamily();
+    const { authHeader, accountId } = await createAuthenticatedUserWithFamilyAndAccount();
 
     await app.request(
       "/api/v1/commitments",
       {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: authHeader },
-        body: JSON.stringify({ name: "Arriendo", amountLimit: 800000, dueDay: 28 }),
+        body: JSON.stringify({ name: "Arriendo", amountLimit: 800000, dueDay: 28, accountId }),
       },
       env,
     );
@@ -135,16 +156,16 @@ describe("commitment routes", () => {
     expect(upcoming.some((c) => c.name === "Arriendo")).toBe(true);
   });
 
-  it("marks a commitment as paid and then unmarks it", async () => {
+  it("marks a commitment as paid, creating a transaction and debiting the account, then unmarks it", async () => {
     const app = createApp();
-    const { authHeader } = await createAuthenticatedUserWithFamily();
+    const { authHeader, accountId } = await createAuthenticatedUserWithFamilyAndAccount();
 
     const createResponse = await app.request(
       "/api/v1/commitments",
       {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: authHeader },
-        body: JSON.stringify({ name: "Arriendo", amountLimit: 800000, dueDay: 5 }),
+        body: JSON.stringify({ name: "Arriendo", amountLimit: 800000, dueDay: 5, accountId }),
       },
       env,
     );
@@ -160,6 +181,12 @@ describe("commitment routes", () => {
       env,
     );
     expect(payResponse.status).toBe(201);
+    const payment = await payResponse.json<{ transactionId: string }>();
+    expect(payment.transactionId).toBeTruthy();
+
+    const accountsResponse = await app.request("/api/v1/accounts", { headers: { Authorization: authHeader } }, env);
+    const accounts = await accountsResponse.json<Array<{ id: string; balance: number }>>();
+    expect(accounts.find((a) => a.id === accountId)?.balance).toBe(-800000);
 
     const unpayResponse = await app.request(
       `/api/v1/commitments/${id}/payments/2026-09`,
@@ -167,11 +194,15 @@ describe("commitment routes", () => {
       env,
     );
     expect(unpayResponse.status).toBe(204);
+
+    const accountsAfterResponse = await app.request("/api/v1/accounts", { headers: { Authorization: authHeader } }, env);
+    const accountsAfter = await accountsAfterResponse.json<Array<{ id: string; balance: number }>>();
+    expect(accountsAfter.find((a) => a.id === accountId)?.balance).toBe(0);
   });
 
   it("returns 404 when marking a nonexistent commitment as paid", async () => {
     const app = createApp();
-    const { authHeader } = await createAuthenticatedUserWithFamily();
+    const { authHeader } = await createAuthenticatedUserWithFamilyAndAccount();
 
     const response = await app.request(
       `/api/v1/commitments/${crypto.randomUUID()}/payments`,

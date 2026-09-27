@@ -1,4 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { accountsQueryKey } from "@/features/accounts/hooks";
+import { budgetsQueryKey } from "@/features/budgets/hooks";
+import { transactionsQueryKey } from "@/features/transactions/hooks";
 import type { CommitmentChanges, NewCommitment } from "./api";
 import { createCommitment, getCommitments, getUpcomingCommitments, markCommitmentPaid, unmarkCommitmentPaid, updateCommitment } from "./api";
 
@@ -38,11 +41,18 @@ export function useUpdateCommitment() {
   });
 }
 
+function invalidatePaymentEffects(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: upcomingCommitmentsQueryKey });
+  queryClient.invalidateQueries({ queryKey: accountsQueryKey });
+  queryClient.invalidateQueries({ queryKey: budgetsQueryKey });
+  queryClient.invalidateQueries({ queryKey: transactionsQueryKey });
+}
+
 export function useMarkCommitmentPaid() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, period }: { id: string; period: string }) => markCommitmentPaid(id, period),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: upcomingCommitmentsQueryKey }),
+    onSuccess: () => invalidatePaymentEffects(queryClient),
   });
 }
 
@@ -50,6 +60,6 @@ export function useUnmarkCommitmentPaid() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, period }: { id: string; period: string }) => unmarkCommitmentPaid(id, period),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: upcomingCommitmentsQueryKey }),
+    onSuccess: () => invalidatePaymentEffects(queryClient),
   });
 }

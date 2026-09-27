@@ -27,10 +27,13 @@ export class DrizzleCommitmentRepository implements CommitmentRepository {
       createdAt: new Date(),
       archivedAt: null,
       notifyDaysBefore: 3,
+      categoryId: null,
       familyId: input.familyId,
       name: input.name,
       amountLimit: input.amountLimit,
       dueDay: input.dueDay,
+      accountId: input.accountId,
+      ...(input.categoryId !== undefined ? { categoryId: input.categoryId } : {}),
       ...(input.notifyDaysBefore !== undefined ? { notifyDaysBefore: input.notifyDaysBefore } : {}),
     };
 
@@ -68,12 +71,13 @@ export class DrizzleCommitmentRepository implements CommitmentRepository {
     return row ?? null;
   }
 
-  async markPaid(familyId: string, commitmentId: string, period: string): Promise<CommitmentPayment> {
+  async markPaid(familyId: string, commitmentId: string, period: string, transactionId: string): Promise<CommitmentPayment> {
     const row: CommitmentPayment = {
       id: crypto.randomUUID(),
       familyId,
       commitmentId,
       period,
+      transactionId,
       paidAt: new Date(),
     };
 

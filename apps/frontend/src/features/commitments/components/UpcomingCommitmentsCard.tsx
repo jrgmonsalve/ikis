@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import type { UpcomingCommitment } from "@/features/commitments/api";
 import { useMarkCommitmentPaid } from "@/features/commitments/hooks";
+import { ApiError } from "@/lib/api-client";
 import { formatMoney } from "@/lib/format";
 
 type UpcomingCommitmentsCardProps = {
@@ -23,9 +25,24 @@ function dueLabel(daysUntil: number, t: (key: string, options?: Record<string, u
 export function UpcomingCommitmentsCard({ commitments, isLoading }: UpcomingCommitmentsCardProps) {
   const { t } = useTranslation();
   const markPaid = useMarkCommitmentPaid();
+  const [budgetError, setBudgetError] = useState<{ id: string; remaining: number } | null>(null);
 
   if (!isLoading && commitments?.length === 0) {
     return null;
+  }
+
+  function handleMarkPaid(commitment: UpcomingCommitment) {
+    setBudgetError(null);
+    markPaid.mutate(
+      { id: commitment.id, period: commitment.period },
+      {
+        onError: (err) => {
+          if (err instanceof ApiError && typeof err.body.remaining === "number") {
+            setBudgetError({ id: commitment.id, remaining: err.body.remaining as number });
+          }
+        },
+      },
+    );
   }
 
   return (
@@ -41,27 +58,29 @@ export function UpcomingCommitmentsCard({ commitments, isLoading }: UpcomingComm
         {commitments?.map((commitment) => (
           <li
             key={commitment.id}
-            className={`flex items-center justify-between gap-2 rounded-xl border p-3 ${
+            className={`flex flex-col gap-2 rounded-xl border p-3 ${
               commitment.daysUntil < 0 ? "border-destructive/40 bg-destructive/5" : "border-border bg-card"
             }`}
           >
-            <div>
-              <p className="font-medium">{commitment.name}</p>
-              <p className={`text-sm ${commitment.daysUntil < 0 ? "text-destructive" : "text-muted-foreground"}`}>
-                {dueLabel(commitment.daysUntil, t)}
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="font-medium">{commitment.name}</p>
+                <p className={`text-sm ${commitment.daysUntil < 0 ? "text-destructive" : "text-muted-foreground"}`}>
+                  {dueLabel(commitment.daysUntil, t)}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium tabular-nums">{formatMoney(commitment.amountLimit, "COP")}</span>
+                <Button variant="outline" size="sm" disabled={markPaid.isPending} onClick={() => handleMarkPaid(commitment)}>
+                  {t("commitments.markPaid")}
+                </Button>
+              </div>
+            </div>
+            {budgetError?.id === commitment.id && (
+              <p className="text-sm text-destructive">
+                {t("movements.budgetExceeded", { remaining: formatMoney(budgetError.remaining, "COP") })}
               </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-medium tabular-nums">{formatMoney(commitment.amountLimit, "COP")}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={markPaid.isPending}
-                onClick={() => markPaid.mutate({ id: commitment.id, period: commitment.period })}
-              >
-                {t("commitments.markPaid")}
-              </Button>
-            </div>
+            )}
           </li>
         ))}
       </ul>

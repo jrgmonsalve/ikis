@@ -6,6 +6,10 @@ export type Commitment = {
   /** Day of the month (1-31) the commitment is due; 29-31 clamp to each month's last day. */
   dueDay: number;
   notifyDaysBefore: number;
+  /** Account the payment transaction is created on when marked paid. */
+  accountId: string;
+  /** Category the payment transaction is created with, so it counts toward that category's budget. */
+  categoryId: string | null;
   /** An archived commitment stops showing up as upcoming but keeps its payment history. */
   archivedAt: Date | null;
   createdAt: Date;

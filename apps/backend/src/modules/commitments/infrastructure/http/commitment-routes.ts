@@ -1,4 +1,10 @@
 import { Hono } from "hono";
+import { DrizzleAccountRepository } from "../../../accounts/infrastructure/persistence/drizzle-account-repository";
+import { BudgetExceededError } from "../../../transactions/application/assert-within-budget";
+import { DrizzleBudgetRepository } from "../../../budgets/infrastructure/persistence/drizzle-budget-repository";
+import { DrizzleCategoryRepository } from "../../../categories/infrastructure/persistence/drizzle-category-repository";
+import { DrizzleFamilyRepository } from "../../../families/infrastructure/persistence/drizzle-family-repository";
+import { DrizzleTransactionRepository } from "../../../transactions/infrastructure/persistence/drizzle-transaction-repository";
 import type { AuthVariables } from "../../../../shared/auth-middleware";
 import { authMiddleware } from "../../../../shared/auth-middleware";
 import { createDb } from "../../../../shared/db";
@@ -46,17 +52,35 @@ commitmentRoutes.get("/upcoming", async (c) => {
 
 commitmentRoutes.post("/", async (c) => {
   const familyId = c.get("familyId") as string;
-  const body = await c.req.json<{ name?: string; amountLimit?: number; dueDay?: number; notifyDaysBefore?: number }>();
-  if (!body.name || typeof body.amountLimit !== "number" || typeof body.dueDay !== "number") {
-    return c.json({ error: "name, amountLimit and dueDay are required" }, 400);
+  const body = await c.req.json<{
+    name?: string;
+    amountLimit?: number;
+    dueDay?: number;
+    accountId?: string;
+    categoryId?: string | null;
+    notifyDaysBefore?: number;
+  }>();
+  if (!body.name || typeof body.amountLimit !== "number" || typeof body.dueDay !== "number" || !body.accountId) {
+    return c.json({ error: "name, amountLimit, dueDay and accountId are required" }, 400);
   }
 
-  const commitmentRepository = new DrizzleCommitmentRepository(createDb(c.env.DB));
+  const db = createDb(c.env.DB);
+  const commitmentRepository = new DrizzleCommitmentRepository(db);
+  const accountRepository = new DrizzleAccountRepository(db);
+  const categoryRepository = new DrizzleCategoryRepository(db);
 
   try {
     const commitment = await createCommitment(
-      { commitmentRepository },
-      { familyId, name: body.name, amountLimit: body.amountLimit, dueDay: body.dueDay, notifyDaysBefore: body.notifyDaysBefore },
+      { commitmentRepository, accountRepository, categoryRepository },
+      {
+        familyId,
+        name: body.name,
+        amountLimit: body.amountLimit,
+        dueDay: body.dueDay,
+        accountId: body.accountId,
+        categoryId: body.categoryId ?? null,
+        notifyDaysBefore: body.notifyDaysBefore,
+      },
     );
     return c.json(commitment, 201);
   } catch (err) {
@@ -74,6 +98,8 @@ commitmentRoutes.patch("/:id", async (c) => {
     name?: string;
     amountLimit?: number;
     dueDay?: number;
+    accountId?: string;
+    categoryId?: string | null;
     notifyDaysBefore?: number;
     archived?: boolean;
   }>();
@@ -81,17 +107,22 @@ commitmentRoutes.patch("/:id", async (c) => {
     body.name === undefined &&
     body.amountLimit === undefined &&
     body.dueDay === undefined &&
+    body.accountId === undefined &&
+    body.categoryId === undefined &&
     body.notifyDaysBefore === undefined &&
     body.archived === undefined
   ) {
     return c.json({ error: "At least one field is required" }, 400);
   }
 
-  const commitmentRepository = new DrizzleCommitmentRepository(createDb(c.env.DB));
+  const db = createDb(c.env.DB);
+  const commitmentRepository = new DrizzleCommitmentRepository(db);
+  const accountRepository = new DrizzleAccountRepository(db);
+  const categoryRepository = new DrizzleCategoryRepository(db);
 
   try {
     const commitment = await updateCommitment(
-      { commitmentRepository },
+      { commitmentRepository, accountRepository, categoryRepository },
       {
         familyId,
         id,
@@ -99,6 +130,8 @@ commitmentRoutes.patch("/:id", async (c) => {
           name: body.name,
           amountLimit: body.amountLimit,
           dueDay: body.dueDay,
+          accountId: body.accountId,
+          categoryId: body.categoryId,
           notifyDaysBefore: body.notifyDaysBefore,
           archivedAt: body.archived === undefined ? undefined : body.archived ? new Date() : null,
         },
@@ -118,20 +151,33 @@ commitmentRoutes.patch("/:id", async (c) => {
 
 commitmentRoutes.post("/:id/payments", async (c) => {
   const familyId = c.get("familyId") as string;
+  const userId = c.get("userId");
   const commitmentId = c.req.param("id");
   const body = await c.req.json<{ period?: string }>();
   if (!body.period) {
     return c.json({ error: "period is required, e.g. { \"period\": \"2026-09\" }" }, 400);
   }
 
-  const commitmentRepository = new DrizzleCommitmentRepository(createDb(c.env.DB));
+  const db = createDb(c.env.DB);
+  const commitmentRepository = new DrizzleCommitmentRepository(db);
+  const transactionRepository = new DrizzleTransactionRepository(db);
+  const accountRepository = new DrizzleAccountRepository(db);
+  const categoryRepository = new DrizzleCategoryRepository(db);
+  const budgetRepository = new DrizzleBudgetRepository(db);
+  const familyRepository = new DrizzleFamilyRepository(db);
 
   try {
-    const payment = await markCommitmentPaid({ commitmentRepository }, { familyId, commitmentId, period: body.period });
+    const payment = await markCommitmentPaid(
+      { commitmentRepository, transactionRepository, accountRepository, categoryRepository, budgetRepository, familyRepository },
+      { familyId, userId, commitmentId, period: body.period },
+    );
     return c.json(payment, 201);
   } catch (err) {
     if (err instanceof Error && err.message === "Commitment not found") {
       return c.json({ error: err.message }, 404);
+    }
+    if (err instanceof BudgetExceededError) {
+      return c.json({ error: err.message, remaining: err.remaining, categoryId: err.categoryId }, 400);
     }
     if (err instanceof Error) {
       return c.json({ error: err.message }, 400);
@@ -145,10 +191,12 @@ commitmentRoutes.delete("/:id/payments/:period", async (c) => {
   const commitmentId = c.req.param("id");
   const period = c.req.param("period");
 
-  const commitmentRepository = new DrizzleCommitmentRepository(createDb(c.env.DB));
+  const db = createDb(c.env.DB);
+  const commitmentRepository = new DrizzleCommitmentRepository(db);
+  const transactionRepository = new DrizzleTransactionRepository(db);
 
   try {
-    await unmarkCommitmentPaid({ commitmentRepository }, { familyId, commitmentId, period });
+    await unmarkCommitmentPaid({ commitmentRepository, transactionRepository }, { familyId, commitmentId, period });
     return c.body(null, 204);
   } catch (err) {
     if (err instanceof Error && err.message === "Commitment not found") {

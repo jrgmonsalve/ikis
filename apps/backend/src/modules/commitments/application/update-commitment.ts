@@ -1,9 +1,13 @@
+import type { AccountRepository } from "../../accounts/domain/account-repository";
+import type { CategoryRepository } from "../../categories/domain/category-repository";
 import { assertValidAmountLimit, assertValidDueDay, assertValidNotifyDaysBefore } from "../domain/commitment";
 import type { Commitment } from "../domain/commitment";
 import type { CommitmentChanges, CommitmentRepository } from "../domain/commitment-repository";
 
 type Dependencies = {
   commitmentRepository: CommitmentRepository;
+  accountRepository: AccountRepository;
+  categoryRepository: CategoryRepository;
 };
 
 type UpdateCommitmentInput = {
@@ -13,7 +17,7 @@ type UpdateCommitmentInput = {
 };
 
 export const updateCommitment = async (
-  { commitmentRepository }: Dependencies,
+  { commitmentRepository, accountRepository, categoryRepository }: Dependencies,
   { familyId, id, changes }: UpdateCommitmentInput,
 ): Promise<Commitment> => {
   const existing = await commitmentRepository.findById(familyId, id);
@@ -29,6 +33,18 @@ export const updateCommitment = async (
   }
   if (changes.notifyDaysBefore !== undefined) {
     assertValidNotifyDaysBefore(changes.notifyDaysBefore);
+  }
+  if (changes.accountId !== undefined) {
+    const account = await accountRepository.findById(familyId, changes.accountId);
+    if (!account) {
+      throw new Error("Account not found");
+    }
+  }
+  if (changes.categoryId) {
+    const category = await categoryRepository.findById(familyId, changes.categoryId);
+    if (!category) {
+      throw new Error("Category not found");
+    }
   }
 
   return commitmentRepository.update(familyId, id, changes);
