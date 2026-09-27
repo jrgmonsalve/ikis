@@ -5,6 +5,8 @@ description: Spec completo de Transacciones, Cuentas, Presupuestos y Transferenc
 
 Leer `SPEC-finanzas-familiares.md` (raíz del repo) completo antes de tocar cualquiera de estos módulos. Contiene, en este orden:
 
+> **Nota (2026-09-27):** la sección 6 (ciclo de presupuesto) quedó desactualizada — describe `budgetCycleStartDay`, pero el código real usa `budgetCycleEndDay` + rango personalizado (`definedCycleStart`/`definedCycleEnd`, `PUT /api/v1/budgets/cycle`). Para eso, confiar en `budgets/domain/budget.ts` y `budgets/application/ensure-current-cycle-budgets.ts`, no en el spec. Además, el spec no cubre el módulo `commitments` (compromisos de pago con recordatorio de vencimiento, agregado después) — ese vive solo en el código y en memoria del proyecto, aunque reutiliza `createTransaction`/`deleteTransaction` de `transactions` descritos abajo.
+
 1. Alineación con lo ya construido (qué cambió respecto al planteamiento original: ids `text`, sin roles, categorías de 2 niveles existentes, sin `/api/v1` en el spec original pero sí en el proyecto).
 2. Principios de diseño no negociables (transactions como única fuente de verdad, balance como caché sincronizado en el mismo `db.batch()`, dinero en INTEGER, multi-tenant estricto, soft delete, patrón revert-and-apply).
 3. Esquema Drizzle de las tablas nuevas (`accounts`, `transactions`, `budgets`, `transaction_revisions`, `transfers`).
