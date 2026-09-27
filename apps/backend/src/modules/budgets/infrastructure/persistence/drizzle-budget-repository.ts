@@ -74,13 +74,20 @@ export class DrizzleBudgetRepository implements BudgetRepository {
       return;
     }
 
-    await this.db.insert(budgets).values(
-      inputs.map((input) => ({
-        id: crypto.randomUUID(),
-        createdAt: new Date(),
-        ...input,
-      })),
-    );
+    const rows = inputs.map((input) => ({
+      id: crypto.randomUUID(),
+      createdAt: new Date(),
+      ...input,
+    }));
+
+    // D1 caps bound parameters per statement at 100; 7 columns/row keeps each chunk well under that.
+    const chunkSize = 10;
+    const statements = [];
+    for (let i = 0; i < rows.length; i += chunkSize) {
+      statements.push(this.db.insert(budgets).values(rows.slice(i, i + chunkSize)));
+    }
+
+    await this.db.batch(statements as [(typeof statements)[number], ...(typeof statements)[number][]]);
   }
 
   async update(familyId: string, id: string, changes: BudgetChanges): Promise<Budget> {

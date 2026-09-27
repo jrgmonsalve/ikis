@@ -99,6 +99,26 @@ describe("DrizzleBudgetRepository", () => {
     expect(await budgetRepository.findActiveOn(familyId, "2026-07-10")).toHaveLength(2);
   });
 
+  it("creates many budgets even when the row count would exceed D1's per-statement variable limit", async () => {
+    const { budgetRepository, categoryRepository } = await setup();
+    const familyId = crypto.randomUUID();
+    const categories = await Promise.all(
+      Array.from({ length: 20 }, (_, i) => categoryRepository.create({ familyId, parentId: null, name: `cat-${i}` })),
+    );
+
+    await budgetRepository.createMany(
+      categories.map((category) => ({
+        familyId,
+        categoryId: category.id,
+        period: "2026-06-29",
+        periodEnd: "2026-07-28",
+        amountLimit: 10000,
+      })),
+    );
+
+    expect(await budgetRepository.findActiveOn(familyId, "2026-07-10")).toHaveLength(20);
+  });
+
   it("derives spent purely from transactions: creations, edits and deletions all reflect without touching the budget", async () => {
     const { budgetRepository, categoryRepository, accountRepository, transactionRepository, userId } = await setup();
     const familyId = crypto.randomUUID();
