@@ -1,4 +1,4 @@
-import { daysBetween, dueDateForPeriod, nextPeriod, startingPeriodFor } from "../domain/commitment";
+import { daysBetween, dueDateForPeriod, startingPeriodFor } from "../domain/commitment";
 import type { UpcomingCommitment } from "../domain/commitment";
 import type { CommitmentRepository } from "../domain/commitment-repository";
 
@@ -14,7 +14,12 @@ type ListUpcomingCommitmentsInput = {
   limit?: number;
 };
 
-/** All pending/overdue commitments, most urgent first; capped to `limit` when given. No date-window filtering. */
+/**
+ * Commitments still unpaid for their current period — pending or overdue — most urgent
+ * first, capped to `limit` when given. No date-window filtering. A commitment already
+ * paid for its current period drops out entirely until its next period's due date
+ * comes around on its own; it never gets shown early.
+ */
 export const listUpcomingCommitments = async (
   { commitmentRepository }: Dependencies,
   { familyId, today = todayIsoDate(), limit }: ListUpcomingCommitmentsInput,
@@ -26,10 +31,10 @@ export const listUpcomingCommitments = async (
   const upcoming: UpcomingCommitment[] = [];
 
   for (const commitment of commitments) {
-    let period = startingPeriodFor(commitment.dueDay, commitment.createdAt, today);
-    const currentPayment = await commitmentRepository.findPayment(familyId, commitment.id, period);
-    if (currentPayment) {
-      period = nextPeriod(period);
+    const period = startingPeriodFor(commitment.dueDay, commitment.createdAt, today);
+    const payment = await commitmentRepository.findPayment(familyId, commitment.id, period);
+    if (payment) {
+      continue;
     }
 
     const dueDate = dueDateForPeriod(commitment.dueDay, period);
