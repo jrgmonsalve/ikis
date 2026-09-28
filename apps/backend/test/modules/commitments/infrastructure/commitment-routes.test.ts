@@ -135,7 +135,7 @@ describe("commitment routes", () => {
     expect(response.status).toBe(404);
   });
 
-  it("returns the upcoming commitments within the window", async () => {
+  it("returns the upcoming commitments", async () => {
     const app = createApp();
     const { authHeader, accountId } = await createAuthenticatedUserWithFamilyAndAccount();
 
@@ -149,11 +149,34 @@ describe("commitment routes", () => {
       env,
     );
 
-    const response = await app.request("/api/v1/commitments/upcoming?withinDays=90", { headers: { Authorization: authHeader } }, env);
+    const response = await app.request("/api/v1/commitments/upcoming", { headers: { Authorization: authHeader } }, env);
 
     expect(response.status).toBe(200);
     const upcoming = await response.json<Array<{ name: string }>>();
     expect(upcoming.some((c) => c.name === "Arriendo")).toBe(true);
+  });
+
+  it("caps the upcoming commitments to the given limit", async () => {
+    const app = createApp();
+    const { authHeader, accountId } = await createAuthenticatedUserWithFamilyAndAccount();
+
+    for (const dueDay of [5, 15, 25]) {
+      await app.request(
+        "/api/v1/commitments",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: authHeader },
+          body: JSON.stringify({ name: `Compromiso ${dueDay}`, amountLimit: 100000, dueDay, accountId }),
+        },
+        env,
+      );
+    }
+
+    const response = await app.request("/api/v1/commitments/upcoming?limit=2", { headers: { Authorization: authHeader } }, env);
+
+    expect(response.status).toBe(200);
+    const upcoming = await response.json<Array<{ name: string }>>();
+    expect(upcoming).toHaveLength(2);
   });
 
   it("marks a commitment as paid, creating a transaction and debiting the account, then unmarks it", async () => {

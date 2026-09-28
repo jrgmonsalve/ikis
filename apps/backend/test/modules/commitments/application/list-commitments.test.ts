@@ -34,4 +34,18 @@ describe("listCommitments", () => {
     expect(commitments.find((c) => c.id === paid.id)).toMatchObject({ currentPeriod: "2026-09", paidThisPeriod: true });
     expect(commitments.find((c) => c.id === unpaid.id)).toMatchObject({ currentPeriod: "2026-09", paidThisPeriod: false });
   });
+
+  it("sorts by urgency, overdue first, then soonest to furthest", async () => {
+    const commitmentRepository = new InMemoryCommitmentRepository();
+    const luz = await commitmentRepository.create({ familyId: "family-1", name: "Luz", amountLimit: 100000, dueDay: 30, accountId: "acc-1" });
+    const agua = await commitmentRepository.create({ familyId: "family-1", name: "Agua", amountLimit: 50000, dueDay: 27, accountId: "acc-1" });
+    const internet = await commitmentRepository.create({ familyId: "family-1", name: "Internet", amountLimit: 80000, dueDay: 5, accountId: "acc-1" });
+    luz.createdAt = new Date("2026-08-01T00:00:00Z");
+    agua.createdAt = new Date("2026-08-01T00:00:00Z");
+    internet.createdAt = new Date("2026-08-01T00:00:00Z");
+
+    const commitments = await listCommitments({ commitmentRepository }, { familyId: "family-1", today: "2026-09-26" });
+
+    expect(commitments.map((c) => c.name)).toEqual(["Internet", "Agua", "Luz"]);
+  });
 });

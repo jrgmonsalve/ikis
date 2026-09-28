@@ -1,4 +1,4 @@
-import { startingPeriodFor } from "../domain/commitment";
+import { daysBetween, dueDateForPeriod, startingPeriodFor } from "../domain/commitment";
 import type { CommitmentWithPaymentStatus } from "../domain/commitment";
 import type { CommitmentRepository } from "../domain/commitment-repository";
 import { todayIsoDate } from "./list-upcoming-commitments";
@@ -18,7 +18,7 @@ export const listCommitments = async (
 ): Promise<CommitmentWithPaymentStatus[]> => {
   const commitments = await commitmentRepository.findAllByFamily(familyId);
 
-  return Promise.all(
+  const withStatus = await Promise.all(
     commitments.map(async (commitment) => {
       const currentPeriod = startingPeriodFor(commitment.dueDay, commitment.createdAt, today);
       return {
@@ -27,5 +27,11 @@ export const listCommitments = async (
         paidThisPeriod: (await commitmentRepository.findPayment(familyId, commitment.id, currentPeriod)) !== null,
       };
     }),
+  );
+
+  return withStatus.sort(
+    (a, b) =>
+      daysBetween(today, dueDateForPeriod(a.dueDay, a.currentPeriod)) -
+      daysBetween(today, dueDateForPeriod(b.dueDay, b.currentPeriod)),
   );
 };

@@ -47,8 +47,8 @@ export function getCommitments(): Promise<Commitment[]> {
   return apiFetch<Commitment[]>("/commitments");
 }
 
-export function getUpcomingCommitments(withinDays = 7): Promise<UpcomingCommitment[]> {
-  return apiFetch<UpcomingCommitment[]>(`/commitments/upcoming?withinDays=${withinDays}`);
+export function getUpcomingCommitments(limit = 4): Promise<UpcomingCommitment[]> {
+  return apiFetch<UpcomingCommitment[]>(`/commitments/upcoming?limit=${limit}`);
 }
 
 export function createCommitment(input: NewCommitment): Promise<Commitment> {

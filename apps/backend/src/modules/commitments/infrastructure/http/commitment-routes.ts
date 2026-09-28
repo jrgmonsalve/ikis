@@ -38,15 +38,15 @@ commitmentRoutes.get("/", async (c) => {
 
 commitmentRoutes.get("/upcoming", async (c) => {
   const familyId = c.get("familyId") as string;
-  const withinDaysParam = c.req.query("withinDays");
-  const withinDays = withinDaysParam === undefined ? undefined : Number(withinDaysParam);
-  if (withinDays !== undefined && (!Number.isInteger(withinDays) || withinDays < 0)) {
-    return c.json({ error: "withinDays must be a non-negative integer" }, 400);
+  const limitParam = c.req.query("limit");
+  const limit = limitParam === undefined ? undefined : Number(limitParam);
+  if (limit !== undefined && (!Number.isInteger(limit) || limit < 1)) {
+    return c.json({ error: "limit must be a positive integer" }, 400);
   }
 
   const commitmentRepository = new DrizzleCommitmentRepository(createDb(c.env.DB));
 
-  const upcoming = await listUpcomingCommitments({ commitmentRepository }, { familyId, withinDays });
+  const upcoming = await listUpcomingCommitments({ commitmentRepository }, { familyId, limit });
   return c.json(upcoming);
 });
 

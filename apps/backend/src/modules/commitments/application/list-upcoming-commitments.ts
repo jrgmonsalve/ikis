@@ -11,12 +11,13 @@ type Dependencies = {
 type ListUpcomingCommitmentsInput = {
   familyId: string;
   today?: string;
-  withinDays?: number;
+  limit?: number;
 };
 
+/** All pending/overdue commitments, most urgent first; capped to `limit` when given. No date-window filtering. */
 export const listUpcomingCommitments = async (
   { commitmentRepository }: Dependencies,
-  { familyId, today = todayIsoDate(), withinDays = 7 }: ListUpcomingCommitmentsInput,
+  { familyId, today = todayIsoDate(), limit }: ListUpcomingCommitmentsInput,
 ): Promise<UpcomingCommitment[]> => {
   const commitments = (await commitmentRepository.findAllByFamily(familyId)).filter(
     (commitment) => commitment.archivedAt === null,
@@ -33,17 +34,16 @@ export const listUpcomingCommitments = async (
 
     const dueDate = dueDateForPeriod(commitment.dueDay, period);
     const daysUntil = daysBetween(today, dueDate);
-    if (daysUntil <= withinDays) {
-      upcoming.push({
-        id: commitment.id,
-        name: commitment.name,
-        amountLimit: commitment.amountLimit,
-        period,
-        dueDate,
-        daysUntil,
-      });
-    }
+    upcoming.push({
+      id: commitment.id,
+      name: commitment.name,
+      amountLimit: commitment.amountLimit,
+      period,
+      dueDate,
+      daysUntil,
+    });
   }
 
-  return upcoming.sort((a, b) => a.daysUntil - b.daysUntil);
+  upcoming.sort((a, b) => a.daysUntil - b.daysUntil);
+  return limit === undefined ? upcoming : upcoming.slice(0, limit);
 };

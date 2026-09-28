@@ -12,10 +12,10 @@ export function useCommitments() {
   return useQuery({ queryKey: commitmentsQueryKey, queryFn: getCommitments });
 }
 
-export function useUpcomingCommitments(withinDays = 7) {
+export function useUpcomingCommitments(limit = 4) {
   return useQuery({
-    queryKey: [...upcomingCommitmentsQueryKey, withinDays],
-    queryFn: () => getUpcomingCommitments(withinDays),
+    queryKey: [...upcomingCommitmentsQueryKey, limit],
+    queryFn: () => getUpcomingCommitments(limit),
   });
 }
 
