@@ -25,6 +25,8 @@ describe("listCommitments", () => {
     const commitmentRepository = new InMemoryCommitmentRepository();
     const paid = await commitmentRepository.create({ familyId: "family-1", name: "Arriendo", amountLimit: 800000, dueDay: 5, accountId: "acc-1" });
     const unpaid = await commitmentRepository.create({ familyId: "family-1", name: "Gimnasio", amountLimit: 60000, dueDay: 10, accountId: "acc-1" });
+    paid.createdAt = new Date("2026-08-01T00:00:00Z");
+    unpaid.createdAt = new Date("2026-08-01T00:00:00Z");
     await commitmentRepository.markPaid("family-1", paid.id, "2026-09", "tx-1");
 
     const commitments = await listCommitments({ commitmentRepository }, { familyId: "family-1", today: "2026-09-15" });

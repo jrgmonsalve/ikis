@@ -31,7 +31,8 @@ describe("listUpcomingCommitments", () => {
 
   it("keeps showing an unpaid commitment as overdue past its due date", async () => {
     const commitmentRepository = new InMemoryCommitmentRepository();
-    await commitmentRepository.create({ familyId: "family-1", name: "Arriendo", amountLimit: 800000, dueDay: 5, accountId: "acc-1" });
+    const commitment = await commitmentRepository.create({ familyId: "family-1", name: "Arriendo", amountLimit: 800000, dueDay: 5, accountId: "acc-1" });
+    commitment.createdAt = new Date("2026-08-01T00:00:00Z");
 
     const upcoming = await listUpcomingCommitments(
       { commitmentRepository },
@@ -40,6 +41,22 @@ describe("listUpcomingCommitments", () => {
 
     expect(upcoming).toHaveLength(1);
     expect(upcoming[0]?.daysUntil).toBe(-15);
+  });
+
+  it("starts a freshly created commitment at next month when this month's due day already passed", async () => {
+    const commitmentRepository = new InMemoryCommitmentRepository();
+    const commitment = await commitmentRepository.create({ familyId: "family-1", name: "Credito lulo", amountLimit: 1550000, dueDay: 9, accountId: "acc-1" });
+    commitment.createdAt = new Date("2026-09-27T00:00:00Z");
+
+    const upcoming = await listUpcomingCommitments(
+      { commitmentRepository },
+      { familyId: "family-1", today: "2026-09-27", withinDays: 30 },
+    );
+
+    expect(upcoming).toHaveLength(1);
+    expect(upcoming[0]?.period).toBe("2026-10");
+    expect(upcoming[0]?.dueDate).toBe("2026-10-09");
+    expect(upcoming[0]?.daysUntil).toBeGreaterThan(0);
   });
 
   it("rolls forward to next month once the current period is marked paid", async () => {
@@ -78,8 +95,10 @@ describe("listUpcomingCommitments", () => {
 
   it("sorts by proximity, most urgent first", async () => {
     const commitmentRepository = new InMemoryCommitmentRepository();
-    await commitmentRepository.create({ familyId: "family-1", name: "Luz", amountLimit: 100000, dueDay: 30, accountId: "acc-1" });
-    await commitmentRepository.create({ familyId: "family-1", name: "Agua", amountLimit: 50000, dueDay: 27, accountId: "acc-1" });
+    const luz = await commitmentRepository.create({ familyId: "family-1", name: "Luz", amountLimit: 100000, dueDay: 30, accountId: "acc-1" });
+    const agua = await commitmentRepository.create({ familyId: "family-1", name: "Agua", amountLimit: 50000, dueDay: 27, accountId: "acc-1" });
+    luz.createdAt = new Date("2026-08-01T00:00:00Z");
+    agua.createdAt = new Date("2026-08-01T00:00:00Z");
 
     const upcoming = await listUpcomingCommitments(
       { commitmentRepository },

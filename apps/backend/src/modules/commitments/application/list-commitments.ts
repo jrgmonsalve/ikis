@@ -1,4 +1,4 @@
-import { periodOf } from "../domain/commitment";
+import { startingPeriodFor } from "../domain/commitment";
 import type { CommitmentWithPaymentStatus } from "../domain/commitment";
 import type { CommitmentRepository } from "../domain/commitment-repository";
 import { todayIsoDate } from "./list-upcoming-commitments";
@@ -17,13 +17,15 @@ export const listCommitments = async (
   { familyId, today = todayIsoDate() }: ListCommitmentsInput,
 ): Promise<CommitmentWithPaymentStatus[]> => {
   const commitments = await commitmentRepository.findAllByFamily(familyId);
-  const currentPeriod = periodOf(today);
 
   return Promise.all(
-    commitments.map(async (commitment) => ({
-      ...commitment,
-      currentPeriod,
-      paidThisPeriod: (await commitmentRepository.findPayment(familyId, commitment.id, currentPeriod)) !== null,
-    })),
+    commitments.map(async (commitment) => {
+      const currentPeriod = startingPeriodFor(commitment.dueDay, commitment.createdAt, today);
+      return {
+        ...commitment,
+        currentPeriod,
+        paidThisPeriod: (await commitmentRepository.findPayment(familyId, commitment.id, currentPeriod)) !== null,
+      };
+    }),
   );
 };

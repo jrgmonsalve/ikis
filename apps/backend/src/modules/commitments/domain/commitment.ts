@@ -75,6 +75,17 @@ export const dueDateForPeriod = (dueDay: number, period: string): string => {
   return `${period}-${pad(Math.min(dueDay, lastDayOfMonth(year, month)))}`;
 };
 
+/**
+ * The first period a commitment can be due for. If the current period's due date
+ * already fell before the commitment was created, there was no way to have tracked
+ * it, so it starts at the next period instead of showing up already overdue.
+ */
+export const startingPeriodFor = (dueDay: number, createdAt: Date, today: string): string => {
+  const period = periodOf(today);
+  const createdDate = createdAt.toISOString().slice(0, 10);
+  return dueDateForPeriod(dueDay, period) < createdDate ? nextPeriod(period) : period;
+};
+
 export const daysBetween = (from: string, to: string): number => {
   const a = new Date(`${from}T00:00:00Z`).getTime();
   const b = new Date(`${to}T00:00:00Z`).getTime();

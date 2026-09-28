@@ -1,4 +1,4 @@
-import { daysBetween, dueDateForPeriod, nextPeriod, periodOf } from "../domain/commitment";
+import { daysBetween, dueDateForPeriod, nextPeriod, startingPeriodFor } from "../domain/commitment";
 import type { UpcomingCommitment } from "../domain/commitment";
 import type { CommitmentRepository } from "../domain/commitment-repository";
 
@@ -25,7 +25,7 @@ export const listUpcomingCommitments = async (
   const upcoming: UpcomingCommitment[] = [];
 
   for (const commitment of commitments) {
-    let period = periodOf(today);
+    let period = startingPeriodFor(commitment.dueDay, commitment.createdAt, today);
     const currentPayment = await commitmentRepository.findPayment(familyId, commitment.id, period);
     if (currentPayment) {
       period = nextPeriod(period);
